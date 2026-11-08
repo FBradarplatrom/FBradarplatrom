@@ -151,7 +151,7 @@ function mkProduct(ads,NOW,L,proofs){
  ads.forEach(a=>{a._mk=String(a.country||L.market||'').toUpperCase()});
  const market=modeOf(ads.map(a=>a._mk)),markets=[...new Set(ads.map(a=>a._mk).filter(Boolean))];
  const counted=ads.filter(a=>a.stat!=='stopped'),stopped=ads.length-counted.length;
- const S={};counted.forEach(a=>{const s=S[a._s]=S[a._s]||{name:a.page_name,host:hostOf(a),ads:[],pr:[],start:Infinity};s.ads.push(a);if(a.start)s.start=Math.min(s.start,+a.start);
+ const S={};counted.forEach(a=>{const s=S[a._s]=S[a._s]||{pid:a.page_id||'',name:a.page_name,host:hostOf(a),ads:[],pr:[],start:Infinity};s.ads.push(a);if(a.start)s.start=Math.min(s.start,+a.start);
   const p=a._p??(a._p=price(a.title+' '+a.body));if(p)s.pr.push(p)});
  const sellers=Object.values(S).map(s=>({...s,p:med(s.pr),copies:s.ads.length,lib:s.ads[0].library_url})).sort((a,b)=>b.copies-a.copies),n=sellers.length;
  const copies=n?sellers[0].copies:0;

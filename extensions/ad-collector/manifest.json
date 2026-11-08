@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "إضافة جمع الإعلانات – رادار المنتجات الرابحة",
   "short_name": "جمع الإعلانات",
-  "version": "1.2.0",
-  "description": "تجمع إعلانات مكتبة ميتا وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
+  "version": "1.3.0",
+  "description": "تجمع إعلانات مكتبة ميتا، ونتائج بحث AliExpress (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
@@ -14,6 +14,9 @@
   "host_permissions": [
     "https://www.facebook.com/*",
     "https://web.facebook.com/*",
+    "https://*.aliexpress.com/*",
+    "https://*.aliexpress.us/*",
+    "https://www.tiktok.com/*",
     "https://YOUR-PLATFORM-DOMAIN/*"
   ],
   "background": {
@@ -52,6 +55,36 @@
       ],
       "js": [
         "collector.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://*.aliexpress.com/w/*",
+        "https://*.aliexpress.com/wholesale*",
+        "https://*.aliexpress.us/w/*"
+      ],
+      "js": [
+        "ali-collector.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.tiktok.com/search*"
+      ],
+      "js": [
+        "tt-inject.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.tiktok.com/search*"
+      ],
+      "js": [
+        "tt-collector.js"
       ],
       "run_at": "document_start"
     },

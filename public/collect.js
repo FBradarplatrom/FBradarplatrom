@@ -57,7 +57,45 @@
   const running = () => !!(B.state && B.state.active);
   // الإعلانات التي يجمعها فحص «ثغرات السوق الجزائري» تذهب لذلك القسم لا إلى «الواردة»
   const GAP = () => (W.WPRGAP && W.WPRGAP.ready ? W.WPRGAP : null);
+  /* ---------- مهام الأقسام الأخرى (المورّد، مراقبة المنافسين، TikTok): كل قسم يسجّل معالجه، والمهمة الجارية تُحفظ فتصمد بعد إعادة التحميل ---------- */
+  const JK = 'wpr_job_v1', MODS = {};
+  let JOB = (() => { try { return JSON.parse(localStorage.getItem(JK)); } catch (x) { return null; } })();
+  const saveJob = j => { JOB = j; try { j ? localStorage.setItem(JK, JSON.stringify(j)) : localStorage.removeItem(JK); } catch (x) {} };
+  const jobOwns = id => !!(JOB && id && id === JOB.batch && MODS[JOB.mod]);
+  W.WPRJOB = {
+    register(name, h) { MODS[name] = h; },
+    cur: () => JOB,
+    // يبدأ مهمة في الإضافة باسم القسم وسياقه. items: [{q, url}]
+    async start(mod, items, ctx, settings, label) {
+      if (!B.ok) throw new Error('الإضافة غير متصلة. ثبّتها من «جمع الإعلانات ← الإضافة» ثم أعد تحميل الصفحة.');
+      if (vlt(B.version, '1.3.0') && items.some(i => !/facebook\.com/.test(i.url))) throw new Error('هذه الميزة تحتاج الإضافة 1.3.0 أو أحدث: نزّلها من «جمع الإعلانات ← الإضافة» واستبدل القديمة.');
+      try { const r = await bsend('ping', {}, 2500); if (r && r.state) B.state = r.state; } catch (x) {}   // حالة الإضافة الفعلية لا آخر حدث وصل
+      if (running()) throw new Error('هناك عملية جمع تعمل الآن. انتظر انتهاءها.');
+      if (!STATS) await loadStats();
+      await api('POST', '/lib/batch', { count: items.length });
+      const r = await startQueue({ items, settings: Object.assign(settingsOut(), settings || {}), limits: STATS && STATS.limits, label: String(label || mod).slice(0, 150) }, 8000);
+      if (!r.ok) throw new Error({ busy: 'هناك عملية جمع تعمل الآن', tab: 'تعذّر فتح التبويب', no_items: 'لا توجد عناصر صالحة' }[r.error] || 'تعذّر البدء');
+      saveJob({ mod, batch: r.batch, ctx: ctx || {}, at: Date.now() }); return r.batch;
+    },
+    stop: () => bsend('stop').catch(() => {}), skip: () => bsend('skip').catch(() => {})
+  };
   function onBridge(ev) {
+    if (JOB && MODS[JOB.mod]) {
+      const h = MODS[JOB.mod];
+      if (ev.evt === 'ads' && jobOwns(ev.batchId)) {
+        if (inflight.has(ev.seq)) return; inflight.add(ev.seq);
+        chain = chain.then(() => h.ads(ev, JOB.ctx)).then(() => bsend('ack', { seqs: [ev.seq] }).catch(() => {}))
+          .catch(x => { X && X.toast(x.message || 'خطأ', 'err'); setTimeout(() => bsend('flush').catch(() => {}), 15000); }).finally(() => inflight.delete(ev.seq));
+        return;
+      }
+      if ((ev.evt === 'state' && ev.state && jobOwns(ev.state.id)) || (ev.evt === 'progress' && jobOwns(ev.id))) { try { h.event && h.event(ev, JOB.ctx); } catch (x) {} }
+      if (ev.evt === 'done' && jobOwns(ev.id)) {
+        const j = JOB;
+        chain = chain.then(async () => { let st = B.state; try { const r = await bsend('ping', {}, 3000); if (r && r.state) { st = r.state; B.state = r.state; } } catch (x) {} saveJob(null); await h.done(ev, j.ctx, (st && st.id === j.batch && st.items) || []); })
+          .catch(x => X && X.toast(x.message || 'خطأ', 'err'));
+        return;
+      }
+    }
     if (GAP() && ['state', 'progress', 'done'].includes(ev.evt)) { try { GAP().event(ev); } catch (x) {} }
     if (ev.evt === 'ads' && GAP() && GAP().owns(ev)) {
       if (inflight.has(ev.seq)) return; inflight.add(ev.seq);
@@ -67,7 +105,9 @@
     }
     if (ev.evt === 'done' && GAP() && GAP().ownsBatch(ev.id)) return;
     if (ev.evt === 'reply') { const f = B.wait.get(ev.id); if (f) { B.wait.delete(ev.id); f(ev); } return; }
-    if (ev.evt === 'hello') { B.ok = true; B.version = ev.version; B.state = ev.state; bsend('flush').catch(() => {}); return redraw(); }
+    if (ev.evt === 'hello') { B.ok = true; B.version = ev.version; B.state = ev.state; bsend('flush').catch(() => {});
+      if (JOB && MODS[JOB.mod] && ev.state && !ev.state.active && ev.state.id === JOB.batch) setTimeout(() => onBridge({ evt: 'done', id: JOB.batch, reason: 'done' }), 2500);   // انتهت المهمة والصفحة مغلقة
+      return redraw(); }
     if (ev.evt === 'offline') { B.ok = false; return redraw(); }
     if (ev.evt === 'state') { const was = running(); B.state = ev.state; return was !== running() ? redraw() : drawProg(); }
     if (ev.evt === 'progress') { if (B.state && B.state.items && B.state.items[ev.idx]) B.state.items[ev.idx].seen = ev.seen; return drawProg(); }
@@ -278,6 +318,7 @@ ${qs.length ? `<div class="l-q">${qs.slice(0, 40).map(x => `<span dir="auto"${x.
       <div style="max-height:260px;overflow:auto">${items.map(i => `<div class="l-bi"><span class="q" dir="auto" title="${e(i.niche)}">${e(i.q || '(الصفحة المفتوحة)')}</span><span class="muted">${i.status === 'running' || i.seen ? num(i.seen) + ' / ' + num(want) + ' إعلان · ' : ''}${(i.status === 'done' && WHY[i.reason]) || L[i.status] || i.status}</span></div>`).join('')}</div></div>`;
   }
   async function drawCollect(soft) {
+    try { const qq = localStorage.getItem('wpr_collect_quick'); if (qq) { P.q = qq; localStorage.removeItem('wpr_collect_quick'); } } catch (x) {}
     const root = $('#l-body'), opened = soft ? $$('#l-body details').map(d => d.open) : [], y0 = scrollY;
     if (!soft) root.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>';
     try { await Promise.all([STATS ? 0 : loadStats(), loadDict()]); } catch (x) { if (x.message !== 'auth') root.innerHTML = '<div class="alert err">' + e(x.message) + '</div>'; return; }

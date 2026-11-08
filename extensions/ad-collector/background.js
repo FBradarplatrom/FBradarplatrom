@@ -7,6 +7,11 @@
 const VERSION = chrome.runtime.getManifest().version;
 const QK = 'bq', OK = 'outbox', SK = 'seq', PK = 'platformOrigin', MK = 'mode';
 const LIB_RE = /^https:\/\/(www|web)\.facebook\.com\/ads\/library\//;
+// أنواع المهام: fb = مكتبة إعلانات ميتا · ali = بحث AliExpress (إيجاد المورّد) · tt = بحث TikTok
+const ALI_RE = /^https:\/\/([a-z]{2,3}\.|www\.)?aliexpress\.(com|us)\/(w\/wholesale|wholesale)/;
+const TT_RE = /^https:\/\/www\.tiktok\.com\/search(\/video)?\?/;
+const aliKey = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();   // «kid's light» = «kid-s-light» مهما حوّل AliExpress الرابط
+const kindOf = (u) => (LIB_RE.test(u) ? 'fb' : ALI_RE.test(u) ? 'ali' : TT_RE.test(u) ? 'tt' : '');
 // حدود صلبة داخل الإضافة نفسها مهما أرسلت الصفحة: حماية لحساب المستخدم من التقييد
 // ads: سقف الإعلانات للبحث الواحد (كان 500، ويقصّه حد المنصة). itemMs: مهلة البحث الواحد تكبر مع العدد المطلوب (انظر itemLimit)
 const HARD = { items: 120, ads: 5000, waitMin: 8, waitMax: 60, itemMs: 7 * 60 * 1000, itemMsMax: 75 * 60 * 1000, outbox: 400 };
@@ -20,14 +25,21 @@ const set = (o) => chrome.storage.local.set(o);
 let chain = Promise.resolve();
 const locked = (fn) => { const p = chain.then(() => fn()); chain = p.catch(() => {}); return p; };   // قراءة-تعديل-كتابة التخزين لا تتداخل
 
-const urlQ = (href) => { try { return new URL(href).searchParams.get('q') || ''; } catch (_) { return ''; } };
+// مفتاح البحث من الرابط: كلمة البحث (أو page:معرّف الصفحة في مراقبة المنافسين). يتحمّل تحويل AliExpress إلى نطاق لغة آخر.
+const urlQ = (href) => {
+  try {
+    const u = new URL(href), p = u.searchParams;
+    if (ALI_RE.test(href)) { const m = /wholesale-([^/?#]+)\.html/.exec(u.pathname); return aliKey(p.get('SearchText') || (m ? decodeURIComponent(m[1]) : '')); }
+    return p.get('q') || (p.get('view_all_page_id') ? 'page:' + p.get('view_all_page_id') : '');
+  } catch (_) { return ''; }
+};
 const adsIn = (out) => (out || []).reduce((n, e) => n + ((e && e.ads && e.ads.length) || 0), 0);
 const getMode = async () => ((await get(MK)) === 'manual' ? 'manual' : 'auto');
 const bc = (msg) => ports.forEach((p) => { try { p.postMessage(msg); } catch (_) { ports.delete(p); } });
 
 const pub = (q) => (!q ? { active: false, total: 0, items: [] } : {
   active: !!q.active, id: q.id, mode: q.mode, idx: q.idx, total: q.items.length, startedAt: q.createdAt, finishedAt: q.finishedAt || 0, endReason: q.endReason || '',
-  items: q.items.map((i) => ({ q: i.q, niche: i.niche || '', status: i.status, seen: i.seen || 0, reason: i.reason || '' }))
+  items: q.items.map((i) => ({ q: i.q, kind: i.kind || 'fb', niche: i.niche || '', status: i.status, seen: i.seen || 0, reason: i.reason || '' }))
 });
 // حالة كاملة للمنصة وللنافذة: التقدّم + الإرسال
 async function full(q) {
@@ -63,7 +75,8 @@ chrome.runtime.onStartup.addListener(init);
 async function startQueue(m) {
   const items = (Array.isArray(m.items) ? m.items : []).slice(0, HARD.items)
     .map((x) => ({ q: String((x && x.q) || '').slice(0, 120), niche: String((x && x.niche) || '').slice(0, 60), url: String((x && x.url) || ''), status: 'pending' }))
-    .filter((x) => LIB_RE.test(x.url) && urlQ(x.url) === x.q);       // لا يُفتح إلا رابط مكتبة الإعلانات
+    .map((x) => Object.assign(x, { kind: kindOf(x.url), key: urlQ(x.url) }))
+    .filter((x) => x.kind && x.key && (x.kind === 'ali' ? aliKey(x.q) === x.key : x.q === x.key));   // مكتبة الإعلانات أو AliExpress أو TikTok فقط، والكلمة = كلمة الرابط
   if (!items.length) return { ok: false, error: 'no_items' };
   const old = await get(QK);
   if (old && old.active) return { ok: false, error: 'busy' };
@@ -154,7 +167,7 @@ async function pushAds(msg, q) {
   }
   const seq = ((await get(SK)) || 0) + 1, it = q.items[q.idx];
   const entry = {
-    seq, batchId: q.id, t: Date.now(), label: q.label || '',
+    seq, batchId: q.id, t: Date.now(), label: q.label || '', kind: (it && it.kind) || 'fb',
     ctx: { query: String((msg.ctx && msg.ctx.query) || '').slice(0, 120), country: String((msg.ctx && msg.ctx.country) || '').slice(0, 10), niche: it ? it.niche || '' : '' },
     ads: (Array.isArray(msg.raw) ? msg.raw : []).slice(0, 60)
   };
@@ -265,7 +278,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const mine = !!(it && tabId === q.tabId);
       switch (msg.cmd) {
         case 'queue_check':
-          res = mine && q.mode === 'queue' && urlQ(msg.href) === it.q ? { start: true, settings: q.settings } : { start: false };
+          res = mine && q.mode === 'queue' && urlQ(msg.href) === (it.key || it.q) ? { start: true, settings: q.settings, kind: it.kind || 'fb' } : { start: false };
           return;
         case 'ads':
           if (mine) await pushAds(msg, q);

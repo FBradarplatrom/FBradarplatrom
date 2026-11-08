@@ -153,6 +153,8 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <button class="nv" data-v="arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>الأرشيف</span></button>
 <button class="nv" data-v="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>المنتجات المحفوظة</span></button>
 <button class="nv" data-v="gap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>ثغرات السوق الجزائري</span><i class="nb" id="nb-gap" hidden></i></button>
+<button class="nv" data-v="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>مراقبة المنافسين</span><i class="nb" id="nb-watch" hidden></i></button>
+<button class="nv" data-v="tiktok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>TikTok</span></button>
 <button class="nv" data-v="admin" id="nav-admin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>إدارة المشتركين</span></button>
 <button class="nv" data-v="settings" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>الإعدادات</span></button>
 <div class="me"><div class="av" id="me-av">؟</div><div><b id="me-name"></b><small id="me-plan"></small></div><button data-a="logout" title="تسجيل الخروج" aria-label="خروج"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
@@ -194,12 +196,14 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <label class="fl">هش (إقصاء الدفع عند الاستلام)<textarea id="d_fragile" rows="5"></textarea></label></div>
 <button id="apply" type="button" class="btn">تطبيق وإعادة الحساب</button></details>
 <div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
-<div class="acts" style="display:flex;gap:8px"><button id="copy" type="button" class="btn ghost sm">نسخ للجدول</button><button id="csv" type="button" class="btn ghost sm">تحميل CSV</button></div></div>
+<div class="acts" style="display:flex;gap:8px"><button id="copy" type="button" class="btn ghost sm">نسخ للجدول</button><button id="csv" type="button" class="btn ghost sm">تحميل CSV</button><button id="gsheet" type="button" class="btn ghost sm" data-tool="sheet" data-src="results">📤 إلى Google Sheets</button></div></div>
 <div id="grid" class="grid"></div><div style="text-align:center;margin-top:20px"><button id="more" type="button" class="btn ghost" hidden>عرض المزيد</button></div>
 </div></section>
 <section id="v-arch" class="view" hidden><div class="ph"><div><h1>الأرشيف</h1><p class="sub">كل ما وصلك أو رفعته مرتّباً بالتاريخ. افتح أي تحليل لإعادة حسابه بالمعايير الحالية.</p></div></div><div id="x-arch"></div></section>
-<section id="v-saved" class="view" hidden><div class="ph"><div><h1>المنتجات المحفوظة</h1><p class="sub">يُحفظ المنتج كما هو بصوره وإعلاناته وتحليله، فتستطيع العودة إليه والتحقق من الإعلان لاحقاً حتى لو توقف.</p></div><div class="acts"><button class="btn ghost" id="x-svcsv" type="button">تحميل CSV</button></div></div><div id="x-saved"></div></section>
+<section id="v-saved" class="view" hidden><div class="ph"><div><h1>المنتجات المحفوظة</h1><p class="sub">يُحفظ المنتج كما هو بصوره وإعلاناته وتحليله، فتستطيع العودة إليه والتحقق من الإعلان لاحقاً حتى لو توقف.</p></div><div class="acts"><button class="btn ghost" id="x-svcsv" type="button">تحميل CSV</button><button class="btn ghost sm" type="button" data-tool="sheet" data-src="saved">📤 إلى Google Sheets</button></div></div><div id="x-saved"></div></section>
 <section id="v-gap" class="view" hidden><div class="ph"><div><h1>🎯 ثغرات السوق الجزائري</h1><p class="sub">منتجات رابحة في أسواق أجنبية: هل يُعلَن عنها في الجزائر؟ تبحث المنصة في مكتبة إعلانات ميتا بعبارات جزائرية وتقارن كل إعلان بصورة المنتج ورابط مورّده وكلماته، فتكتشف الثغرة وتتحقق منها.</p></div></div><div id="x-gap"></div></section>
+<section id="v-watch" class="view" hidden><div class="ph"><div><h1>👁 مراقبة المنافسين</h1><p class="sub">تابع صفحات المنافسين: كل فحص يجمع إعلانات الصفحة من مكتبة ميتا ويكشف الإعلانات الجديدة (منتجات يختبرونها الآن) والتي توقفت. يُعاد الفحص أسبوعياً.</p></div></div><div id="x-watch"></div></section>
+<section id="v-tiktok" class="view" hidden><div class="ph"><div><h1>🎵 منتجات TikTok</h1><p class="sub">ابحث في TikTok بأشهر عبارات المنتجات الرائجة، وتُرتَّب الفيديوهات بالمشاهدات والتفاعل والحداثة، واحفظ المنتجات لتبحث عن مورّدها وتحلّلها وتفحصها في الجزائر.</p></div></div><div id="x-tiktok"></div></section>
 <section id="v-settings" class="view" hidden><div class="ph"><div><h1>الإعدادات</h1><p class="sub">بيانات حسابك وكلمة المرور والاشتراك ومفتاح ربط الإضافات.</p></div></div><div id="x-set"></div></section>
 <section id="v-admin" class="view" hidden><div class="ph"><div><h1>إدارة المشتركين</h1><p class="sub">أضف أياماً لاشتراك العضو بعد استلام الدفع (رقم سالب للإنقاص)، وعدّل بياناته أو ولّد له رابط استعادة كلمة المرور.</p></div></div><div id="x-link"></div><div id="x-users" class="card pad0"></div></section>
 </main>
@@ -361,7 +365,7 @@ function mkProduct(ads,NOW,L,proofs){
  ads.forEach(a=>{a._mk=String(a.country||L.market||'').toUpperCase()});
  const market=modeOf(ads.map(a=>a._mk)),markets=[...new Set(ads.map(a=>a._mk).filter(Boolean))];
  const counted=ads.filter(a=>a.stat!=='stopped'),stopped=ads.length-counted.length;
- const S={};counted.forEach(a=>{const s=S[a._s]=S[a._s]||{name:a.page_name,host:hostOf(a),ads:[],pr:[],start:Infinity};s.ads.push(a);if(a.start)s.start=Math.min(s.start,+a.start);
+ const S={};counted.forEach(a=>{const s=S[a._s]=S[a._s]||{pid:a.page_id||'',name:a.page_name,host:hostOf(a),ads:[],pr:[],start:Infinity};s.ads.push(a);if(a.start)s.start=Math.min(s.start,+a.start);
   const p=a._p??(a._p=price(a.title+' '+a.body));if(p)s.pr.push(p)});
  const sellers=Object.values(S).map(s=>({...s,p:med(s.pr),copies:s.ads.length,lib:s.ads[0].library_url})).sort((a,b)=>b.copies-a.copies),n=sellers.length;
  const copies=n?sellers[0].copies:0;
@@ -577,10 +581,10 @@ ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="a
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join(''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
 ${srcBox(p,kw,imgs)}
 <details class="pc-more" data-lz="${lzPut(()=>`${p.excl||!r?'':`<h4>الإعلان المرجعي</h4>${evTable(r)}`}${proofLine(p)}${simLine(p)}<h4>إعلانات المنتج، كلٌّ بتصنيفه</h4>${adsTable(p,saved)}
-<h4>البائعون</h4><table class="tb"><tr><th>البائع</th><th>المتجر</th><th>نسخ</th><th>السعر</th></tr>${(p.sellers||[]).slice(0,12).map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.host)}</td><td>${s.copies}</td><td>${s.p||'—'}</td></tr>`).join('')}</table>`)}"><summary>${p.excl||!r?'الإعلانات والبائعون':'تحليل الأدلة والإعلانات والبائعون'}</summary><p class="sub">…</p></details>
+<h4>البائعون</h4><table class="tb"><tr><th>البائع</th><th>المتجر</th><th>نسخ</th><th>السعر</th><th></th></tr>${(p.sellers||[]).slice(0,12).map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.host)}</td><td>${s.copies}</td><td>${s.p||'—'}</td><td>${/^\d{5,}$/.test(s.pid||'')?`<button class="btn ghost sm" data-tool="watch" data-pid="${esc(s.pid)}" data-name="${esc(s.name)}" title="راقب إعلانات هذه الصفحة">👁 راقب</button>`:''}</td></tr>`).join('')}</table>`)}"><summary>${p.excl||!r?'الإعلانات والبائعون':'تحليل الأدلة والإعلانات والبائعون'}</summary><p class="sub">…</p></details>
 <div class="pc-lk">${[['library_url','الإعلان'],['link_url','المتجر'],['video_url','الفيديو']].map(([f,l])=>{const u=lk(f);return ok(u)?`<a class="lk" href="${esc(u)}" target="_blank" rel="noopener">${l} ↗</a>`:''}).join('')}${ok(im)?`<a class="lk" href="${esc(im)}" target="_blank" rel="noopener">الصورة ↗</a>`:''}</div>
-${saved?`<label class="fl">ملاحظتي<textarea data-f="note" data-k="${esc(o.k)}" rows="2" placeholder="ملاحظاتك على المنتج">${esc(o.note||'')}</textarea></label><div class="pc-act"><span class="sub">نسخة محفوظة بتاريخ ${fd(o.at||Date.now())}</span><button class="btn sm" data-a="togap" data-id="${esc(o.k)}" title="هل يُباع في الجزائر؟">🎯 افحص في الجزائر</button><button class="btn danger sm" data-a="unsave" data-id="${esc(o.k)}">إزالة من المحفوظات</button></div>`
-:`<div class="pc-act"><button class="btn ${FAV.has(p.k)?'':'ghost'} sm save" data-k="${esc(p.k)}">${FAV.has(p.k)?'★ محفوظ':'☆ حفظ المنتج'}</button></div>`}</div></article>`}
+${saved?`<label class="fl">ملاحظتي<textarea data-f="note" data-k="${esc(o.k)}" rows="2" placeholder="ملاحظاتك على المنتج">${esc(o.note||'')}</textarea></label><div class="pc-act"><span class="sub">نسخة محفوظة بتاريخ ${fd(o.at||Date.now())}</span><button class="btn ghost sm" data-tool="sup" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="ابحث عن هذا المنتج في AliExpress وقارن بالصورة">🏭 المورّد</button><button class="btn ghost sm" data-tool="ai" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="زاوية البيع والجمهور ونص إعلان جزائري">🧠 تحليل الإعلان</button><button class="btn sm" data-a="togap" data-id="${esc(o.k)}" title="هل يُباع في الجزائر؟">🎯 افحص في الجزائر</button><button class="btn danger sm" data-a="unsave" data-id="${esc(o.k)}">إزالة من المحفوظات</button></div>`
+:`<div class="pc-act"><button class="btn ghost sm" data-tool="sup" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="ابحث عن هذا المنتج في AliExpress وقارن بالصورة">🏭 المورّد</button><button class="btn ghost sm" data-tool="ai" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="زاوية البيع والجمهور ونص إعلان جزائري">🧠 تحليل الإعلان</button><button class="btn ${FAV.has(p.k)?'':'ghost'} sm save" data-k="${esc(p.k)}">${FAV.has(p.k)?'★ محفوظ':'☆ حفظ المنتج'}</button></div>`}</div></article>`}
 const card=p=>cardHTML(p);
 function draw(){const s=VIEW.slice(0,shown);$('#grid').innerHTML=s.length?s.map(card).join(''):'<div class="empty">لا توجد منتجات في هذا التبويب بهذه الفلاتر. خفّف شرطاً أو أكثر.</div>';$('#more').hidden=VIEW.length<=shown}
 /* ---------- نسخة المنتج المحفوظة كما هي ---------- */
@@ -588,7 +592,7 @@ const slim=a=>({title:a.title,body:String(a.body||'').slice(0,700),page_name:a.p
 function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.ref));
  return{v:2,name:p.name,kw:p.kw||'',cat:p.cat,tier:p.cat,score:p.score,days:p.days,trend:p.trend,seas:p.seas,n:p.n,copies:p.copies,pr:p.pr,price:p.pr,pages:p.pages,why:p.why,stopped:p.stopped,fmt:p.fmt,
   counted:new Array(p.counted.length).fill(0),hits:p.hits.slice(0,8).map(h=>({label:h.label,w:h.w})),tags:p.tags,proofs:[...p.proofs],sim:p.sim,simNames:p.simNames,tgN:p.tg.size,promising:p.promising,also:p.also,oldInfo:p.oldInfo,benOk:p.benOk,top:slim(p.top),images:imgsOf(p),
-  sellers:p.sellers.slice(0,12).map(s=>({name:s.name,host:s.host,copies:s.copies,p:s.p})),
+  sellers:p.sellers.slice(0,12).map(s=>({pid:s.pid||'',name:s.name,host:s.host,copies:s.copies,p:s.p})),
   recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||''}}
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
@@ -624,9 +628,9 @@ $('#copy').addEventListener('click',async()=>{const tx=rows().map(r=>r.map(x=>St
  msg('تم نسخ '+VIEW.length+' منتجاً. الصقها في Excel أو Google Sheets.')});
 $('#csv').addEventListener('click',()=>{const tx='\uFEFF'+rows().map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""').replace(/[\r\n]+/g,' ')+'"').join(',')).join('\r\n');window.__dl('winning-products.csv',tx)});
 fillMarkets();
-window.WPR={load,msg,PROD:()=>PROD,byKey:k=>PROD.find(p=>p.k===k),setFav:a=>{FAV=new Set(a)},snapshot,hydrate,cardHTML,counts,imgsOf};
+window.WPR={sheetRows:()=>rows(),load,msg,PROD:()=>PROD,byKey:k=>PROD.find(p=>p.k===k),setFav:a=>{FAV=new Set(a)},snapshot,hydrate,cardHTML,counts,imgsOf};
 })();
-</script><script src="/collect.js"></script><script src="/radar-lib/gapmatch.js"></script><script src="/gap.js"></script><script>(function(){
+</script><script src="/collect.js"></script><script src="/radar-lib/gapmatch.js"></script><script src="/gap.js"></script><script src="/tools.js"></script><script src="/watch.js"></script><script src="/tiktok.js"></script><script>(function(){
 'use strict';
 const R=document.getElementById('wpr-app'),$=s=>R.querySelector(s),W=window;
 const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -657,11 +661,11 @@ W.__dl=(n,t)=>{const b=new Blob([t],{type:'text/plain;charset=utf-8'}),a=documen
 const guard=f=>(...a)=>W.__btnBusy(a[0],f(...a)).catch(x=>{if(x.message!=='auth')toast(x.message||'حدث خطأ','err')});
 
 let cur='dash',ME={},reopenIds=[],SV={},RUNS=[],KEYV=null;
-const V=['dash','collect','inbox','analyze','arch','saved','gap','settings','admin'];
-const DRAW={collect:async(sub,o)=>{if(!W.WPRLIB)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRLIB.render(sub,o)},dash:rDash,inbox:rInbox,arch:rArch,saved:rSaved,gap:async(sub,o)=>{if(!W.WPRGAP)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRGAP.render(sub,o);gapBadge()},settings:rSettings,admin:rAdmin};
+const V=['dash','collect','inbox','analyze','arch','saved','gap','watch','tiktok','settings','admin'];
+const DRAW={collect:async(sub,o)=>{if(!W.WPRLIB)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRLIB.render(sub,o)},dash:rDash,inbox:rInbox,arch:rArch,saved:rSaved,watch:async()=>{if(!W.WPRWATCH)throw new Error('تعذّر تحميل القسم');W.WPRWATCH.render()},tiktok:async()=>{if(!W.WPRTT)throw new Error('تعذّر تحميل القسم');W.WPRTT.render()},gap:async(sub,o)=>{if(!W.WPRGAP)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRGAP.render(sub,o);gapBadge()},settings:rSettings,admin:rAdmin};
 /* الروابط: لكل قسم مسار حقيقي، فيعمل زر الرجوع والتحديث ونسخ الرابط */
-const PATH={dash:'/',collect:'/collect',inbox:'/inbox',analyze:'/analyze',arch:'/archive',saved:'/saved',gap:'/gaps',settings:'/settings',admin:'/subscribers'};
-const TITLE={dash:'لوحة التحكم',collect:'جمع الإعلانات',inbox:'الإعلانات الواردة',analyze:'تحليل جديد',arch:'الأرشيف',saved:'المنتجات المحفوظة',gap:'ثغرات السوق الجزائري',settings:'الإعدادات',admin:'إدارة المشتركين'};
+const PATH={dash:'/',collect:'/collect',inbox:'/inbox',analyze:'/analyze',arch:'/archive',saved:'/saved',gap:'/gaps',watch:'/watch',tiktok:'/tiktok',settings:'/settings',admin:'/subscribers'};
+const TITLE={dash:'لوحة التحكم',collect:'جمع الإعلانات',inbox:'الإعلانات الواردة',analyze:'تحليل جديد',arch:'الأرشيف',saved:'المنتجات المحفوظة',gap:'ثغرات السوق الجزائري',watch:'مراقبة المنافسين',tiktok:'منتجات TikTok',settings:'الإعدادات',admin:'إدارة المشتركين'};
 const viewOf=p=>{const g='/'+(p.split('/')[1]||'');return Object.keys(PATH).find(k=>PATH[k]===g)||'dash'};
 const goUrl=(p,replace)=>{if(location.pathname!==p)history[replace?'replaceState':'pushState']({},'',p)};
 function show(v,o){o=o||{};const forced=!ME.active&&v!=='settings';if(forced){v='dash';o={replace:true}}cur=v;V.forEach(x=>$('#v-'+x).hidden=x!==v);
@@ -730,6 +734,7 @@ async function rSaved(){const sv=await api('GET','/saved');SV={};sv.forEach(p=>S
  const ms=[...new Set(sv.map(mkOf).filter(Boolean))],list=sv.filter(p=>!SVMK||mkOf(p)===SVMK||(p.markets||[]).includes(SVMK));
  const bar=ms.length?`<div class="g-kp" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px"><button class="btn sm ${SVMK?'ghost':''}" data-svmk="">كل الأسواق (${sv.length})</button>${ms.map(c=>`<button class="btn sm ${SVMK===c?'':'ghost'}" data-svmk="${e(c)}">${fl(c)} ${e(nm(c))} (${sv.filter(p=>mkOf(p)===c).length})</button>`).join('')}</div>`:'';
  $('#x-saved').innerHTML=sv.length?bar+'<div class="grid">'+list.map(p=>W.WPR.cardHTML(W.WPR.hydrate(p),{saved:true,k:p.k,note:p.note,kw:p.kw,at:p.saved_at||p.date})).join('')+'</div>':'<div class="empty">لا توجد منتجات محفوظة بعد.<br>اضغط «حفظ المنتج» على أي بطاقة في نتائج التحليل.</div>'}
+W.__sv=k=>SV[k];W.__svList=()=>Object.values(SV);
 $('#x-svcsv').addEventListener('click',()=>{const L=Object.values(SV);if(!L.length)return toast('لا توجد منتجات','err');
  W.__dl('saved-products.csv',csv([['المنتج','الكلمة الدلالية','التصنيف','الدرجة','البائعون','السعر دج','ملاحظة','رابط الإعلان','المتجر','تاريخ الحفظ']].concat(L.map(p=>[p.name,p.kw,CL[p.cat||p.tier]||'',p.score,p.n,p.pr||p.price||'',p.note,p.lib||(p.top&&p.top.library_url),p.link||(p.top&&p.top.link_url),new Date(p.saved_at||p.date).toISOString().slice(0,10)]))))});
 
@@ -738,8 +743,10 @@ async function gapBadge(){try{const n=(await api('GET','/gap/due')).due,b=$('#nb
 
 /* ---------- الإعدادات ---------- */
 let KST='load';
+let GSV={};
 async function rSettings(){
- KST='load';KEYV=null;drawSet();   // تُرسم الصفحة فوراً ولا تتوقف على جلب المفتاح
+ KST='load';KEYV=null;drawSet();
+ try{GSV=await api('GET','/sheets')}catch(x){GSV={}}   // تُرسم الصفحة فوراً ولا تتوقف على جلب المفتاح
  try{KEYV=ME.active?(await api('GET','/key')).key:null;KST='ok'}catch(x){if(x.message==='auth')throw x;KST='err:'+(x.message||'')}
  drawSet()}
 function drawSet(){try{
@@ -750,7 +757,12 @@ function drawSet(){try{
 <div class="grid2"><div class="card"><h2>الاشتراك</h2><p style="margin:6px 0"><span class="pill ${ME.active?'ok':'bad'}">${planName()}</span></p>${ME.role==='admin'?'<p class="sub">حساب مدير، بلا انتهاء.</p>':`<p class="sub">${ME.active?'ينتهي في '+fd(ME.expires_at)+' (باقي '+left+' يوم)':'انتهى'+(ME.expires_at?' في '+fd(ME.expires_at):'')}</p>${ME.contact?`<a class="btn ghost sm" href="${e(ME.contact)}" target="_blank" rel="noopener">تجديد أو ترقية الاشتراك</a>`:''}`}</div>
 <div class="card"><h2>مفتاح ربط الإضافات</h2><p class="sub">للإضافات الخارجية التي ترسل دفعات جاهزة إلى «الإعلانات الواردة» (POST /api/ext/adlib). جمع الإعلانات وفحص الثغرات لا يحتاجان مفتاحاً: يتم من قسم «جمع الإعلانات» عبر الإضافة. يبقى المفتاح محفوظاً هنا ويمكنك إظهاره متى شئت.</p>
 <label class="fl">عنوان المنصة</label><div class="keyb"><code>${e(location.origin)}</code><button class="btn ghost sm" data-a="copyurl">نسخ</button></div>
-<label class="fl" style="margin-top:10px">المفتاح</label>${KST==='load'?'<p class="sub">جارٍ تحميل المفتاح…</p>':KST.startsWith('err')?`<p class="sub">تعذّر جلب المفتاح (${e(KST.slice(4))}). أنشئ مفتاحاً جديداً أو أعد المحاولة.</p><p style="margin:6px 0"><button class="btn" data-a="newkey">إنشاء مفتاح</button></p>`:KEYV?`<div class="keyb"><code id="k-val">${'•'.repeat(24)}</code><button class="btn ghost sm" data-a="showkey">إظهار</button><button class="btn ghost sm" data-a="copykey">نسخ</button></div><p style="margin:12px 0 0"><button class="btn danger sm" data-a="newkey">توليد مفتاح جديد (يُبطل القديم)</button></p>`:`<p style="margin:6px 0"><button class="btn" data-a="newkey">إنشاء مفتاح</button></p>`}</div></div>`}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
+<label class="fl" style="margin-top:10px">المفتاح</label>${KST==='load'?'<p class="sub">جارٍ تحميل المفتاح…</p>':KST.startsWith('err')?`<p class="sub">تعذّر جلب المفتاح (${e(KST.slice(4))}). أنشئ مفتاحاً جديداً أو أعد المحاولة.</p><p style="margin:6px 0"><button class="btn" data-a="newkey">إنشاء مفتاح</button></p>`:KEYV?`<div class="keyb"><code id="k-val">${'•'.repeat(24)}</code><button class="btn ghost sm" data-a="showkey">إظهار</button><button class="btn ghost sm" data-a="copykey">نسخ</button></div><p style="margin:12px 0 0"><button class="btn danger sm" data-a="newkey">توليد مفتاح جديد (يُبطل القديم)</button></p>`:`<p style="margin:6px 0"><button class="btn" data-a="newkey">إنشاء مفتاح</button></p>`}</div></div>
+<div class="card" style="margin-top:16px"><h2>📤 الربط مع Google Sheets</h2><p class="sub">أرسل نتائج التحليل والمنتجات المحفوظة إلى جدولك مباشرة بزر «📤 إلى Google Sheets». الربط مرة واحدة:</p>
+<ol class="sub" style="line-height:2"><li>افتح جدولاً جديداً في Google Sheets، ثم <b>Extensions ← Apps Script</b>.</li><li>امسح ما فيه والصق الكود أدناه، وغيّر <code>TOKEN</code> إلى رمز سري من اختيارك.</li><li><b>Deploy ← New deployment ← Web app</b>: Execute as <b>Me</b> و Who has access <b>Anyone</b>، ثم <b>Deploy</b> ووافق على الأذونات.</li><li>انسخ رابط <b>Web app</b> (ينتهي بـ /exec) والصقه هنا مع نفس الرمز السري.</li></ol>
+<div style="display:flex;gap:8px;margin:6px 0"><button class="btn ghost sm" data-a="gcopy">نسخ كود Apps Script</button></div>
+<div class="grid2" style="margin:8px 0 0"><label class="fl">رابط Web app<input id="g-url" dir="ltr" value="${e(GSV.url||'')}" placeholder="https://script.google.com/macros/s/…/exec"></label><label class="fl">الرمز السري (TOKEN)<input id="g-tok" dir="ltr" value="${e(GSV.token||'')}"></label></div>
+<p style="margin:8px 0 0;display:flex;gap:8px"><button class="btn" data-a="gsave">حفظ الربط</button><button class="btn ghost" data-a="gtest">إرسال صف تجريبي</button></p></div>`}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
 R.addEventListener('submit',async ev=>{const f=ev.target.closest('[data-form]');if(!f)return;ev.preventDefault();const d=Object.fromEntries(new FormData(f));
  try{if(f.dataset.form==='profile'){await api('PUT','/profile',d);ME={...ME,...(await api('GET','/me'))};updateMe();toast('تم حفظ بياناتك');f.password.value=''}
   else{if(d.password!==d.again)return toast('كلمتا المرور الجديدتان غير متطابقتين','err');await api('POST','/password',{old:d.old,password:d.password});toast('تم تغيير كلمة المرور');f.reset()}}
@@ -782,6 +794,9 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='selall'){const bx=R.querySelectorAll('[data-sel]'),all=[...bx].every(x=>x.checked);bx.forEach(x=>x.checked=!all);return}
  if(a==='analyzeSel')return analyzeIds([...R.querySelectorAll('[data-sel]:checked')].map(x=>x.dataset.sel));
  if(a==='ianalyze')return analyzeIds([id]);
+ if(a==='gcopy'){await navigator.clipboard.writeText(W.__sheetScript||'');return toast('نُسخ الكود. الصقه في Apps Script')}
+ if(a==='gsave'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});GSV={url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()};return toast('حُفظ الربط مع Google Sheets')}
+ if(a==='gtest'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});const r=await api('POST','/sheets/push',{sheet:'اختبار الربط',header:['الحالة','التاريخ'],rows:[['تم الربط بنجاح ✅',new Date().toLocaleString('ar-DZ')]]});toast('وصل الصف التجريبي إلى جدولك');if(r.url)W.open(r.url,'_blank','noopener');return}
  if(a==='copyurl'){await navigator.clipboard.writeText(location.origin);return toast('تم نسخ عنوان المنصة')}
  if(a==='showkey'){const c=$('#k-val');const on=c.dataset.on==='1';c.textContent=on?'•'.repeat(24):KEYV;c.dataset.on=on?'':'1';b.textContent=on?'إظهار':'إخفاء';return}
  if(a==='copykey'){await navigator.clipboard.writeText(KEYV);return toast('تم نسخ المفتاح')}
@@ -802,6 +817,9 @@ R.addEventListener('change',guard(async ev=>{const ps=ev.target.closest('[data-p
 (async()=>{try{ME=await api('GET','/me')}catch(x){return}
  updateMe();if(ME.active&&W.WPRLIB)W.WPRLIB.init({api,toast,e,fd,ago,analyzeIds,root:R,cur:()=>cur,me:()=>ME,url:goUrl,refresh:refreshSoon});
  if(ME.active&&W.WPRGAP){W.WPRGAP.init({api,toast,fd,ago,root:R,cur:()=>cur,url:goUrl});gapBadge()}
+ if(ME.active&&W.WPRTOOLS)W.WPRTOOLS.init({api,toast,fd,ago,root:R,show:v=>show(v)});
+ if(ME.active&&W.WPRWATCH)W.WPRWATCH.init({api,toast,fd,ago,root:R,cur:()=>cur,url:goUrl,show:v=>show(v)});
+ if(ME.active&&W.WPRTT)W.WPRTT.init({api,toast,fd,ago,root:R,cur:()=>cur,url:goUrl,show:v=>show(v)});
  if(ME.active){try{const sv=await api('GET','/saved');W.WPR.setFav(sv.map(x=>x.k))}catch(x){}}
  addEventListener('popstate',()=>show(viewOf(location.pathname),{nopush:true,fromUrl:true}));
  show(viewOf(location.pathname),{nopush:true,fromUrl:true});

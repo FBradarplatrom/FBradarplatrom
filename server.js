@@ -218,8 +218,9 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
 }));
 app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
-  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
+  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
+  ['delete from watch_ads where watch_id not in (select id from watch_pages)', 'delete from watch_scans where watch_id not in (select id from watch_pages)', 'delete from tt_items where run_id not in (select id from tt_runs)'].forEach(x => db.prepare(x).run());
   db.prepare('delete from users where id=?').run(id); s.json({ ok: 1 });
 }));
 
@@ -278,6 +279,7 @@ app.post('/api/img/keep', auth, active, async (q, s) => {   // يحفظ نسخة
 // ---------- جمع الإعلانات (الإضافة ← الواردة + قاموس كلمات البحث) ----------
 require('./adlib')(app, { db, auth, active, admin, wrap, now, DAY, addRun, fpOf });
 require('./adlib/gap.js')(app, { db, auth, active, wrap, now });   // ثغرات السوق الجزائري
+require('./adlib/tools.js')(app, { db, auth, active, wrap, now });  // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
 // ---------- الصفحات ----------
 const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
@@ -286,7 +288,7 @@ const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), '
 const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.join(__dirname, 'views', 'login.html');
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.type('html').send(LANDING));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/settings', '/subscribers'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/settings', '/subscribers'],
   (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));

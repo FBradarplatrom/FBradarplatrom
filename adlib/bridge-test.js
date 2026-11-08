@@ -50,6 +50,9 @@ const url = q => 'https://www.facebook.com/ads/library/?active_status=active&ad_
   let r = await send({ cmd: 'start', items: [{ q: 'a', url: 'https://evil.example/ads/library/?q=a' }, { q: 'b', url: 'https://www.facebook.com/profile?q=b' }] });
   eq([r.ok, tabs.length], [false, 0], 'only ad-library urls are opened');
   eq((await send({ cmd: 'start', items: [{ q: 'x', url: url('y') }] })).ok, false, 'url q must equal item q');
+  // 10.0: AliExpress (المورّد) و TikTok مقبولان بشرط مطابقة الكلمة، وأي موقع آخر مرفوض
+  eq((await send({ cmd: 'start', items: [{ q: 'lamp', url: 'https://aliexpress.evil.example/wholesale?SearchText=lamp' }, { q: 'x', url: 'https://www.tiktok.com.evil.example/search?q=x' }, { q: 'x', url: 'https://www.tiktok.com/@a/video/1?q=x' }] })).ok, false, 'look-alike AliExpress / TikTok hosts and non-search pages are refused');
+  eq((await send({ cmd: 'start', items: [{ q: 'lamp', url: 'https://www.aliexpress.com/wholesale?SearchText=other' }, { q: 'a', url: 'https://www.tiktok.com/search?q=b' }] })).ok, false, 'AliExpress / TikTok query must equal the item');
 
   r = await send({ cmd: 'start', label: 'جمع: يزيل البقع +1', items: [{ q: 'يزيل البقع', niche: 'المنزل', url: url('يزيل البقع') }, { q: 'يحمي', niche: '', url: url('يحمي') }],
     settings: { speed: 'fast', maxAds: 99999, waitSeconds: 1, activeOnly: true }, limits: { maxAdsPerSearch: 300, allowFast: false } });
