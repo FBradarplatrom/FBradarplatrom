@@ -9,6 +9,23 @@ const SECRET = process.env.JWT_SECRET;
 if (!SECRET || SECRET.length < 24) { console.error('JWT_SECRET (24+ chars) is required'); process.exit(1); }
 const ADMIN = (process.env.ADMIN_EMAIL || '').toLowerCase(), DAY = 864e5, now = () => Date.now();
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
+const zlib = require('zlib');
+// الأداء: ضغط gzip لكل رد نصي (الصفحة، السكربتات، JSON). دفعة 5000 إعلان: 4.5 ميغا → نحو 0.4 ميغا.
+function gzip(q, s, n) {
+  if (q.method === 'HEAD' || !/\bgzip\b/.test(q.headers['accept-encoding'] || '')) return n();
+  const write = s.write.bind(s), end = s.end.bind(s); let gz = null, decided = false;
+  const decide = () => {
+    if (decided) return; decided = true;
+    const ct = String(s.getHeader('content-type') || ''), len = +s.getHeader('content-length') || 0;
+    if (s.statusCode < 200 || s.statusCode === 204 || s.statusCode === 304 || s.getHeader('content-encoding') || !/json|text|javascript|svg|xml/.test(ct) || (len && len < 1024)) return;
+    gz = zlib.createGzip({ level: 6 }); s.setHeader('Content-Encoding', 'gzip'); s.removeHeader('Content-Length'); s.setHeader('Vary', 'Accept-Encoding');
+    gz.on('data', c => write(c)); gz.on('end', () => end());
+  };
+  const buf = (c, e) => (typeof c === 'string' ? Buffer.from(c, typeof e === 'string' ? e : 'utf8') : c);
+  s.write = (c, e, cb) => { decide(); if (!gz) return write(c, e, cb); gz.write(buf(c, e)); if (typeof e === 'function') e(); else if (cb) cb(); return true; };
+  s.end = (c, e, cb) => { if (typeof c === 'function') { cb = c; c = null; } decide(); if (!gz) return end(c, e, cb); if (c) gz.write(buf(c, e)); gz.end(); if (typeof e === 'function') s.once('finish', e); else if (cb) s.once('finish', cb); return s; };
+  n();
+}
 
 const DBF = process.env.DB_FILE || 'data.db';
 let db;
@@ -26,7 +43,12 @@ create table if not exists runs(id integer primary key, user_id integer, source 
   summary text, rows text, created_at integer);
 create index if not exists runs_u on runs(user_id, created_at);
 create table if not exists resets(h text primary key, user_id integer, exp integer);
-create table if not exists saved(user_id integer, k text, snap text, created_at integer, primary key(user_id, k));`);
+create table if not exists saved(user_id integer, k text, snap text, created_at integer, primary key(user_id, k));
+create table if not exists lib_rows(run_id integer, ad_id text, row text, primary key(run_id, ad_id));`);
+// الأداء: إعلانات «جمع الإعلانات» تُخزَّن صفاً لكل إعلان (lib_rows) بدل إعادة كتابة الدفعة كلها مع كل 60 إعلاناً.
+// runs.rows = '@lib' يعني أن صفوف الدفعة في lib_rows. الملفات المرفوعة والأرشيف القديم يبقيان JSON كما هما.
+const LIB = '@lib';
+const rowsJson = r => r.rows === LIB ? '[' + db.prepare('select row from lib_rows where run_id=? order by rowid').all(r.id).map(x => x.row).join(',') + ']' : (r.rows || '[]');
 
 const cols = t => db.prepare(`pragma table_info(${t})`).all().map(c => c.name);
 [['users', 'name text'], ['users', 'username text'], ['users', 'api_enc text'], ['runs', 'counts text'], ['runs', 'fp text']]
@@ -37,6 +59,7 @@ const enc = t => { const iv = crypto.randomBytes(12), c = crypto.createCipheriv(
 const dec = x => { try { const b = Buffer.from(x, 'base64'), d = crypto.createDecipheriv('aes-256-gcm', EK, b.subarray(0, 12)); d.setAuthTag(b.subarray(12, 28)); return Buffer.concat([d.update(b.subarray(28)), d.final()]).toString('utf8'); } catch (e) { return null; } };
 const app = express();
 app.disable('x-powered-by'); app.set('trust proxy', 1);
+app.use(gzip);
 app.use(express.json({ limit: '50mb' }), cookie());
 app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });   // البيانات حيّة: لا تُخزَّن في المتصفح (تظهر فور وصولها)
 
@@ -121,14 +144,16 @@ app.get('/api/runs', auth, active, wrap((q, s) => {
 }));
 app.get('/api/runs/:id', auth, active, wrap((q, s) => {
   const r = db.prepare('select id,source,label,rows,created_at from runs where id=? and user_id=?').get(q.params.id, q.u.id);
-  r ? s.json({ ...r, rows: JSON.parse(r.rows) }) : s.sendStatus(404);
+  if (!r) return s.sendStatus(404);
+  // بلا JSON.parse ثم JSON.stringify لملايين الأحرف: النص المخزَّن يُرسل كما هو
+  s.type('application/json').send('{"id":' + r.id + ',"source":' + JSON.stringify(r.source) + ',"label":' + JSON.stringify(r.label) + ',"created_at":' + r.created_at + ',"rows":' + rowsJson(r) + '}');
 }));
-app.delete('/api/runs/:id', auth, active, wrap((q, s) => { db.prepare('delete from runs where id=? and user_id=?').run(q.params.id, q.u.id); s.json({ ok: 1 }); }));
+app.delete('/api/runs/:id', auth, active, wrap((q, s) => { if (db.prepare('delete from runs where id=? and user_id=?').run(q.params.id, q.u.id).changes) db.prepare('delete from lib_rows where run_id=?').run(q.params.id); s.json({ ok: 1 }); }));
 app.post('/api/runs', auth, active, wrap((q, s) => {
   const rows = arr(q.body.rows, 'rows'), fp = fpOf(rows);
   let ex = db.prepare('select id,created_at from runs where user_id=? and fp=? limit 1').get(q.u.id, fp);
   if (!ex) for (const r of db.prepare('select id,rows,created_at from runs where user_id=? and fp is null and ads=?').all(q.u.id, rows.length)) {   // أرشيف قديم بلا بصمة: تُحسب وتُحفظ مرة واحدة
-    let f; try { f = fpOf(JSON.parse(r.rows)); } catch (e) { continue; }
+    if (r.rows === LIB) continue; let f; try { f = fpOf(JSON.parse(r.rows)); } catch (e) { continue; }
     db.prepare('update runs set fp=? where id=?').run(f, r.id); if (f === fp) { ex = r; break; } }
   if (ex) return s.json({ id: ex.id, dup: 1, created_at: ex.created_at });
   s.json({ id: addRun(q.u, 'upload', q.body.label, rows) });
@@ -194,6 +219,7 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
 app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
   ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
+  db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
   db.prepare('delete from users where id=?').run(id); s.json({ ok: 1 });
 }));
 
