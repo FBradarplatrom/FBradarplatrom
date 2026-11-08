@@ -1,0 +1,12 @@
+# التبعيات تُثبَّت على الخادم (cPanel ← Setup Node.js App ← Run NPM Install)
+node_modules/
+# البيانات والأسرار لا تُرفع أبداً
+data.db
+data.db-*
+*.db
+images/
+.env
+# سجلات وملفات مؤقتة
+stderr.log
+*.log
+tmp/
