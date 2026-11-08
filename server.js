@@ -148,16 +148,6 @@ app.delete('/api/saved', auth, active, wrap((q, s) => { db.prepare('delete from 
 // ---------- واجهة الإضافات ----------
 // إضافة خارجية قديمة (إرسال دفعات جاهزة): POST {label, rows:[ads...]}
 app.post('/api/ext/adlib', auth, active, wrap((q, s) => s.json({ id: addRun(q.u, 'adlib', q.body.label, arr(q.body.rows, 'rows')) })));
-// الإضافة 2 تقرأ البذور: المنتجات المحفوظة أولاً ثم الجواهر والرابحة من آخر 3 تحليلات
-app.get('/api/ext/seeds', auth, active, wrap((q, s) => {
-  const out = new Map(), add = p => p.name && !out.has(p.name) && out.set(p.name, { name: p.name, keyword: p.kw || p.name, score: p.score || 0 });
-  db.prepare('select snap from saved where user_id=?').all(q.u.id).forEach(r => add(JSON.parse(r.snap)));
-  db.prepare("select summary from runs where user_id=? and source!='spy' and summary is not null order by created_at desc limit 3").all(q.u.id)
-    .forEach(r => JSON.parse(r.summary).filter(p => p.tier === 'gem' || p.tier === 'fire').forEach(add));
-  s.json([...out.values()].slice(0, Math.min(+q.query.limit || 30, 100)));
-}));
-// الإضافة 2: POST {tool, items:[{seed,name,eng,ads,country,url}]}
-app.post('/api/ext/spy', auth, active, wrap((q, s) => s.json({ id: addRun(q.u, 'spy', q.body.tool, arr(q.body.items, 'items')) })));
 
 // ---------- الإدارة والاشتراكات ----------
 app.get('/api/admin/users', auth, admin, wrap((q, s) => s.json(db.prepare('select id,email,name,username,role,plan,expires_at,created_at from users order by created_at desc').all())));
@@ -203,7 +193,7 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
 }));
 app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
-  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
+  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
   db.prepare('delete from users where id=?').run(id); s.json({ ok: 1 });
 }));
 
@@ -261,6 +251,7 @@ app.post('/api/img/keep', auth, active, async (q, s) => {   // يحفظ نسخة
 
 // ---------- جمع الإعلانات (الإضافة ← الواردة + قاموس كلمات البحث) ----------
 require('./adlib')(app, { db, auth, active, admin, wrap, now, DAY, addRun, fpOf });
+require('./adlib/gap.js')(app, { db, auth, active, wrap, now });   // ثغرات السوق الجزائري
 
 // ---------- الصفحات ----------
 const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
@@ -269,11 +260,12 @@ const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), '
 const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.join(__dirname, 'views', 'login.html');
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.type('html').send(LANDING));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/spy', '/settings', '/subscribers'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/settings', '/subscribers'],
   (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
+app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 // منطق الأسواق وفحص المنتج مشترك بين الخادم والمتصفح (ملف واحد لكل منطق)
-app.get(['/radar-lib/markets.js', '/radar-lib/productcheck.js'], (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'adlib', 'lib', path.basename(q.path))));
+app.get(['/radar-lib/markets.js', '/radar-lib/productcheck.js', '/radar-lib/gapmatch.js'], (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'adlib', 'lib', path.basename(q.path))));
 app.use((e, q, s, n) => { if (!e.status) console.error(e); s.status(e.status || 500).json({ error: e.status ? e.message : 'server' }); });
 app.listen(+process.env.PORT || 3000, () => console.log('Radar platform on :' + (process.env.PORT || 3000)));
