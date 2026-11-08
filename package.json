@@ -1,0 +1,24 @@
+{
+  "name": "radar-platform",
+  "version": "6.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node adlib/test.js && node adlib/bridge-test.js",
+    "build:dict": "node adlib/tools/build-dict.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.14"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.3.0"
+  }
+}
