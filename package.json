@@ -1,6 +1,6 @@
 {
   "name": "radar-platform",
-  "version": "8.0.0",
+  "version": "9.0.0",
   "private": true,
   "engines": {
     "node": ">=20.6"
@@ -11,7 +11,7 @@
     "test": "node adlib/test.js && node adlib/bridge-test.js && node adlib/markets-test.js && node adlib/intl-test.js && node adlib/gap-test.js && cd engine && node test.js",
     "build:dict": "node adlib/tools/build-dict.js",
     "build:app": "node engine/build.js",
-    "test:browser": "node adlib/gap-e2e-test.js"
+    "test:browser": "node adlib/gap-e2e-test.js && node adlib/ui-intl-e2e-test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
