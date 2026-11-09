@@ -3,7 +3,8 @@
 // تُخزَّن في قاعدة البيانات، والأسرار مشفّرة (AES-GCM بمفتاح مشتق من JWT_SECRET). إن لم تُضبط يُقرأ متغير البيئة المقابل.
 const ENV = { openai_key: 'OPENAI_API_KEY', openai_model: 'OPENAI_MODEL', openai_base: 'OPENAI_BASE_URL', satim_user: 'SATIM_USER', satim_pass: 'SATIM_PASSWORD', satim_terminal: 'SATIM_TERMINAL_ID', satim_mode: 'SATIM_MODE',
   stripe_secret: 'STRIPE_SECRET_KEY', stripe_webhook: 'STRIPE_WEBHOOK_SECRET', paypal_client: 'PAYPAL_CLIENT_ID', paypal_secret: 'PAYPAL_SECRET', paypal_mode: 'PAYPAL_MODE',
-  telegram_token: 'TELEGRAM_BOT_TOKEN', telegram_bot: 'TELEGRAM_BOT_USERNAME', baridi_info: 'BARIDI_INFO', app_url: 'APP_URL' };
+  telegram_token: 'TELEGRAM_BOT_TOKEN', telegram_bot: 'TELEGRAM_BOT_USERNAME', baridi_info: 'BARIDI_INFO', app_url: 'APP_URL',
+  biz_name: 'BIZ_NAME', biz_country: 'BIZ_COUNTRY', biz_address: 'BIZ_ADDRESS', support_email: 'SUPPORT_EMAIL', support_whatsapp: 'SUPPORT_WHATSAPP', refund_days: 'REFUND_DAYS', legal_updated: 'LEGAL_UPDATED' };
 const SECRET = new Set(['openai_key', 'satim_pass', 'stripe_secret', 'stripe_webhook', 'paypal_secret', 'telegram_token']);
 let db = null, enc = null, dec = null, cache = null;
 function init(d, e, x) {

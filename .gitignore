@@ -13,3 +13,5 @@ stderr.log
 tmp/
 # حزم التوزيع
 radar-platform-*.zip
+backups/
+store-build/

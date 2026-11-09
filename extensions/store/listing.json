@@ -1,0 +1,37 @@
+{
+  "_note": "نصوص صفحة الإضافة في متجر Chrome (Chrome Web Store). تُنسخ إلى لوحة مطوّري Chrome. {site} = دومين المنصة.",
+  "name": {
+    "en": "Winning Product Radar – Ad Collector",
+    "ar": "رادار المنتجات الرابحة – جمع الإعلانات",
+    "fr": "Radar des produits gagnants – Collecteur"
+  },
+  "short": {
+    "en": "Collect public ads, trending TikTok videos and supplier listings into your Winning Product Radar account.",
+    "ar": "اجمع الإعلانات العامة وفيديوهات TikTok الرائجة وعروض المورّدين إلى حسابك في رادار المنتجات الرابحة.",
+    "fr": "Collectez publicités publiques, vidéos TikTok tendance et offres fournisseurs dans votre compte Radar."
+  },
+  "description": {
+    "en": "Companion extension for Winning Product Radar ({site}), a product research platform for e-commerce sellers.\n\nWhat it does\n• Runs the searches you start from your Radar account in the Meta Ad Library, TikTok search and supplier marketplaces (AliExpress, Alibaba, 1688, Taobao, Pinduoduo).\n• Reads the public results shown on those pages and sends them to your own Radar account, where they are ranked into product opportunities.\n• Works at a moderate, human-like pace with daily limits.\n\nWhat it does not do\n• It never posts, likes, messages or changes anything on any site.\n• It does not read your private messages, friends or personal data.\n• It does not store passwords or API keys, and only talks to your Radar platform.\n\nRequires a Winning Product Radar account (free trial available). Privacy policy: https://{site}/privacy",
+    "ar": "إضافة مرافقة لمنصة رادار المنتجات الرابحة ({site})، منصة أبحاث منتجات لأصحاب المتاجر الإلكترونية.\n\nماذا تفعل\n• تنفّذ عمليات البحث التي تبدؤها من حسابك في المنصة: مكتبة إعلانات ميتا، وبحث TikTok، وأسواق المورّدين (AliExpress وAlibaba و1688 وTaobao وPinduoduo).\n• تقرأ النتائج العامة الظاهرة في تلك الصفحات وترسلها إلى حسابك أنت في المنصة، حيث تُرتَّب إلى فرص منتجات.\n• تعمل بسرعة معتدلة تشبه الإنسان وبحدود يومية.\n\nما لا تفعله\n• لا تنشر ولا تعجب ولا تراسل ولا تغيّر أي شيء في أي موقع.\n• لا تقرأ رسائلك الخاصة ولا أصدقاءك ولا بياناتك الشخصية.\n• لا تخزّن كلمات مرور ولا مفاتيح، ولا تتصل إلا بمنصتك.\n\nتتطلب حساباً في رادار المنتجات الرابحة (تجربة مجانية متاحة). سياسة الخصوصية: https://{site}/privacy",
+    "fr": "Extension compagnon de Radar des produits gagnants ({site}), plateforme de recherche de produits pour les e-commerçants.\n\nCe qu’elle fait\n• Lance les recherches que vous démarrez depuis votre compte Radar dans la Bibliothèque publicitaire Meta, la recherche TikTok et les places de marché fournisseurs (AliExpress, Alibaba, 1688, Taobao, Pinduoduo).\n• Lit les résultats publics affichés sur ces pages et les envoie à votre propre compte Radar, où ils sont classés en opportunités produits.\n• Fonctionne à un rythme modéré et humain, avec des limites quotidiennes.\n\nCe qu’elle ne fait pas\n• Elle ne publie, n’aime, n’envoie ni ne modifie rien sur aucun site.\n• Elle ne lit ni vos messages privés, ni vos amis, ni vos données personnelles.\n• Elle ne stocke ni mots de passe ni clés et ne communique qu’avec votre plateforme Radar.\n\nNécessite un compte Radar des produits gagnants (essai gratuit disponible). Confidentialité : https://{site}/privacy"
+  },
+  "category": "Tools (Productivity)",
+  "single_purpose": "Collect public search results (ads, TikTok videos, supplier listings) that the user requests from their Winning Product Radar account and send them to that account for product research.",
+  "permissions": {
+    "storage": "Keeps the collection queue, progress and the user’s send mode between pages.",
+    "unlimitedStorage": "A collection can hold thousands of public ads before they are delivered to the user’s account; this avoids losing them when the quota is reached.",
+    "alarms": "Resumes and paces the collection queue (waits between searches) without keeping the service worker alive.",
+    "scripting": "Injects the small bridge script into the user’s already-open platform tab after install/update, so the platform can talk to the extension without a page reload.",
+    "cookies": "Only checks whether a TikTok session cookie exists, to tell the user whether they are logged in to TikTok before a TikTok search. The cookie value is never stored or sent anywhere.",
+    "host_permissions": "facebook.com (Meta Ad Library pages), tiktok.com (search pages), aliexpress/alibaba/1688/taobao/tmall/yangkeduo (supplier search pages): read the public results the user asked for. The platform domain: deliver those results to the user’s own account."
+  },
+  "data_usage": {
+    "collects": ["Website content: public ads / videos / product listings shown on the search pages the user opens through the platform"],
+    "does_not_collect": ["Personally identifiable information", "Health", "Financial and payment information", "Authentication information", "Personal communications", "Location", "Web history", "User activity (clicks, keystrokes)"],
+    "certify": ["Not sold to third parties", "Not used or transferred for purposes unrelated to the single purpose", "Not used to determine creditworthiness or for lending"]
+  },
+  "remote_code": "No. All code is packaged in the extension; it only exchanges data (JSON) with the platform.",
+  "privacy_url": "https://{site}/privacy",
+  "homepage_url": "https://{site}/",
+  "support_url": "https://{site}/contact"
+}

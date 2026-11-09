@@ -231,12 +231,35 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
   if (u.role === 'admin' && role !== 'admin' && db.prepare("select count(*) c from users where role='admin'").get().c < 2) return s.status(400).json({ error: 'لا يمكن إزالة آخر مدير' });
   db.prepare('update users set email=?, role=? where id=?').run(em, role, id); act(q.u.id, 'admin_update', q, '#' + id + ' ' + em + ' ' + role); s.json({ ok: 1 });
 }));
-app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
-  const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
-  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log', 'lib_bstats', 'lib_bfilt'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
+// حذف حساب وكل بياناته (يُستعمل من المدير ومن المشترك نفسه). سجلات الدفع تبقى لأن القانون قد يفرض الاحتفاظ بها
+const USER_TABLES = ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log', 'lib_bstats', 'lib_bfilt', 'activity'];
+function deleteUser(id) {
+  USER_TABLES.forEach(t => { try { db.prepare(`delete from ${t} where user_id=?`).run(id); } catch (e) {} });
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
   ['delete from watch_ads where watch_id not in (select id from watch_pages)', 'delete from watch_scans where watch_id not in (select id from watch_pages)', 'delete from tt_items where run_id not in (select id from tt_runs)'].forEach(x => db.prepare(x).run());
-  db.prepare('delete from users where id=?').run(id); act(q.u.id, 'admin_delete', q, '#' + id); s.json({ ok: 1 });
+  db.prepare('delete from users where id=?').run(id);
+}
+app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
+  const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
+  deleteUser(id); act(q.u.id, 'admin_delete', q, '#' + id); s.json({ ok: 1 });
+}));
+// المشترك: تصدير بياناته (ملف JSON) وحذف حسابه نهائياً بكلمة المرور
+app.get('/api/me/export', auth, wrap((q, s) => {
+  const id = q.u.id, all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (e) { return []; } }, J = x => { try { return JSON.parse(x); } catch (e) { return x; } };
+  const out = { exported_at: new Date().toISOString(), account: { email: q.u.email, name: q.u.name || '', username: q.u.username || '', plan: q.u.plan, expires_at: q.u.expires_at ? new Date(q.u.expires_at).toISOString() : null, created_at: q.u.created_at ? new Date(q.u.created_at).toISOString() : null },
+    saved_products: all('select k, snap, created_at from saved where user_id=?', id).map(r => Object.assign({ key: r.k, saved_at: new Date(r.created_at).toISOString() }, J(r.snap))),
+    analyses: all('select id, source, label, ads, summary, created_at from runs where user_id=? order by created_at desc', id).map(r => ({ id: r.id, source: r.source, label: r.label, ads: r.ads, summary: J(r.summary), created_at: new Date(r.created_at).toISOString() })),
+    market_gaps: all('select name, snap, verdict, created_at from gap_products where user_id=?', id).map(r => ({ name: r.name, product: J(r.snap), verdict: r.verdict, created_at: r.created_at })),
+    watched_pages: all('select page_id, name, note, created_at, stats from watch_pages where user_id=?', id).map(r => Object.assign({}, r, { stats: J(r.stats) })),
+    settings: Object.fromEntries(all('select k, v from user_kv where user_id=?', id).map(r => [r.k, J(r.v)])),
+    payments: all('select plan_name, days, amount, currency, method, status, created_at, paid_at from payments where user_id=? order by created_at desc', id),
+    login_activity: all('select kind, at, ip, ua from activity where user_id=? order by at desc limit 200', id).map(r => Object.assign({}, r, { at: new Date(r.at).toISOString() })) };
+  s.set('Content-Disposition', 'attachment; filename="radar-my-data.json"').type('application/json').send(JSON.stringify(out, null, 2));
+}));
+app.delete('/api/me', auth, wrap((q, s) => {
+  if (!bcrypt.compareSync(String((q.body || {}).password || ''), q.u.hash)) return s.status(400).json({ error: 'كلمة المرور غير صحيحة' });
+  if (q.u.role === 'admin' && db.prepare("select count(*) n from users where role='admin'").get().n <= 1) return s.status(400).json({ error: 'أنت المدير الوحيد: عيّن مديراً آخر قبل حذف حسابك' });
+  deleteUser(q.u.id); s.clearCookie('t'); s.json({ ok: 1 });
 }));
 
 // ---------- نسيت كلمة المرور (بريد SMTP) ----------
@@ -305,6 +328,7 @@ require('./adlib/tools.js')(app, { db, auth, active, wrap, now, imgData });
 const BX = { db, auth, active, admin, wrap, now, act, DATA_DIR: path.dirname(path.resolve(DBF)) };
 Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport() }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
 require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
+require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يومية لقاعدة البيانات
 // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
 // ---------- الصفحات ----------
@@ -318,6 +342,11 @@ app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(LANDING));
 app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscribers'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
+// الصفحات القانونية: شروط الاستخدام، الخصوصية، الاسترداد، الاتصال (بثلاث لغات، ومعلومات النشاط من «الربط والتكامل»)
+const LEGAL_PAGE = path.join(__dirname, 'views', 'legal.html');
+app.get(['/terms', '/privacy', '/refund', '/contact'], (q, s) => s.set('Cache-Control', 'no-cache').sendFile(LEGAL_PAGE));
+app.get('/api/legal/info', (q, s) => { const C = require('./adlib/config.js');
+  s.json({ name: C.get('biz_name'), country: C.get('biz_country'), address: C.get('biz_address'), email: C.get('support_email') || process.env.ADMIN_EMAIL || '', whatsapp: C.get('support_whatsapp'), refund_days: +C.get('refund_days') || 7, updated: C.get('legal_updated') || '' }); });
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));
 // الأداء: روابط الملفات تحمل رقم نسختها (?v=…) فيحفظها المتصفح سنة كاملة ولا يسأل الخادم عنها في كل زيارة.
 // يتغير الرقم تلقائياً متى تغيّر أي ملف (بعد إعادة تشغيل الخادم عند النشر).

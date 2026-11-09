@@ -82,7 +82,7 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
 
   /* ================= لوحة المدير ================= */
   let ATAB = 'users';
-  const TABS = [['users', '👥 المشتركون'], ['stats', '📊 الإحصائيات'], ['pay', '💳 المدفوعات'], ['plans', '📦 الباقات'], ['err', '⚠️ الأخطاء']];
+  const TABS = [['users', '👥 المشتركون'], ['stats', '📊 الإحصائيات'], ['pay', '💳 المدفوعات'], ['plans', '📦 الباقات'], ['err', '⚠️ الأخطاء'], ['backup', '💾 النسخ الاحتياطي']];
   function adminTabs() {
     const v = $('#v-admin'); if (!v) return;
     let bar = $('#adm-tabs'); if (!bar) { bar = document.createElement('div'); bar.id = 'adm-tabs'; bar.className = 'adm-t'; v.querySelector('.ph').after(bar); const box = document.createElement('div'); box.id = 'x-adm'; v.appendChild(box); }
@@ -119,6 +119,13 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
 <div class="tbw"><table class="tb" id="pl-t"><tr><th>الاسم</th><th>الأيام</th><th>السعر (دج)</th><th>السعر ($)</th><th>مجانية للتجربة</th>${r.keys.map(k => `<th>${e(r.labels[k])}</th>`).join('')}<th>المميزات المشمولة</th><th>مفعّلة</th><th>ملاحظة</th></tr>${r.plans.map(row).join('')}${row({})}</table></div>
 <p style="margin:10px 0 0"><button class="btn" data-adm="saveplans">حفظ الباقات</button></p></div>`;
     }
+    if (ATAB === 'backup') {
+      const r = await X.api('GET', '/admin/backups'), kb = n => num(Math.round(n / 1024)) + ' KB';
+      el.innerHTML = `<div class="card"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">💾 النسخ الاحتياطي لقاعدة البيانات</h2><button class="btn sm" data-adm="bknow">إنشاء نسخة الآن</button></div>
+<p class="sub">نسخة تلقائية كل يوم، مضغوطة، وتُحفظ آخر ${num(r.keep)} نسخة في <code dir="ltr">${e(r.dir)}</code>. حمّل نسخة إلى حاسوبك أو خدمة سحابية من وقت لآخر: إن تعطّل الخادم نفسه تضيع النسخ التي عليه.</p>
+<div class="tbw"><table class="tb"><tr><th>النسخة</th><th>التاريخ</th><th>الحجم</th><th></th></tr>${r.list.map(f => `<tr><td dir="ltr">${e(f.name)}</td><td>${X.fd(f.at)} ${new Date(f.at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })}</td><td>${kb(f.size)}</td><td><a class="btn ghost sm" href="/api/admin/backups/${encodeURIComponent(f.name)}">⬇ تحميل</a></td></tr>`).join('') || '<tr><td colspan="4" class="muted">لا نسخ بعد. أول نسخة تُنشأ تلقائياً خلال دقيقة من تشغيل المنصة.</td></tr>'}</table></div>
+<details class="fx" style="margin-top:12px"><summary>كيف أسترجع نسخة؟</summary><ol class="sub" style="line-height:2"><li>أوقف التطبيق من لوحة الاستضافة.</li><li>فك ضغط النسخة (ملف <code>.gz</code>) فتحصل على ملف <code>.db</code>.</li><li>احتفظ بالملف الحالي <code>data.db</code> باسم آخر احتياطاً، ثم ضع النسخة مكانه باسم <code>data.db</code>.</li><li>شغّل التطبيق.</li></ol><p class="sub">الصور المحفوظة ووصولات الدفع في مجلدي <code>images</code> و<code>proofs</code>: انسخهما أيضاً من وقت لآخر.</p></details></div>`;
+    }
     if (ATAB === 'err') {
       const s = await X.api('GET', '/admin/stats');
       el.innerHTML = `<div class="card"><div style="display:flex;gap:10px;align-items:center"><h2 style="margin:0;flex:1">⚠️ سجل الأخطاء</h2>${s.errors.list.length ? '<button class="btn danger sm" data-adm="clearerr">مسح السجل</button>' : ''}</div>
@@ -132,6 +139,7 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
     if (a === 'approve') { await X.api('POST', '/admin/payments/' + b.dataset.id + '/approve', {}); X.toast('قُبل الدفع وفُعّل الاشتراك'); return drawAdmin(); }
     if (a === 'reject') { const note = prompt('سبب الرفض (يظهر للمشترك):') || ''; await X.api('POST', '/admin/payments/' + b.dataset.id + '/reject', { note }); return drawAdmin(); }
     if (a === 'clearerr') { await X.api('DELETE', '/admin/errors'); return drawAdmin(); }
+    if (a === 'bknow') { await X.api('POST', '/admin/backups', {}); X.toast('أُنشئت نسخة احتياطية'); return drawAdmin(); }
     if (a === 'fdel') { b.closest('tr').remove(); return; }
     if (a === 'savefeats') {
       const list = [...X.root.querySelectorAll('#ft-t [data-fk]')].map(tr => { const g = n => tr.querySelector(`[data-g="${n}"]`); return { k: tr.dataset.fk || undefined, ar: g('ar').value.trim(), en: g('en').value.trim(), fr: g('fr').value.trim(), shown: g('shown').checked }; }).filter(f => f.ar || f.en || f.fr);
@@ -182,6 +190,10 @@ ${field('paypal_client', 'Client ID', '')}${field('paypal_secret', 'Secret', '',
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
 <div class="card"><h2>✈️ بوت تيليغرام (للتنبيهات)</h2>${S(C.telegram_token && C.telegram_token.set, C.telegram_token && C.telegram_token.set ? 'مفعّل' : 'غير مفعّل')}<p class="sub">أنشئ بوتاً من <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> وضع رمزه واسمه هنا، فيستطيع كل مشترك ربط حسابه وتلقي التنبيهات.</p>
 ${field('telegram_token', 'رمز البوت (Token)', '123456:ABC…', 'secret')}${field('telegram_bot', 'اسم البوت', 'RadarProductsBot')}
+<p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
+<div class="card"><h2>🏢 معلومات النشاط والدعم</h2><p class="sub">تظهر في الصفحات القانونية (الشروط، الخصوصية، الاسترداد، اتصل بنا) وفي الدعم. <a href="/terms" target="_blank">معاينة</a></p>
+${field('biz_name', 'اسم النشاط', 'Winning Product Radar')}${field('biz_country', 'البلد (القانون المطبّق)', 'الجزائر')}${field('biz_address', 'العنوان (اختياري)', '')}
+${field('support_email', 'بريد الدعم', 'support@…')}${field('support_whatsapp', 'واتساب الدعم (اختياري)', '+213…')}${field('refund_days', 'مدة طلب الاسترداد (أيام)', '7')}${field('legal_updated', 'تاريخ آخر تحديث للشروط', '2026-11-10')}
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
 <div class="card"><h2>🌐 المنصة والبريد</h2>${field('app_url', 'عنوان المنصة الكامل', 'https://winningproductradar.com')}<p class="sub">بريد الإرسال (SMTP): ${cfg && cfg.smtp ? '✅ مضبوط في إعدادات الخادم' : '⚠️ غير مضبوط (SMTP_HOST في إعدادات الخادم)'}</p><p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
 </div>` : ''}`;

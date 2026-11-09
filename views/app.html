@@ -144,6 +144,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 }
 @media(max-width:480px){.kps{grid-template-columns:1fr 1fr;gap:10px}.kpi b{font-size:23px}.pc-body{padding:14px}.grid{gap:14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+.onbar{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin:12px 0}.onbar i{display:block;height:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed)}.onl{display:grid;gap:8px}.onr{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.onr.ok{opacity:.6}.onr.ok b{text-decoration:line-through}.onn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--soft);color:var(--brand);flex:none}.onr.ok .onn{background:#059669;color:#fff}
 </style></head><body><div id="wpr-app" dir="rtl" lang="ar">
 <header class="top"><button id="burger" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="brand"><i>📡</i>رادار المنتجات</div></header>
 <div class="scrim" id="scrim"></div>
@@ -731,7 +732,18 @@ async function rDash(){
  const inbox=rs.filter(r=>r.source==='adlib'),anal=rs.filter(r=>r.summary),L=anal[0],prev=anal[1],pend=inbox.filter(r=>!r.summary).length;
  const gf=L?(L.counts?L.counts.gem+L.counts.fire:L.summary.filter(p=>p.tier==='gem'||p.tier==='fire').length):0;
  let h=`<div class="kps">${kpi('inbox',inbox.reduce((s,r)=>s+r.ads+(r.filtered||0),0),'إعلان وارد من الإضافة')}${kpi('clock',pend,'دفعات بانتظار التحليل')}${kpi('chart',anal.length,'تحليل مكتمل')}${kpi('award',gf,'💎🔥 في آخر تحليل')}${kpi('star',sv.length,'منتج محفوظ')}</div>`;
- if(!rs.length){h+=`<div class="card"><h2>ابدأ في ثلاث خطوات</h2><div class="steps"><div><div class="n">1</div><b>ثبّت الإضافة</b><p class="sub">من «جمع الإعلانات ← الإضافة» نزّلها وثبّتها في Chrome مرة واحدة.</p></div><div><div class="n">2</div><b>اجمع الإعلانات</b><p class="sub">ابدأ بحثاً سريعاً أو جماعياً بالكلمات الذهبية من المنصة نفسها، وتصل إلى «الإعلانات الواردة».</p></div><div><div class="n">3</div><b>حلّل واختر</b><p class="sub">تُصنَّف المنتجات، فاحفظ ما يعجبك وابحث عن مورّده.</p></div></div><p style="margin-top:14px"><button class="btn" data-v="collect">افتح جمع الإعلانات</button> <button class="btn ghost" data-v="analyze">أو ارفع ملفاً الآن</button></p></div>`;$('#d-body').innerHTML=h;return}
+ /* دليل البداية: خطوات أول استعمال تُشطب تلقائياً، ويختفي عند اكتمالها أو إخفائه */
+ let ntf=null;try{ntf=await api('GET','/notify')}catch(x){}
+ const br=W.WPRLIB&&W.WPRLIB.bridge,ON=[
+  ['ext','🧩','ثبّت إضافة Chrome','تجمع لك الإعلانات من حسابك بأمان.',!!(br&&br.ok&&br.ok()),'collect','التثبيت'],
+  ['col','📡','اجمع أول دفعة إعلانات','اختر سوقك ومجالك وكلماتك، واضغط «ابدأ الجمع».',inbox.length>0,'collect','ابدأ الجمع'],
+  ['an','📊','حلّل الدفعة','من «الإعلانات الواردة» اضغط «تحليل» لترى المنتجات مرتّبة.',anal.length>0,'inbox','الواردة'],
+  ['sv','⭐','احفظ منتجاً يعجبك','ثم ابحث عن مورّده واحسب ربحه من بطاقته.',sv.length>0,'saved','المحفوظات'],
+  ['nt','🔔','فعّل التنبيهات','بالبريد أو تيليغرام عند ظهور فرصة جديدة.',!!(ntf&&ntf.prefs&&(ntf.prefs.email||ntf.prefs.tg)),'integrations','الربط']],
+  done=ON.filter(x=>x[4]).length;let hide=false;try{hide=localStorage.getItem('wpr_onb_hide')==='1'}catch(x){}
+ if(done<ON.length&&!hide)h+=`<div class="card onb" style="margin-bottom:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">🚀 ابدأ من هنا <small class="muted" style="font-weight:500">${done} من ${ON.length}</small></h2><button class="btn ghost sm" data-a="onbhide">إخفاء</button></div>
+<div class="onbar"><i style="width:${Math.round(done/ON.length*100)}%"></i></div>
+<div class="onl">${ON.map((x,k)=>`<div class="onr${x[4]?' ok':''}"><span class="onn">${x[4]?'✓':k+1}</span><div class="grow"><b>${x[1]} ${x[2]}</b><div class="muted">${x[3]}</div></div>${x[4]?'':`<button class="btn sm${ON.findIndex(y=>!y[4])===k?'':' ghost'}" data-v="${x[5]}">${x[6]}</button>`}</div>`).join('')}</div></div>`;
  const cn=L&&L.counts,keys=['trial','prom','gem','fire','old','excl'].concat(cn&&cn.maybe?['maybe']:[]).concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
  const days=[...Array(14)].map((_,i)=>{const d=new Date(Date.now()-(13-i)*864e5);return{k:d.toLocaleDateString('en-CA'),n:0,l:d.getDate()}});
  rs.forEach(r=>{const k=new Date(r.created_at).toLocaleDateString('en-CA'),x=days.find(d=>d.k===k);if(x)x.n+=r.ads});const mx=Math.max(1,...days.map(d=>d.n));
@@ -801,6 +813,8 @@ function drawSet(){try{
 <form class="card" data-form="profile"><h2>الملف الشخصي</h2><div class="form"><label class="fl">الاسم<input name="name" value="${e(ME.name)}" autocomplete="name"></label><label class="fl">اسم المستخدم<input name="username" dir="ltr" value="${e(ME.username)}" placeholder="مثال: ahmed_dz" autocomplete="username"></label><label class="fl">البريد الإلكتروني<input name="email" type="email" dir="ltr" value="${e(ME.email)}" required autocomplete="email"></label><label class="fl">كلمة المرور الحالية <small>(عند تغيير البريد فقط)</small><input name="password" type="password" autocomplete="current-password"></label></div><button class="btn">حفظ التغييرات</button></form>
 <form class="card" data-form="password"><h2>تغيير كلمة المرور</h2><div class="form"><label class="fl">كلمة المرور الحالية<input name="old" type="password" required autocomplete="current-password"></label><label class="fl">الجديدة (8 أحرف فأكثر)<input name="password" type="password" minlength="8" required autocomplete="new-password"></label><label class="fl">تأكيد الجديدة<input name="again" type="password" minlength="8" required autocomplete="new-password"></label></div><button class="btn">تغيير كلمة المرور</button></form></div>
 <div class="card" id="x-billing" style="margin-top:16px"><h2>💳 الاشتراك</h2><p class="sub">جارٍ التحميل…</p></div>
+<div class="card" style="margin-top:16px"><h2>🗂️ بياناتي وحسابي</h2><p class="sub">حمّل نسخة من كل بياناتك (المنتجات المحفوظة، التحليلات، الإعدادات، المدفوعات) في ملف واحد، أو احذف حسابك نهائياً.</p>
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0"><a class="btn ghost" href="/api/me/export" download>⬇ تصدير بياناتي</a><button class="btn danger" data-a="delme">حذف حسابي نهائياً</button></p></div>
 <div class="card" style="margin-top:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">🔒 الأمان: آخر عمليات الدخول</h2><button class="btn danger sm" data-a="logoutall">تسجيل الخروج من كل الأجهزة</button></div>
 <p class="sub">إن رأيت دخولاً لا تعرفه: غيّر كلمة المرور فوراً (يُسجَّل خروج كل الأجهزة الأخرى تلقائياً).</p>
 <div class="tbw"><table class="tb"><tr><th>العملية</th><th>التاريخ</th><th>الجهاز</th><th>العنوان</th></tr>${ACTV.map(a=>`<tr><td>${AK[a.kind]||e(a.kind)}</td><td>${fd(a.at)} ${ft(a.at)}</td><td>${e(uaShort(a.ua))}</td><td dir="ltr">${e(a.ip)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">—</td></tr>'}</table></div></div>`;W.WPRACC&&W.WPRACC.billing()}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
@@ -837,6 +851,8 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='selall'){const bx=R.querySelectorAll('[data-sel]'),all=[...bx].every(x=>x.checked);bx.forEach(x=>x.checked=!all);return}
  if(a==='analyzeSel')return analyzeIds([...R.querySelectorAll('[data-sel]:checked')].map(x=>x.dataset.sel));
  if(a==='ianalyze')return analyzeIds([id]);
+ if(a==='delme'){const pw=prompt('حذف الحساب نهائياً: تُحذف كل بياناتك ولا يمكن التراجع.\nاكتب كلمة المرور للتأكيد:');if(!pw)return;await api('DELETE','/me',{password:pw});location.href='/?deleted=1';return}
+ if(a==='onbhide'){try{localStorage.setItem('wpr_onb_hide','1')}catch(x){}return rDash()}
  if(a==='logoutall'){if(!two(b))return;await api('POST','/logout-all',{});location.href='/login';return}
  if(a==='gcopy'){await navigator.clipboard.writeText(W.__sheetScript||'');return toast('نُسخ الكود. الصقه في Apps Script')}
  if(a==='gsave'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});GSV={url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()};return toast('حُفظ الربط مع Google Sheets')}

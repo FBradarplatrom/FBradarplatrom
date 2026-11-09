@@ -95,6 +95,7 @@ input[dir=ltr]{text-align:left}
 </style>
 </head>
 <style>.lsw{display:flex;justify-content:flex-end;margin-bottom:10px}.lsw label{display:inline-flex;align-items:center;gap:6px;font-size:13px;opacity:.85}.lsw select{border:1px solid rgba(127,127,127,.35);border-radius:10px;padding:5px 10px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}</style>
+<style>.consent{font-size:12.5px;opacity:.75;margin:4px 0 10px}.consent a,.legal a{color:inherit}.legal{text-align:center;font-size:12.5px;opacity:.7;margin-top:6px}</style>
 <body>
 <div class="auth">
  <aside class="bp" aria-hidden="false">
@@ -151,6 +152,7 @@ input[dir=ltr]{text-align:left}
      <div class="meter"><i id="r-bar"></i></div><div class="mt" id="r-mt"></div></label>
     <label class="fl"><span>تأكيد كلمة المرور</span>
      <div class="pw"><input id="r-pw2" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••"><button type="button" class="eye" data-eye="r-pw2" aria-label="إظهار كلمة المرور"></button></div></label>
+    <p class="consent">بإنشاء حسابك توافق على <a href="/terms" target="_blank">شروط الاستخدام</a> و<a href="/privacy" target="_blank">سياسة الخصوصية</a>.</p>
     <button class="btn" type="submit">إنشاء الحساب</button>
     <div class="foot"><span>لديك حساب؟</span><button type="button" class="lnk" data-go="login">سجّل الدخول</button></div>
    </form>
@@ -175,6 +177,7 @@ input[dir=ltr]{text-align:left}
    <div id="done" class="done" hidden></div>
   </div>
   <p class="home"><a href="/">← الصفحة الرئيسية</a></p>
+  <p class="legal"><a href="/terms">شروط الاستخدام</a> · <a href="/privacy">الخصوصية</a> · <a href="/refund">الاسترداد</a> · <a href="/contact">اتصل بنا</a></p>
  </div></main>
 </div>
 <noscript><p style="text-align:center;padding:20px">يتطلب تسجيل الدخول تفعيل JavaScript.</p></noscript>
@@ -220,6 +223,8 @@ A('محاولات كثيرة، أعد المحاولة بعد 15 دقيقة','To
 A('جهاز منزلي ذكي','Smart home gadget','Gadget maison connecté');A('يتصدّر هذا الأسبوع','Leading this week','En tête cette semaine');A('إكسسوار سيارة','Car accessory','Accessoire auto');A('صاعد','Rising','En hausse');
 A('منتج عناية','Self-care product','Produit de soin');A('طلب ثابت','Steady demand','Demande stable');A('💎 جوهرة','💎 Gem','💎 Pépite');A('🌱 واعد','🌱 Promising','🌱 Prometteur');A('🔥 رابح','🔥 Winner','🔥 Gagnant');
 A('🏭 مورّد بسعر أقل وُجد','🏭 Cheaper supplier found','🏭 Fournisseur moins cher trouvé');A('✨ تجربة مجانية','✨ Free trial','✨ Essai gratuit');A('🔒 دفع آمن','🔒 Secure payment','🔒 Paiement sécurisé');A('↩️ إلغاء في أي وقت','↩️ Cancel anytime','↩️ Résiliable à tout moment');
+A('بإنشاء حسابك توافق على','By creating an account you agree to the','En créant un compte, vous acceptez les');A('شروط الاستخدام','Terms of Service','Conditions d’utilisation');A('سياسة الخصوصية','Privacy Policy','la Politique de confidentialité');A('و','and','et');
+A('الخصوصية','Privacy','Confidentialité');A('الاسترداد','Refunds','Remboursement');A('اتصل بنا','Contact','Contact');
 A('يتطلب تسجيل الدخول تفعيل JavaScript.','JavaScript is required to log in.','JavaScript est requis pour se connecter.');
 var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
 var L=new URLSearchParams(location.search).get('lang')||g('wpr_lang')||(navigator.language||'ar').slice(0,2);if(L!=='en'&&L!=='fr')L='ar';

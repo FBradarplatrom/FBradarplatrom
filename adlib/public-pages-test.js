@@ -70,6 +70,13 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.waitForSelector('.nv[data-v="gap"]', { state: 'attached' });
     ok(await pg.$eval('.nv[data-v="tiktok"]', b => b.hidden) && !(await pg.$eval('.nv[data-v="gap"]', b => b.hidden)), 'قسم TikTok مخفي في القائمة لأنه خارج الباقة');
     if (process.env.SHOT) { await pg.goto(BASE + '/login?lang=ar'); await pg.context().clearCookies(); await pg.goto(BASE + '/login?lang=ar'); await pg.waitForSelector('#ttl'); await pg.screenshot({ path: process.env.SHOT + '/login-ar.png' }); }
+    // الصفحات القانونية
+    await A.request.put(BASE + '/api/admin/config', { data: { biz_name: 'Radar SARL', biz_country: 'الجزائر', support_email: 'help@radar.test', refund_days: '10' } });
+    for (const [path, lg, re] of [['/terms', 'ar', /شروط الاستخدام/], ['/privacy', 'en', /Privacy Policy/], ['/refund', 'fr', /Remboursement/], ['/contact', 'en', /Contact us/]]) {
+      const lp = await b.newPage(); lp.on('pageerror', e => errs.push(path + ': ' + e.message)); await lp.goto(BASE + path + '?lang=' + lg); await lp.waitForFunction(() => /help@radar\.test/.test(document.body.innerText));
+      const tx = await lp.locator('main').innerText(); ok(re.test(tx) && /help@radar\.test/.test(tx) && (path !== '/refund' || /10/.test(tx)), 'صفحة ' + path + ' (' + lg + ') بمعلومات النشاط'); await lp.close(); }
+    { const lp = await b.newPage(); await lp.goto(BASE + '/?lang=en'); ok((await lp.$$('footer a[href^="/terms"], footer a[href^="/privacy"], footer a[href^="/refund"], footer a[href^="/contact"]')).length === 4, 'روابط الصفحات القانونية في أسفل الصفحة الرئيسية'); await lp.close(); }
+    { const lp = await b.newPage(); await lp.goto(BASE + '/register?lang=en'); await lp.waitForSelector('#f-register:not([hidden])'); ok(/By creating an account you agree to the/.test(await lp.locator('.consent').innerText()), 'موافقة الشروط عند التسجيل (مترجمة)'); await lp.close(); }
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log(`PASS ${pass} public pages checks`);
   } catch (e) { console.error('FAIL', e.message, log.slice(-800)); process.exitCode = 1; }
