@@ -24,7 +24,6 @@ const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
 const CL={ended:'⏹️ توقف بعد نجاح',trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'🚫 مستبعد',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
-const TRL={emerging:'بداية انتشار',rising:'صاعد',steady:'مستقر',declining:'في هبوط',saturated:'متشبع'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
 const arr=j=>{if(Array.isArray(j))return j;for(const k in j){if(Array.isArray(j[k]))return j[k];if(j[k]&&typeof j[k]==='object')for(const k2 in j[k])if(Array.isArray(j[k][k2]))return j[k][k2]}return[j]};
@@ -36,27 +35,13 @@ async function readFile(f){const n=f.name.toLowerCase();if(!/\.(json|jsonl|txt)$
  const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});return wb.SheetNames.flatMap(s=>XLSX.utils.sheet_to_json(wb.Sheets[s],{defval:''}))}
 function msg(t,err){$('#msg').innerHTML=t?`<div class="alert ${err?'err':''}">${esc(t)}</div>`:''}
 
-let LAST_L=null,VP=0,LK='',LCACHE=null;const VH=new Map();
+let LAST_L=null,LK='',LCACHE=null;
 /* قائمة «سوق الملف» و«فلتر السوق» وأسعار الصرف */
 function fillMarkets(){const m=MK();if(!m)return;const sel=$('#mkt');if(sel&&sel.options.length<2){sel.innerHTML='<option value="">تلقائي (من عمود الدولة في الملف)</option>'+Object.keys(m.COUNTRIES).filter(c=>c!=='ALL').map(c=>`<option value="${c}">${flag(c)} ${esc(m.COUNTRIES[c].name)}</option>`).join('')}
  const f=$('#fmk');if(f){const cur=f.value,ms=[...new Set(PROD.flatMap(p=>p.markets||[]))].filter(Boolean);f.innerHTML='<option value="">كل الأسواق</option>'+ms.map(c=>`<option value="${c}"${c===cur?' selected':''}>${flag(c)} ${esc(mkName(c))}</option>`).join('')}
  const rb=$('#rates');if(rb){const cs=[...new Set(PROD.map(p=>p.cur).filter(c=>c&&c!=='DZD'))],r=Object.assign({},m.RATES_DZD,myRates());rb.innerHTML=cs.length?cs.map(c=>`<label class="fl">1 ${esc(m.curSymbol(c))} (${c}) = ? دج<input type="number" step="any" min="0" data-rate="${c}" value="${r[c]||''}"></label>`).join(''):'<p class="sub">كل الأسعار بالدينار.</p>'}}
-/* بصمة الصورة: نفس المنتج بصور متطابقة بصرياً (في سوقين، بلغتين، أو بروابط مختلفة) يُدمج في منتج واحد */
-async function vpass(){const G=window.RadarGapMatch;if(!G||!PROD.length)return;const run=++VP;
- const ps=[...new Map(PROD.filter(p=>!p.excl&&p.cat!=='low').map(p=>[p.k.split('#')[0],p])).values()].slice(0,250),todo=[];   /* الأداء: المنتجات المهمة فقط وصورة واحدة لكل منتج */
- ps.forEach(p=>imgsOf(p).slice(0,1).forEach(u=>{if(u&&!VH.has(u)&&!todo.includes(u))todo.push(u)}));
- let i=0,done=0;const step=async()=>{while(i<todo.length){const u=todo[i++];VH.set(u,await G.hashImage('/api/img?u='+encodeURIComponent(u))||[]);done++;if(run!==VP)return;if(done%10===0)window.__busy&&window.__busy('vp','جارٍ مقارنة بصمات صور المنتجات '+nf(done)+'/'+nf(todo.length))}};
- if(todo.length){window.__busy&&window.__busy('vp','جارٍ مقارنة بصمات صور المنتجات…');try{await Promise.all([1,2,3].map(step))}finally{window.__busy&&window.__busy('vp')}}
- if(run!==VP)return;
- const H=ps.map(p=>imgsOf(p).slice(0,1).flatMap(u=>VH.get(u)||[])),par=ps.map((_,k)=>k),f=k=>{while(par[k]!==k){par[k]=par[par[k]];k=par[k]}return k};
- for(let a=0;a<ps.length;a++)if(H[a].length)for(let b=a+1;b<ps.length;b++)if(H[b].length&&f(a)!==f(b)&&G.bestImage(H[a],H[b])<=6)par[f(b)]=f(a);
- const size=new Map();ps.forEach((_,k)=>size.set(f(k),(size.get(f(k))||0)+1));let merged=0;
- ps.forEach((p,k)=>{const r=f(k);if(size.get(r)>1){merged++;p.ads.forEach(a=>{if(a._i!=null)VHI[a._i]='v'+r})}});
- if(!merged)return;
- await analyze();
- if($('#note').textContent.includes('🔗'))return;$('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
 let RST=null;
-async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
+async function load(files){RST=(files&&files[0]&&files[0].stats)||null;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
  for(const f of files){lm=Math.max(lm,f.lastModified||0);if(Array.isArray(f.rows)){rows=rows.concat(f.rows);continue}   /* صفوف جاهزة من المنصة: بلا تحويل إلى ملف ثم قراءته */
   try{rows=rows.concat(await readFile(f))}catch(e){msg('تعذّرت قراءة الملف '+f.name+'. تأكد أنه JSON أو Excel أو CSV سليم.',1)}}
  const seen=new Set();ALL=[];
@@ -69,7 +54,7 @@ async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(
 
 /* التحليل في خيط خلفي للملفات الكبيرة (الصفحة لا تتجمد)، ومباشرة للصغيرة أو إن تعذّر الخيط */
 let WK=null,WKN=0;const WKW=new Map();
-function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js');WK.onmessage=e=>{const f=WKW.get(e.data.id);if(f){WKW.delete(e.data.id);f(e.data)}};WK.onerror=()=>{WK=false;WKW.forEach(f=>f({error:'worker'}));WKW.clear()}}catch(x){WK=false}return WK}
+function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js'+(window.__V?'?v='+window.__V:''));WK.onmessage=e=>{const f=WKW.get(e.data.id);if(f){WKW.delete(e.data.id);f(e.data)}};WK.onerror=()=>{WK=false;WKW.forEach(f=>f({error:'worker'}));WKW.clear()}}catch(x){WK=false}return WK}
 const VHI={};   /* بصمة الصورة: رقم الإعلان في ALL → مجموعة الدمج */
 async function analyze(){
  const MKT=window.RadarMarkets,mg=t=>MKT?', '+MKT.goldText(t):'';   /* الفائدة تُقرأ أيضاً بلغات الأسواق الدولية */
@@ -126,18 +111,11 @@ function lbClose(){$('#lb').hidden=true;D.body.classList.remove('noscroll');$('#
 /* ---------- بطاقة المنتج ---------- */
 function evTable(r){if(r.coef!==undefined)return evTableOld(r);if(r.ev&&r.ev.some(e=>e.w))return'';   /* نسخ محفوظة بالمعايير القديمة */
  return `<table class="tb"><tr><th>المعيار</th><th>القيمة</th></tr>${r.ev.map(e=>`<tr><td>${e.name}</td><td>${e.present?'✓ ':''}${esc(e.val||'')}${e.tag?' <small>('+esc(e.tag)+')</small>':''}</td></tr>`).join('')}</table>`}
-function proofLine(p){const a=[...(p.proofs||[])].map(([k,n])=>`${k} (${n} إعلانات)`).join('، ');return `<p class="sub"><b>إثبات أن الإعلانات لمنتج واحد:</b> ${a||'إعلان واحد، لا تطابق مع غيره'}</p>`}
-function simLine(p){const n=p.tg?p.tg.size:p.tgN;return n?`<p class="sub"><b>منتجات مشابهة لوظيفته (${p.sim||0}):</b> ${(p.simNames||[]).map(esc).join('، ')||'لا يوجد'}</p>`:'<p class="sub">لم تُستخرج فائدة محددة، فلا يمكن التحقق من المشابهة.</p>'}
 function evTableOld(r){return `<table class="tb"><tr><th>الدليل</th><th>الوزن</th><th>حاضر</th><th>الدرجة</th><th>النقاط</th></tr>${r.ev.map(e=>`<tr><td>${e.name}${e.half?' <small>(نصف الدرجة: لا دليل آخر)</small>':''}</td><td>${e.w}</td><td>${e.present?'✓':'—'}</td><td>${NF(e.pct*100)}%</td><td>${Math.round(e.pts*10)/10}</td></tr>`).join('')}<tr class="ft"><td colspan="2">الأدلة الحاضرة ك = ${r.k}</td><td colspan="2">معامل التضافر ${r.coef.toFixed(2)}</td><td>${Math.round(r.raw*10)/10} × ${r.coef.toFixed(2)} = <b>${r.score}</b></td></tr></table>`}
 function adsTable(p,saved){const rs=[...(p.recs||[])].sort((a,b)=>(a.age==null)-(b.age==null)||a.age-b.age).slice(0,20);if(!rs.length)return'';
  const L=(u,t)=>ok(u)?`<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`:'';
  const th=u=>ok(u)?`<a href="${esc(u)}" target="_blank" rel="noopener"><img class="th" loading="lazy" referrerpolicy="no-referrer" alt="" src="${esc(saved?'/api/img?u='+encodeURIComponent(u):u)}" data-o="${esc(u)}" onerror="if(!this.dataset.p&&!${saved?1:0}){this.dataset.p=1;this.src='/api/img?u='+encodeURIComponent(this.dataset.o)}else{this.remove()}"></a>`:'';
  return `<table class="tb"><tr><th>صورة</th><th>عمر الإعلان</th><th>الفئة</th><th>الحالة</th><th>الروابط</th></tr>${rs.map(r=>`<tr><td>${th(r.a.image_url)}</td><td>${r.age==null?'بلا تاريخ':r.age+' يوم'}</td><td>${CL[r.cat]||r.cat}${r.range?' · '+r.range:''}</td><td>${r.a.stat==='active'?'نشط':'بلا حالة'}</td><td>${[L(r.a.library_url,'الإعلان'),L(r.a.image_url,'الصورة'),L(r.a.video_url,'الفيديو')].filter(Boolean).join(' · ')}</td></tr>`).join('')}</table>${p.recs.length>20?`<p class="sub">يعرض أحدث 20 من ${p.recs.length} إعلاناً.</p>`:''}${p.stopped?`<p class="sub">${p.stopped} إعلان متوقف لا يدخل التحليل ولا العدّ، ويُستعمل في قياس الاتجاه فقط.</p>`:''}`}
-function oldBanner(p){const o=p.oldInfo;if(!o)return'';
- const d=p.days!=null?p.days+' يوماً':'';
- const up=o.up&&o.up.length?` ولبعض نسخه تصنيف ${o.up.map(c=>CL[c]).join(' و')} أيضاً.`:'';
- return o.all?`<div class="oldn ok">🕰️ <b>قديم في السوق (${d})</b>، لكنه <b>يستوفي كل معايير الجوهرة والرابح الأخرى</b>: ${o.met.join('، ')}.${up}</div>`
- :`<div class="oldn">🕰️ <b>قديم في السوق (${d})</b>. يستوفي: ${o.met.length?o.met.join('، '):'لا شيء'}${o.miss.length?`. لا يستوفي: ${o.miss.join('، ')}`:''}.${up}</div>`}
 function srcBox(p,kw,imgs){const q=encodeURIComponent(kw||p.name.slice(0,60)),im=imgs[0],e=encodeURIComponent;
  return `<div class="src"><div class="src-r"><span class="src-l">🔎 بالكلمة${kw?` <b>«${esc(kw)}»</b>`:''}</span>
 <a class="chip" href="https://www.aliexpress.com/wholesale?SearchText=${q}" target="_blank" rel="noopener">AliExpress</a><a class="chip" href="https://www.alibaba.com/trade/search?SearchText=${q}" target="_blank" rel="noopener">Alibaba (جملة)</a><a class="chip" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Google</a><a class="chip" href="https://www.tiktok.com/search?q=${q}" target="_blank" rel="noopener">TikTok</a><a class="chip" href="https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=DZ&q=${q}&search_type=keyword_unordered" target="_blank" rel="noopener">منافسون بالجزائر</a></div>
@@ -146,7 +124,6 @@ ${im?`<div class="src-r"><span class="src-l">🖼️ بالصورة</span><a cla
 /* الأداء: جداول الإعلانات والأدلة داخل كل بطاقة تُبنى فقط عند فتحها (كانت تُبنى لكل البطاقات مسبقاً: عشرات آلاف العناصر) */
 const LZ=new Map();let LZN=0;const lzPut=f=>{const k='z'+(++LZN);LZ.set(k,f);if(LZ.size>3000)LZ.delete(LZ.keys().next().value);return k};
 document.addEventListener('toggle',ev=>{const d=ev.target;if(!d.open||!d.dataset||!d.dataset.lz||d.dataset.done)return;const f=LZ.get(d.dataset.lz);if(!f)return;d.dataset.done=1;const sm=d.querySelector('summary');d.innerHTML='';d.appendChild(sm);d.insertAdjacentHTML('beforeend',f())},true);
-const benBadge=p=>{const b=p.ben!=null?p.ben:(p.benOk?2:0);return b===2?'<span class="bn ok" title="فائدة واضحة في العنوان أو أول النص">✅ فائدة</span>':b===1?'<span class="bn mid" title="الفائدة مذكورة في باقي نص الإعلان">☑️ فائدة في النص</span>':'<span class="bn" title="لم تُلتقط فائدة واضحة">بلا فائدة واضحة</span>'};
 function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw=(o.kw!=null&&o.kw!==''?o.kw:p.kw)||'',saved=!!o.saved;
  const src=u=>saved?'/api/img?u='+encodeURIComponent(u):u,pr=priceTxt(p);
  const lk=f=>{if(ok(t[f]))return t[f];const x=(p.recs||[]).find(r=>ok(r.a[f]));return x?x.a[f]:''};
@@ -154,7 +131,7 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  const notes=r&&r.note?`<span class="tg warn">${r.note}</span>`:'';
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
-<div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
+<div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>
 <div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}${p.warn2?`<span class="tg warn">${esc(p.warn2)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
 <div class="pc-st"><div><b>${(p.counted||[]).length?'نشط':'متوقف'}</b><span>الحالة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}

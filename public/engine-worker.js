@@ -1,6 +1,7 @@
 /* محرك التحليل في خيط خلفي (Web Worker): الصفحة تبقى سلسة أثناء تحليل آلاف الإعلانات.
    نفس ملفات المحرك التي يستعملها المتصفح والخادم (لا نسخة ثانية من المنطق). */
-importScripts('/radar-lib/kwdata.js', '/radar-lib/markets.js', '/radar-lib/productcheck.js', '/radar-lib/gapmatch.js', '/radar-lib/core.js');
+const V = self.location.search || '';   // نفس رقم النسخة: من ذاكرة المتصفح
+importScripts('/radar-lib/kwdata.js' + V, '/radar-lib/markets.js' + V, '/radar-lib/productcheck.js' + V, '/radar-lib/gapmatch.js' + V, '/radar-lib/core.js' + V);
 let LK = '', LB = null;
 onmessage = (e) => {
   const { id, rows, NOW, src, market, rates, vh } = e.data;

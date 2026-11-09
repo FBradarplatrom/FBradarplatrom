@@ -95,10 +95,6 @@ function sameSeller(a,b){
  else{const x=N(a.page_name).trim();if(x&&x===N(b.page_name).trim())return true}
  const s=N(a.store_name).trim();if(s&&s===N(b.store_name).trim())return true;
  const h=hostOf(a);return!!h&&h===hostOf(b)&&!SOC.test(h)&&!MARKET.test(h)}
-function sellerCount(ads){const p=new Map(),f=k=>{while(p.get(k)!==k){p.set(k,p.get(p.get(k)));k=p.get(k)}return k},add=k=>{if(!p.has(k))p.set(k,k)};
- ads.forEach(a=>{const ks=[];if(a.page_id)ks.push('p:'+a.page_id);else{const x=N(a.page_name).trim();if(x)ks.push('n:'+x)}const s=N(a.store_name).trim();if(s)ks.push('s:'+s);const h=hostOf(a);if(h&&!SOC.test(h)&&!MARKET.test(h))ks.push('h:'+h);
-  ks.forEach(add);for(let i=1;i<ks.length;i++){const x=f(ks[0]),y=f(ks[i]);if(x!==y)p.set(y,x)}});
- return new Set([...p.keys()].map(f)).size}
 function clusterSellers(ads){const p=ads.map((_,i)=>i),f=i=>{while(p[i]!==i){p[i]=p[p[i]];i=p[i]}return i};
  for(let i=0;i<ads.length;i++)for(let j=i+1;j<ads.length;j++)if(f(i)!==f(j)&&sameSeller(ads[i],ads[j]))p[f(i)]=f(j);
  ads.forEach((a,i)=>a._s=f(i))}
@@ -147,33 +143,6 @@ const MIN_SCORE=0,TIER=ag=>ag==null?'low':ag<=3?'trial':ag<=7?'prom':ag<=30?'gem
 /* المواسم بكل اللغات (وسم فقط) */
 const SEAS=MKT&&MKT.SEASONS?new RegExp(MKT.SEASONS.map(x=>{const t=N(x),e=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return CJK.test(t)?e:'(?<![\\p{L}\\p{N}.])'+e+'(?![\\p{L}\\p{N}.])'}).join('|'),'u'):/رمضان|العيد|الاضحيه|الشتاء|شتاء|بلاك فرايداي|black friday|ramadan|الدخول المدرسي/;
 const seasonOf=t=>{const m=SEAS.exec(t);return m?m[0]:''};
-/* حد «قلة البائعين» حسب حجم السوق (الجزائر 3) */
-const SELL=m=>MKT&&m?MKT.sellersMax(m):3;
-/* ---------- الكلمة الدلالية للمنتج (للبحث في المواقع) ---------- */
-const STOPW=new Set(`ارواحو ارواح تعالو تعالوا تشوفو شوفو شوف تشوف واش وين كاين كاينة راه راهو راهي هاذا هاذي هذا هذه هذي ذلك تلك هاد هادا هادي جبتلكم جبتلك جبنالكم جبنالك جبنا جبت جايبلكم جايبلك وصل وصلنا وصلت وصلكم عندنا عندك عندكم عند لدينا يتوفر متوفر متوفرة متوفرين منتج منتوج منتجات منتوجات سلعة جديد جديدة الجديد الجديدة جدد هبال هبالة خطير خطيرة رهيب رهيبة روعة رائع رائعة ممتاز ممتازة مميز مميزة افضل احسن اجمل اقوى حصري حصريا عرض عروض العرض خصم تخفيض تخفيضات سعر اسعار الاسعار بسعر ثمن مجاني مجانا مجانية توصيل التوصيل شحن الشحن الدفع الاستلام استلام ولاية ولايات الولايات كل جميع لجميع اطلب اطلبه اطلبها اطلبو اطلبوه طلب الطلب للطلب اتصل اتصلوا تواصل واتساب واتس ماسنجر رابط الرابط اضغط انقر الان دير ديرو خذ خذو خد خدو اشتري اشتر اشتروا سارع سارعو بادر لا تفوت تفوتو فرصة الفرصة محدود محدودة كمية الكمية قبل بعد غير فقط ماكانش ماكاش مكاين دج دينار جزائري الجزائر جزائر حبيبي حبيبتي اخي اختي يا اهلا مرحبا السلام عليكم عليك لكم لك لنا انتم انت نحن في من الى على عن مع او ثم لكن حتى اذا لو ان كما كان كانت يكون تكون هو هي هم هن ما لا لم لن كيفاش كيف علاش لماذا هل ديال تاع ديالك تاعك ديالنا تاعنا نتاع عليه عليها به بها له لها فيه فيها منه منها اللي الذي التي وين هنا هناك اليوم غدا جدا كثير كبير صغير مرة واحد واحدة اثنين ثلاثة
-nouveau nouvelle nouveaux promo promotion offre livraison gratuite gratuit prix dzd da dinars commandez commander commande disponible disponibles produit produits le la les un une des du de d l et ou pour avec sans en au aux sur dans par ce cette ces votre vos notre nos est sont a ont plus moins tout tous toutes seulement uniquement best new free delivery shipping order now only the and for with y your you our get buy shop sale off today this that it is are to of in on at from by as be will can all one more just so an or no not
-el los las tu su para con por envio envío gratis oferta precio ahora dan yang untuk di ini itu dengan ongkir harga beli sekarang cod promo giam gia mua ngay freeship sa ang ng mga na lang orderour you our this that from`.split(/\s+/).map(N));
-const BRK=/[\n\r.!؟?,،:;|•·\-–—()\[\]{}"«»*#_~=+\/\\@<>0-9٠-٩]+|[\u{1F000}-\u{1FAFF}\u2600-\u27BF\u2B00-\u2BFF]+/u;
-function phrases(text,extra){const out=[];
- String(text||'').split(BRK).forEach(seg=>{let run=[];const flush=()=>{if(!run.length)return;const L=run.length,mx=Math.min(4,L);
-   for(let n=mx;n>=1;n--)for(let i=0;i+n<=L;i++)out.push({p:run.slice(i,i+n).map(x=>x.n).join(' '),o:run.slice(i,i+n).map(x=>x.o).join(' '),n,pos:i});run=[]};
-  seg.split(/\s+/).filter(Boolean).forEach(o=>{const w=N(o),base=w.replace(/^[وفبلك]?ال/,'');
-   if(w.length<2||STOPW.has(w)||STOPW.has(base)||(extra&&extra.has(w))||/\d/.test(w))flush();else run.push({n:w,o})});flush()});return out}
-function keywordOf(texts,names){const extra=new Set();(names||[]).forEach(x=>N(x).split(/[^\p{L}]+/u).forEach(w=>w.length>2&&extra.add(w)));
- const df=new Map(),first=new Map();
- texts.forEach(t=>{const seen=new Set();phrases(t,extra).forEach(({p,o,n,pos})=>{if(seen.has(p))return;seen.add(p);df.set(p,(df.get(p)||0)+1);if(!first.has(p))first.set(p,{n,pos,o})})});
- let best='',bs=-1;df.forEach((d,p)=>{const {n,pos,o}=first.get(p),sc=d*10+(n>=2?n*3+2:0)-pos*.5;if(sc>bs){bs=sc;best=o}});
- return best}
-/* ---------- الاتجاه ---------- */
-function trendOf(p,NOW){const d=p.ads.filter(a=>a.start),t=a=>+a.start;
- const c14=d.filter(a=>t(a)>=NOW-14*D&&t(a)<=NOW).length,p14=d.filter(a=>t(a)>=NOW-28*D&&t(a)<NOW-14*D).length,c30=d.filter(a=>t(a)>=NOW-30*D&&t(a)<=NOW).length;
- const first=new Map();d.forEach(a=>{const v=first.get(a._s);if(v===undefined||t(a)<v)first.set(a._s,t(a))});
- let n14=0,n30=0;first.forEach(v=>{if(v>=NOW-14*D&&v<=NOW)n14++;if(v>=NOW-30*D&&v<=NOW)n30++});
- const act=p.ads.filter(a=>a.stat!=='stopped').length/p.ads.length;
- if(c30===0&&n30===0&&p.n>SELL(p.market))return'saturated';
- if(act<.5||(p14>0&&c14<p14/2))return'declining';
- if(c14>p14&&n14>=1)return p.n<=3?'emerging':'rising';
- return'steady'}
 /* ---------- منتج واحد: الأدلة المشتركة والإقصاء ---------- */
 const MKN=h=>{const m=MARKET.exec(h);const n=m?m[2]:h;return{aliexpress:'AliExpress',alibaba:'Alibaba',amazon:'Amazon',temu:'Temu',jumia:'Jumia',ouedkniss:'Ouedkniss','linktr.ee':'Linktree','bit.ly':'رابط مختصر',tinyurl:'رابط مختصر','t.me':'Telegram'}[n]||n};
 const MKSET=new Set(['jumia','ouedkniss','temu','aliexpress','amazon','alibaba','shein']);
@@ -195,10 +164,7 @@ function mkProduct(ads,NOW,L,proofs){
   const p=a._p??(a._p=price(a.title+' '+a.body));if(p)s.pr.push(p)});
  const sellers=Object.values(S).map(s=>({...s,p:med(s.pr),copies:s.ads.length,lib:s.ads[0].library_url})).sort((a,b)=>b.copies-a.copies),n=sellers.length;
  const copies=n?sellers[0].copies:0;
- /* عدد النسخ (معلومة فقط): مجموع «X إعلانات تستخدم هذا التصميم» من ميتا، مرة واحدة لكل مجموعة نسخ */
- const vg=new Map();(counted.length?counted:ads).forEach(a=>{const k=a.collation_id?'c'+a.collation_id:'a'+(a.ad_id||a._i);vg.set(k,Math.max(vg.get(k)||1,Math.max(1,parseInt(a.duplicates,10)||1)))});
- const versions=[...vg.values()].reduce((x,y)=>x+y,0);
- const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
+ const P={ads,counted,stopped,sellers,n,copies,market,markets};
  const why=[];
  /* استُبعد عند الاستقبال (ليس منتجاً) ويُعرض في «مستبعد» ليتطابق العدد مع ما جُلب */
  const pre=null;   // «المستبعد عند الوصول» القديم يُحلَّل الآن كغيره
@@ -226,10 +192,6 @@ function mkProduct(ads,NOW,L,proofs){
  const txt=N(pool.map(a=>a.title+' '+a.body).join(' '));P.seasTag=seasonOf(txt);P.seas=!!P.seasTag;
  P.q=N(txt+' '+sellers.map(s=>s.name).join(' '));
  return P}
-function similar(P){const idx=new Map();P.forEach((p,i)=>p.tg.forEach(t=>{let s=idx.get(t);if(!s)idx.set(t,s=new Set());s.add(i)}));
- const cap=Math.max(10,Math.ceil(.2*P.filter(p=>p.tg.size).length));
- P.forEach((p,i)=>{const s=new Set();p.tg.forEach(t=>{const g=idx.get(t);if(g.size<=cap)g.forEach(j=>j!==i&&s.add(j))});
-  p.sim=s.size;p.simNames=[...s].slice(0,4).map(j=>P[j].name);p.simOk=p.tg.size>0&&p.sim<=2})}
 /* ---------- تقييم كل إعلان: المدة تخصه، والباقي مشترك بين إعلانات المنتج ---------- */
 function scoreAd(a,P,NOW){
  const ag=age(a,NOW),dated=ag!=null,cat=TIER(dated?ag:null);
@@ -268,6 +230,6 @@ function analyze(rows,NOW,L){
   p.also=[...new Set(p.recs.map(r=>r.cat))].filter(x=>x!==c).sort((x,y)=>rank[x]-rank[y]);out.push(p)});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
-return{analyze,sellerCount,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
+return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,_t:{scoreAd,groupAds,compile,findAll}};
 })();
 if(typeof module!=='undefined')module.exports=CORE;

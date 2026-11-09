@@ -174,6 +174,8 @@ app.put('/api/runs/:id/summary', auth, active, wrap((q, s) => {
 }));
 
 // ---------- المنتجات المحفوظة ----------
+// الأداء: لوحة التحكم وعلامة ★ تحتاجان المفاتيح فقط، لا المنتجات كاملة بصورها وإعلاناتها
+app.get('/api/saved/keys', auth, active, wrap((q, s) => s.json(db.prepare('select k from saved where user_id=? order by created_at desc').all(q.u.id).map(r => r.k))));
 app.get('/api/saved', auth, active, wrap((q, s) => s.json(db.prepare('select k,snap from saved where user_id=? order by created_at desc').all(q.u.id).map(r => ({ k: r.k, ...JSON.parse(r.snap) })))));
 app.put('/api/saved', auth, active, wrap((q, s) => {
   const { k, snap } = q.body || {}; if (!k || typeof snap !== 'object') return s.sendStatus(400);
@@ -310,15 +312,22 @@ const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), '
   .replace(/\{\{CONTACT\}\}/g, process.env.CONTACT_URL || 'mailto:' + (process.env.ADMIN_EMAIL || ''));
 // صفحات الواجهة تُخدَم من views/ (خارج المجلد العام) فلا تظهر بأسماء ملفاتها (.html). التطبيق صفحة واحدة بروابط حقيقية لكل قسم.
 const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.join(__dirname, 'views', 'login.html');
+const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
-app.get('/', (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.type('html').send(LANDING));
+app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(LANDING));
 app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscribers'],
-  (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
+  (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+// الأداء: روابط الملفات تحمل رقم نسختها (?v=…) فيحفظها المتصفح سنة كاملة ولا يسأل الخادم عنها في كل زيارة.
+// يتغير الرقم تلقائياً متى تغيّر أي ملف (بعد إعادة تشغيل الخادم عند النشر).
+const VER = (() => { const h = crypto.createHash('sha1'); for (const d of ['public', 'engine', path.join('adlib', 'lib')]) for (const f of fs.readdirSync(path.join(__dirname, d)).filter(x => x.endsWith('.js')).sort()) h.update(fs.readFileSync(path.join(__dirname, d, f))); return h.digest('hex').slice(0, 10); })();
+const APP_HTML = fs.readFileSync(APP_PAGE, 'utf8').replace(/<script src="(\/[^"?]+\.js)">/g, '<script src="$1?v=' + VER + '">').replace('<head>', '<head><script>window.__V="' + VER + '"</script>');
+const immutable = (q, s, n) => { if (q.query.v) s.set('Cache-Control', 'public, max-age=31536000, immutable'); n(); };
+app.use(immutable);
+app.use(express.static(path.join(__dirname, 'public'), { index: false, cacheControl: false }));
 // منطق الأسواق وفحص المنتج مشترك بين الخادم والمتصفح (ملف واحد لكل منطق)
-app.get('/radar-lib/core.js', (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'engine', 'core.js')));   // محرك التحليل للخيط الخلفي
-app.get(['/radar-lib/kwdata.js', '/radar-lib/markets.js', '/radar-lib/productcheck.js', '/radar-lib/gapmatch.js'], (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'adlib', 'lib', path.basename(q.path))));
+app.get('/radar-lib/core.js', (q, s) => s.type('application/javascript').set('Cache-Control', q.query.v ? 'public, max-age=31536000, immutable' : 'no-cache').sendFile(path.join(__dirname, 'engine', 'core.js')));   // محرك التحليل للخيط الخلفي
+app.get(['/radar-lib/kwdata.js', '/radar-lib/markets.js', '/radar-lib/productcheck.js', '/radar-lib/gapmatch.js'], (q, s) => s.type('application/javascript').set('Cache-Control', q.query.v ? 'public, max-age=31536000, immutable' : 'no-cache').sendFile(path.join(__dirname, 'adlib', 'lib', path.basename(q.path))));
 app.use((e, q, s, n) => { if (!e.status || e.status >= 500) { console.error(e); BX.logError && BX.logError(e, q); } s.status(e.status || 500).json({ error: e.status ? e.message : 'server' }); });
 app.listen(+process.env.PORT || 3000, () => console.log('Radar platform on :' + (process.env.PORT || 3000)));

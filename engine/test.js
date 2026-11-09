@@ -74,8 +74,7 @@ eq('فيديو وصورة من أعمدة بأسماء غير معروفة',[n.v
 // ===== النسخ والبائعون (معلومة فقط) =====
 P=A([row({ad_id:'v1',page_id:'s1',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'3',collation_id:'G1'}),row({ad_id:'v2',page_id:'s1',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'3',collation_id:'G1'}),
  row({ad_id:'v3',page_id:'s2',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'2',collation_id:'G2'}),row({ad_id:'v4',page_id:'s3',page_name:'متجر 3',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro'})]);
-eq('النسخ: مجموعة ميتا تُعد مرة واحدة (3 + 2 + 1 = 6)، و3 صفحات بنفس المتجر = بائع واحد',[P.length,P[0].versions,P[0].n],[1,6,1]);
-eq('البائعون بلا تكرار عبر المنتجات (صفحة + متجر)',C.sellerCount([{page_id:'1',link_url:'https://a.dz/x'},{page_id:'2',link_url:'https://a.dz/y'},{page_id:'3',link_url:'https://www.aliexpress.com/item/1.html'},{page_id:'4',link_url:'https://www.aliexpress.com/item/2.html'},{page_name:'متجر',link_url:''},{page_name:'متجر',link_url:''}].map(C.normRow)),4);
+eq('بائع واحد: 3 صفحات بنفس المتجر',[P.length,P[0].n],[1,1]);
 // ===== وضع المنصة: بلا تجميع (كل إعلان بطاقة) + المستبعد عند الاستقبال =====
 const LG=Object.assign({},L,{group:false});
 P=C.analyze([row({ad_id:'n1',page_id:'a',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n2',page_id:'b',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n3',page_id:'c',title:'قشابية',pre_excl:'دورة أو تكوين'})],NOW,LG);

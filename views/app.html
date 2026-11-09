@@ -53,7 +53,7 @@ input[type=checkbox]{width:auto;accent-color:var(--brand)}textarea{resize:vertic
 .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 14px;font-size:13px}.legend span{display:flex;align-items:center;gap:7px}.legend i{width:10px;height:10px;border-radius:3px;flex:none}.legend b{margin-inline-start:auto}
 .chart{display:flex;align-items:flex-end;gap:6px;height:130px;margin-top:12px}.chart div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;font-size:10.5px;color:var(--mut)}.chart i{display:block;width:100%;max-width:26px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#8b5cf6,#4f46e5);min-height:3px}
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}.steps div{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}.steps .n{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;margin-bottom:8px}
-.keyb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;direction:ltr}.keyb code{flex:1;min-width:200px;word-break:break-all;font-size:13px}
+
 /* ----- رفع الملفات ----- */
 .drop{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;border:2px dashed var(--line);border-radius:var(--r);padding:34px 16px;background:var(--card);cursor:pointer;transition:.2s}
 .drop:hover,.drop.on{border-color:var(--brand);background:var(--soft)}.drop svg{width:36px;height:36px;color:var(--brand)}.drop b{font-size:16px}.drop span{color:var(--mut);font-size:13px}
@@ -74,11 +74,11 @@ details.fx{background:var(--card);border:1px solid var(--line);border-radius:var
 .pc-top{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
 .bdg{display:inline-block;border-radius:99px;padding:3px 12px;font-size:12.5px;font-weight:700;color:#fff;box-shadow:0 4px 12px -4px rgba(0,0,0,.4)}
 .cat-gem{background:var(--c-gem)}.cat-fire{background:var(--c-fire)}.cat-watch{background:var(--c-watch)}.cat-old{background:var(--c-old)}.cat-low{background:var(--c-low)}.cat-new{background:var(--c-new)}.cat-trial{background:var(--c-trial)}.cat-maybe{background:var(--c-maybe)}.cat-prom{background:var(--c-prom)}.cat-ended{background:var(--c-ended)}
-.bn{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(15,23,42,.55);color:#fff;backdrop-filter:blur(4px)}.bn.ok{background:#059669}.bn.mid{background:#0891b2}.cat-excl{background:var(--c-excl)}
+.cat-excl{background:var(--c-excl)}
 .pc-media.cat-gem,.pc-media.cat-fire,.pc-media.cat-watch,.pc-media.cat-old,.pc-media.cat-low,.pc-media.cat-new,.pc-media.cat-trial,.pc-media.cat-maybe,.pc-media.cat-prom,.pc-media.cat-ended,.pc-media.cat-excl{background-color:var(--card2)}
-.ring{--c:var(--brand);width:50px;height:50px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(255,255,255,.35) 0);display:grid;place-items:center;position:relative;box-shadow:0 4px 14px -4px rgba(0,0,0,.45)}
-.ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:#0f172a}.ring b{position:relative;color:#fff;font-size:15px}
-.pc.gem .ring{--c:var(--c-gem)}.pc.fire .ring{--c:var(--c-fire)}.pc.watch .ring{--c:var(--c-watch)}.pc.old .ring{--c:var(--c-old)}.pc.low .ring{--c:var(--c-low)}.pc.new .ring{--c:var(--c-new)}.pc.trial .ring{--c:var(--c-trial)}.pc.maybe .ring{--c:var(--c-maybe)}.pc.prom .ring{--c:var(--c-prom)}
+
+
+.pc.gem .pc.fire .pc.watch .pc.old .pc.low .pc.new .pc.trial .pc.maybe .pc.prom 
 .pc.excl{opacity:.9}.pc.excl .pc-media{filter:grayscale(.6)}
 .pc-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px}.pc-ti{font-size:16px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pc-sub{margin:-6px 0 0;color:var(--mut);font-size:13px}.pc-tags,.pc-ch,.pc-lk{display:flex;flex-wrap:wrap;gap:6px}
@@ -106,7 +106,7 @@ details.fx{background:var(--card);border:1px solid var(--line);border-radius:var
  .sb{position:fixed;inset-block:0;inset-inline-start:0;transform:translateX(100%);transition:.25s;width:min(300px,86vw);box-shadow:var(--sh)}.sb.open{transform:none}.scrim.open{display:block;position:fixed;inset:0;background:rgba(5,8,20,.5);z-index:35}
  .mn{padding:18px 14px 50px}h1{font-size:22px}.grid{grid-template-columns:1fr}.pc-st{grid-template-columns:repeat(3,1fr);row-gap:10px}.grid2{grid-template-columns:1fr}.row .ac{margin-inline-start:0;width:100%}.lb img{max-height:70vh}}
 @media print{.sb,.top{display:none}}
-.oldn{margin:8px 0;padding:8px 10px;border-radius:10px;background:rgba(120,113,108,.14);border:1px solid var(--c-old);font-size:12.5px;line-height:1.7}.oldn.ok{background:rgba(34,197,94,.12);border-color:#22c55e}.th{width:44px;height:44px;object-fit:cover;border-radius:6px;display:block}
+.th{width:44px;height:44px;object-fit:cover;border-radius:6px;display:block}
 
 /* ===== لمسات التصميم 5.4: سلاسة وإتاحة وجوال ===== */
 ::selection{background:var(--brand);color:#fff}
@@ -314,10 +314,6 @@ function sameSeller(a,b){
  else{const x=N(a.page_name).trim();if(x&&x===N(b.page_name).trim())return true}
  const s=N(a.store_name).trim();if(s&&s===N(b.store_name).trim())return true;
  const h=hostOf(a);return!!h&&h===hostOf(b)&&!SOC.test(h)&&!MARKET.test(h)}
-function sellerCount(ads){const p=new Map(),f=k=>{while(p.get(k)!==k){p.set(k,p.get(p.get(k)));k=p.get(k)}return k},add=k=>{if(!p.has(k))p.set(k,k)};
- ads.forEach(a=>{const ks=[];if(a.page_id)ks.push('p:'+a.page_id);else{const x=N(a.page_name).trim();if(x)ks.push('n:'+x)}const s=N(a.store_name).trim();if(s)ks.push('s:'+s);const h=hostOf(a);if(h&&!SOC.test(h)&&!MARKET.test(h))ks.push('h:'+h);
-  ks.forEach(add);for(let i=1;i<ks.length;i++){const x=f(ks[0]),y=f(ks[i]);if(x!==y)p.set(y,x)}});
- return new Set([...p.keys()].map(f)).size}
 function clusterSellers(ads){const p=ads.map((_,i)=>i),f=i=>{while(p[i]!==i){p[i]=p[p[i]];i=p[i]}return i};
  for(let i=0;i<ads.length;i++)for(let j=i+1;j<ads.length;j++)if(f(i)!==f(j)&&sameSeller(ads[i],ads[j]))p[f(i)]=f(j);
  ads.forEach((a,i)=>a._s=f(i))}
@@ -366,33 +362,6 @@ const MIN_SCORE=0,TIER=ag=>ag==null?'low':ag<=3?'trial':ag<=7?'prom':ag<=30?'gem
 /* المواسم بكل اللغات (وسم فقط) */
 const SEAS=MKT&&MKT.SEASONS?new RegExp(MKT.SEASONS.map(x=>{const t=N(x),e=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return CJK.test(t)?e:'(?<![\\p{L}\\p{N}.])'+e+'(?![\\p{L}\\p{N}.])'}).join('|'),'u'):/رمضان|العيد|الاضحيه|الشتاء|شتاء|بلاك فرايداي|black friday|ramadan|الدخول المدرسي/;
 const seasonOf=t=>{const m=SEAS.exec(t);return m?m[0]:''};
-/* حد «قلة البائعين» حسب حجم السوق (الجزائر 3) */
-const SELL=m=>MKT&&m?MKT.sellersMax(m):3;
-/* ---------- الكلمة الدلالية للمنتج (للبحث في المواقع) ---------- */
-const STOPW=new Set(`ارواحو ارواح تعالو تعالوا تشوفو شوفو شوف تشوف واش وين كاين كاينة راه راهو راهي هاذا هاذي هذا هذه هذي ذلك تلك هاد هادا هادي جبتلكم جبتلك جبنالكم جبنالك جبنا جبت جايبلكم جايبلك وصل وصلنا وصلت وصلكم عندنا عندك عندكم عند لدينا يتوفر متوفر متوفرة متوفرين منتج منتوج منتجات منتوجات سلعة جديد جديدة الجديد الجديدة جدد هبال هبالة خطير خطيرة رهيب رهيبة روعة رائع رائعة ممتاز ممتازة مميز مميزة افضل احسن اجمل اقوى حصري حصريا عرض عروض العرض خصم تخفيض تخفيضات سعر اسعار الاسعار بسعر ثمن مجاني مجانا مجانية توصيل التوصيل شحن الشحن الدفع الاستلام استلام ولاية ولايات الولايات كل جميع لجميع اطلب اطلبه اطلبها اطلبو اطلبوه طلب الطلب للطلب اتصل اتصلوا تواصل واتساب واتس ماسنجر رابط الرابط اضغط انقر الان دير ديرو خذ خذو خد خدو اشتري اشتر اشتروا سارع سارعو بادر لا تفوت تفوتو فرصة الفرصة محدود محدودة كمية الكمية قبل بعد غير فقط ماكانش ماكاش مكاين دج دينار جزائري الجزائر جزائر حبيبي حبيبتي اخي اختي يا اهلا مرحبا السلام عليكم عليك لكم لك لنا انتم انت نحن في من الى على عن مع او ثم لكن حتى اذا لو ان كما كان كانت يكون تكون هو هي هم هن ما لا لم لن كيفاش كيف علاش لماذا هل ديال تاع ديالك تاعك ديالنا تاعنا نتاع عليه عليها به بها له لها فيه فيها منه منها اللي الذي التي وين هنا هناك اليوم غدا جدا كثير كبير صغير مرة واحد واحدة اثنين ثلاثة
-nouveau nouvelle nouveaux promo promotion offre livraison gratuite gratuit prix dzd da dinars commandez commander commande disponible disponibles produit produits le la les un une des du de d l et ou pour avec sans en au aux sur dans par ce cette ces votre vos notre nos est sont a ont plus moins tout tous toutes seulement uniquement best new free delivery shipping order now only the and for with y your you our get buy shop sale off today this that it is are to of in on at from by as be will can all one more just so an or no not
-el los las tu su para con por envio envío gratis oferta precio ahora dan yang untuk di ini itu dengan ongkir harga beli sekarang cod promo giam gia mua ngay freeship sa ang ng mga na lang orderour you our this that from`.split(/\s+/).map(N));
-const BRK=/[\n\r.!؟?,،:;|•·\-–—()\[\]{}"«»*#_~=+\/\\@<>0-9٠-٩]+|[\u{1F000}-\u{1FAFF}\u2600-\u27BF\u2B00-\u2BFF]+/u;
-function phrases(text,extra){const out=[];
- String(text||'').split(BRK).forEach(seg=>{let run=[];const flush=()=>{if(!run.length)return;const L=run.length,mx=Math.min(4,L);
-   for(let n=mx;n>=1;n--)for(let i=0;i+n<=L;i++)out.push({p:run.slice(i,i+n).map(x=>x.n).join(' '),o:run.slice(i,i+n).map(x=>x.o).join(' '),n,pos:i});run=[]};
-  seg.split(/\s+/).filter(Boolean).forEach(o=>{const w=N(o),base=w.replace(/^[وفبلك]?ال/,'');
-   if(w.length<2||STOPW.has(w)||STOPW.has(base)||(extra&&extra.has(w))||/\d/.test(w))flush();else run.push({n:w,o})});flush()});return out}
-function keywordOf(texts,names){const extra=new Set();(names||[]).forEach(x=>N(x).split(/[^\p{L}]+/u).forEach(w=>w.length>2&&extra.add(w)));
- const df=new Map(),first=new Map();
- texts.forEach(t=>{const seen=new Set();phrases(t,extra).forEach(({p,o,n,pos})=>{if(seen.has(p))return;seen.add(p);df.set(p,(df.get(p)||0)+1);if(!first.has(p))first.set(p,{n,pos,o})})});
- let best='',bs=-1;df.forEach((d,p)=>{const {n,pos,o}=first.get(p),sc=d*10+(n>=2?n*3+2:0)-pos*.5;if(sc>bs){bs=sc;best=o}});
- return best}
-/* ---------- الاتجاه ---------- */
-function trendOf(p,NOW){const d=p.ads.filter(a=>a.start),t=a=>+a.start;
- const c14=d.filter(a=>t(a)>=NOW-14*D&&t(a)<=NOW).length,p14=d.filter(a=>t(a)>=NOW-28*D&&t(a)<NOW-14*D).length,c30=d.filter(a=>t(a)>=NOW-30*D&&t(a)<=NOW).length;
- const first=new Map();d.forEach(a=>{const v=first.get(a._s);if(v===undefined||t(a)<v)first.set(a._s,t(a))});
- let n14=0,n30=0;first.forEach(v=>{if(v>=NOW-14*D&&v<=NOW)n14++;if(v>=NOW-30*D&&v<=NOW)n30++});
- const act=p.ads.filter(a=>a.stat!=='stopped').length/p.ads.length;
- if(c30===0&&n30===0&&p.n>SELL(p.market))return'saturated';
- if(act<.5||(p14>0&&c14<p14/2))return'declining';
- if(c14>p14&&n14>=1)return p.n<=3?'emerging':'rising';
- return'steady'}
 /* ---------- منتج واحد: الأدلة المشتركة والإقصاء ---------- */
 const MKN=h=>{const m=MARKET.exec(h);const n=m?m[2]:h;return{aliexpress:'AliExpress',alibaba:'Alibaba',amazon:'Amazon',temu:'Temu',jumia:'Jumia',ouedkniss:'Ouedkniss','linktr.ee':'Linktree','bit.ly':'رابط مختصر',tinyurl:'رابط مختصر','t.me':'Telegram'}[n]||n};
 const MKSET=new Set(['jumia','ouedkniss','temu','aliexpress','amazon','alibaba','shein']);
@@ -414,10 +383,7 @@ function mkProduct(ads,NOW,L,proofs){
   const p=a._p??(a._p=price(a.title+' '+a.body));if(p)s.pr.push(p)});
  const sellers=Object.values(S).map(s=>({...s,p:med(s.pr),copies:s.ads.length,lib:s.ads[0].library_url})).sort((a,b)=>b.copies-a.copies),n=sellers.length;
  const copies=n?sellers[0].copies:0;
- /* عدد النسخ (معلومة فقط): مجموع «X إعلانات تستخدم هذا التصميم» من ميتا، مرة واحدة لكل مجموعة نسخ */
- const vg=new Map();(counted.length?counted:ads).forEach(a=>{const k=a.collation_id?'c'+a.collation_id:'a'+(a.ad_id||a._i);vg.set(k,Math.max(vg.get(k)||1,Math.max(1,parseInt(a.duplicates,10)||1)))});
- const versions=[...vg.values()].reduce((x,y)=>x+y,0);
- const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
+ const P={ads,counted,stopped,sellers,n,copies,market,markets};
  const why=[];
  /* استُبعد عند الاستقبال (ليس منتجاً) ويُعرض في «مستبعد» ليتطابق العدد مع ما جُلب */
  const pre=null;   // «المستبعد عند الوصول» القديم يُحلَّل الآن كغيره
@@ -445,10 +411,6 @@ function mkProduct(ads,NOW,L,proofs){
  const txt=N(pool.map(a=>a.title+' '+a.body).join(' '));P.seasTag=seasonOf(txt);P.seas=!!P.seasTag;
  P.q=N(txt+' '+sellers.map(s=>s.name).join(' '));
  return P}
-function similar(P){const idx=new Map();P.forEach((p,i)=>p.tg.forEach(t=>{let s=idx.get(t);if(!s)idx.set(t,s=new Set());s.add(i)}));
- const cap=Math.max(10,Math.ceil(.2*P.filter(p=>p.tg.size).length));
- P.forEach((p,i)=>{const s=new Set();p.tg.forEach(t=>{const g=idx.get(t);if(g.size<=cap)g.forEach(j=>j!==i&&s.add(j))});
-  p.sim=s.size;p.simNames=[...s].slice(0,4).map(j=>P[j].name);p.simOk=p.tg.size>0&&p.sim<=2})}
 /* ---------- تقييم كل إعلان: المدة تخصه، والباقي مشترك بين إعلانات المنتج ---------- */
 function scoreAd(a,P,NOW){
  const ag=age(a,NOW),dated=ag!=null,cat=TIER(dated?ag:null);
@@ -487,7 +449,7 @@ function analyze(rows,NOW,L){
   p.also=[...new Set(p.recs.map(r=>r.cat))].filter(x=>x!==c).sort((x,y)=>rank[x]-rank[y]);out.push(p)});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
-return{analyze,sellerCount,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
+return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,_t:{scoreAd,groupAds,compile,findAll}};
 })();
 if(typeof module!=='undefined')module.exports=CORE;
 (function(){
@@ -516,7 +478,6 @@ const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
 const CL={ended:'⏹️ توقف بعد نجاح',trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'🚫 مستبعد',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
-const TRL={emerging:'بداية انتشار',rising:'صاعد',steady:'مستقر',declining:'في هبوط',saturated:'متشبع'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
 const arr=j=>{if(Array.isArray(j))return j;for(const k in j){if(Array.isArray(j[k]))return j[k];if(j[k]&&typeof j[k]==='object')for(const k2 in j[k])if(Array.isArray(j[k][k2]))return j[k][k2]}return[j]};
@@ -528,27 +489,13 @@ async function readFile(f){const n=f.name.toLowerCase();if(!/\.(json|jsonl|txt)$
  const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});return wb.SheetNames.flatMap(s=>XLSX.utils.sheet_to_json(wb.Sheets[s],{defval:''}))}
 function msg(t,err){$('#msg').innerHTML=t?`<div class="alert ${err?'err':''}">${esc(t)}</div>`:''}
 
-let LAST_L=null,VP=0,LK='',LCACHE=null;const VH=new Map();
+let LAST_L=null,LK='',LCACHE=null;
 /* قائمة «سوق الملف» و«فلتر السوق» وأسعار الصرف */
 function fillMarkets(){const m=MK();if(!m)return;const sel=$('#mkt');if(sel&&sel.options.length<2){sel.innerHTML='<option value="">تلقائي (من عمود الدولة في الملف)</option>'+Object.keys(m.COUNTRIES).filter(c=>c!=='ALL').map(c=>`<option value="${c}">${flag(c)} ${esc(m.COUNTRIES[c].name)}</option>`).join('')}
  const f=$('#fmk');if(f){const cur=f.value,ms=[...new Set(PROD.flatMap(p=>p.markets||[]))].filter(Boolean);f.innerHTML='<option value="">كل الأسواق</option>'+ms.map(c=>`<option value="${c}"${c===cur?' selected':''}>${flag(c)} ${esc(mkName(c))}</option>`).join('')}
  const rb=$('#rates');if(rb){const cs=[...new Set(PROD.map(p=>p.cur).filter(c=>c&&c!=='DZD'))],r=Object.assign({},m.RATES_DZD,myRates());rb.innerHTML=cs.length?cs.map(c=>`<label class="fl">1 ${esc(m.curSymbol(c))} (${c}) = ? دج<input type="number" step="any" min="0" data-rate="${c}" value="${r[c]||''}"></label>`).join(''):'<p class="sub">كل الأسعار بالدينار.</p>'}}
-/* بصمة الصورة: نفس المنتج بصور متطابقة بصرياً (في سوقين، بلغتين، أو بروابط مختلفة) يُدمج في منتج واحد */
-async function vpass(){const G=window.RadarGapMatch;if(!G||!PROD.length)return;const run=++VP;
- const ps=[...new Map(PROD.filter(p=>!p.excl&&p.cat!=='low').map(p=>[p.k.split('#')[0],p])).values()].slice(0,250),todo=[];   /* الأداء: المنتجات المهمة فقط وصورة واحدة لكل منتج */
- ps.forEach(p=>imgsOf(p).slice(0,1).forEach(u=>{if(u&&!VH.has(u)&&!todo.includes(u))todo.push(u)}));
- let i=0,done=0;const step=async()=>{while(i<todo.length){const u=todo[i++];VH.set(u,await G.hashImage('/api/img?u='+encodeURIComponent(u))||[]);done++;if(run!==VP)return;if(done%10===0)window.__busy&&window.__busy('vp','جارٍ مقارنة بصمات صور المنتجات '+nf(done)+'/'+nf(todo.length))}};
- if(todo.length){window.__busy&&window.__busy('vp','جارٍ مقارنة بصمات صور المنتجات…');try{await Promise.all([1,2,3].map(step))}finally{window.__busy&&window.__busy('vp')}}
- if(run!==VP)return;
- const H=ps.map(p=>imgsOf(p).slice(0,1).flatMap(u=>VH.get(u)||[])),par=ps.map((_,k)=>k),f=k=>{while(par[k]!==k){par[k]=par[par[k]];k=par[k]}return k};
- for(let a=0;a<ps.length;a++)if(H[a].length)for(let b=a+1;b<ps.length;b++)if(H[b].length&&f(a)!==f(b)&&G.bestImage(H[a],H[b])<=6)par[f(b)]=f(a);
- const size=new Map();ps.forEach((_,k)=>size.set(f(k),(size.get(f(k))||0)+1));let merged=0;
- ps.forEach((p,k)=>{const r=f(k);if(size.get(r)>1){merged++;p.ads.forEach(a=>{if(a._i!=null)VHI[a._i]='v'+r})}});
- if(!merged)return;
- await analyze();
- if($('#note').textContent.includes('🔗'))return;$('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
 let RST=null;
-async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
+async function load(files){RST=(files&&files[0]&&files[0].stats)||null;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
  for(const f of files){lm=Math.max(lm,f.lastModified||0);if(Array.isArray(f.rows)){rows=rows.concat(f.rows);continue}   /* صفوف جاهزة من المنصة: بلا تحويل إلى ملف ثم قراءته */
   try{rows=rows.concat(await readFile(f))}catch(e){msg('تعذّرت قراءة الملف '+f.name+'. تأكد أنه JSON أو Excel أو CSV سليم.',1)}}
  const seen=new Set();ALL=[];
@@ -561,7 +508,7 @@ async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(
 
 /* التحليل في خيط خلفي للملفات الكبيرة (الصفحة لا تتجمد)، ومباشرة للصغيرة أو إن تعذّر الخيط */
 let WK=null,WKN=0;const WKW=new Map();
-function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js');WK.onmessage=e=>{const f=WKW.get(e.data.id);if(f){WKW.delete(e.data.id);f(e.data)}};WK.onerror=()=>{WK=false;WKW.forEach(f=>f({error:'worker'}));WKW.clear()}}catch(x){WK=false}return WK}
+function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js'+(window.__V?'?v='+window.__V:''));WK.onmessage=e=>{const f=WKW.get(e.data.id);if(f){WKW.delete(e.data.id);f(e.data)}};WK.onerror=()=>{WK=false;WKW.forEach(f=>f({error:'worker'}));WKW.clear()}}catch(x){WK=false}return WK}
 const VHI={};   /* بصمة الصورة: رقم الإعلان في ALL → مجموعة الدمج */
 async function analyze(){
  const MKT=window.RadarMarkets,mg=t=>MKT?', '+MKT.goldText(t):'';   /* الفائدة تُقرأ أيضاً بلغات الأسواق الدولية */
@@ -618,18 +565,11 @@ function lbClose(){$('#lb').hidden=true;D.body.classList.remove('noscroll');$('#
 /* ---------- بطاقة المنتج ---------- */
 function evTable(r){if(r.coef!==undefined)return evTableOld(r);if(r.ev&&r.ev.some(e=>e.w))return'';   /* نسخ محفوظة بالمعايير القديمة */
  return `<table class="tb"><tr><th>المعيار</th><th>القيمة</th></tr>${r.ev.map(e=>`<tr><td>${e.name}</td><td>${e.present?'✓ ':''}${esc(e.val||'')}${e.tag?' <small>('+esc(e.tag)+')</small>':''}</td></tr>`).join('')}</table>`}
-function proofLine(p){const a=[...(p.proofs||[])].map(([k,n])=>`${k} (${n} إعلانات)`).join('، ');return `<p class="sub"><b>إثبات أن الإعلانات لمنتج واحد:</b> ${a||'إعلان واحد، لا تطابق مع غيره'}</p>`}
-function simLine(p){const n=p.tg?p.tg.size:p.tgN;return n?`<p class="sub"><b>منتجات مشابهة لوظيفته (${p.sim||0}):</b> ${(p.simNames||[]).map(esc).join('، ')||'لا يوجد'}</p>`:'<p class="sub">لم تُستخرج فائدة محددة، فلا يمكن التحقق من المشابهة.</p>'}
 function evTableOld(r){return `<table class="tb"><tr><th>الدليل</th><th>الوزن</th><th>حاضر</th><th>الدرجة</th><th>النقاط</th></tr>${r.ev.map(e=>`<tr><td>${e.name}${e.half?' <small>(نصف الدرجة: لا دليل آخر)</small>':''}</td><td>${e.w}</td><td>${e.present?'✓':'—'}</td><td>${NF(e.pct*100)}%</td><td>${Math.round(e.pts*10)/10}</td></tr>`).join('')}<tr class="ft"><td colspan="2">الأدلة الحاضرة ك = ${r.k}</td><td colspan="2">معامل التضافر ${r.coef.toFixed(2)}</td><td>${Math.round(r.raw*10)/10} × ${r.coef.toFixed(2)} = <b>${r.score}</b></td></tr></table>`}
 function adsTable(p,saved){const rs=[...(p.recs||[])].sort((a,b)=>(a.age==null)-(b.age==null)||a.age-b.age).slice(0,20);if(!rs.length)return'';
  const L=(u,t)=>ok(u)?`<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`:'';
  const th=u=>ok(u)?`<a href="${esc(u)}" target="_blank" rel="noopener"><img class="th" loading="lazy" referrerpolicy="no-referrer" alt="" src="${esc(saved?'/api/img?u='+encodeURIComponent(u):u)}" data-o="${esc(u)}" onerror="if(!this.dataset.p&&!${saved?1:0}){this.dataset.p=1;this.src='/api/img?u='+encodeURIComponent(this.dataset.o)}else{this.remove()}"></a>`:'';
  return `<table class="tb"><tr><th>صورة</th><th>عمر الإعلان</th><th>الفئة</th><th>الحالة</th><th>الروابط</th></tr>${rs.map(r=>`<tr><td>${th(r.a.image_url)}</td><td>${r.age==null?'بلا تاريخ':r.age+' يوم'}</td><td>${CL[r.cat]||r.cat}${r.range?' · '+r.range:''}</td><td>${r.a.stat==='active'?'نشط':'بلا حالة'}</td><td>${[L(r.a.library_url,'الإعلان'),L(r.a.image_url,'الصورة'),L(r.a.video_url,'الفيديو')].filter(Boolean).join(' · ')}</td></tr>`).join('')}</table>${p.recs.length>20?`<p class="sub">يعرض أحدث 20 من ${p.recs.length} إعلاناً.</p>`:''}${p.stopped?`<p class="sub">${p.stopped} إعلان متوقف لا يدخل التحليل ولا العدّ، ويُستعمل في قياس الاتجاه فقط.</p>`:''}`}
-function oldBanner(p){const o=p.oldInfo;if(!o)return'';
- const d=p.days!=null?p.days+' يوماً':'';
- const up=o.up&&o.up.length?` ولبعض نسخه تصنيف ${o.up.map(c=>CL[c]).join(' و')} أيضاً.`:'';
- return o.all?`<div class="oldn ok">🕰️ <b>قديم في السوق (${d})</b>، لكنه <b>يستوفي كل معايير الجوهرة والرابح الأخرى</b>: ${o.met.join('، ')}.${up}</div>`
- :`<div class="oldn">🕰️ <b>قديم في السوق (${d})</b>. يستوفي: ${o.met.length?o.met.join('، '):'لا شيء'}${o.miss.length?`. لا يستوفي: ${o.miss.join('، ')}`:''}.${up}</div>`}
 function srcBox(p,kw,imgs){const q=encodeURIComponent(kw||p.name.slice(0,60)),im=imgs[0],e=encodeURIComponent;
  return `<div class="src"><div class="src-r"><span class="src-l">🔎 بالكلمة${kw?` <b>«${esc(kw)}»</b>`:''}</span>
 <a class="chip" href="https://www.aliexpress.com/wholesale?SearchText=${q}" target="_blank" rel="noopener">AliExpress</a><a class="chip" href="https://www.alibaba.com/trade/search?SearchText=${q}" target="_blank" rel="noopener">Alibaba (جملة)</a><a class="chip" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Google</a><a class="chip" href="https://www.tiktok.com/search?q=${q}" target="_blank" rel="noopener">TikTok</a><a class="chip" href="https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=DZ&q=${q}&search_type=keyword_unordered" target="_blank" rel="noopener">منافسون بالجزائر</a></div>
@@ -638,7 +578,6 @@ ${im?`<div class="src-r"><span class="src-l">🖼️ بالصورة</span><a cla
 /* الأداء: جداول الإعلانات والأدلة داخل كل بطاقة تُبنى فقط عند فتحها (كانت تُبنى لكل البطاقات مسبقاً: عشرات آلاف العناصر) */
 const LZ=new Map();let LZN=0;const lzPut=f=>{const k='z'+(++LZN);LZ.set(k,f);if(LZ.size>3000)LZ.delete(LZ.keys().next().value);return k};
 document.addEventListener('toggle',ev=>{const d=ev.target;if(!d.open||!d.dataset||!d.dataset.lz||d.dataset.done)return;const f=LZ.get(d.dataset.lz);if(!f)return;d.dataset.done=1;const sm=d.querySelector('summary');d.innerHTML='';d.appendChild(sm);d.insertAdjacentHTML('beforeend',f())},true);
-const benBadge=p=>{const b=p.ben!=null?p.ben:(p.benOk?2:0);return b===2?'<span class="bn ok" title="فائدة واضحة في العنوان أو أول النص">✅ فائدة</span>':b===1?'<span class="bn mid" title="الفائدة مذكورة في باقي نص الإعلان">☑️ فائدة في النص</span>':'<span class="bn" title="لم تُلتقط فائدة واضحة">بلا فائدة واضحة</span>'};
 function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw=(o.kw!=null&&o.kw!==''?o.kw:p.kw)||'',saved=!!o.saved;
  const src=u=>saved?'/api/img?u='+encodeURIComponent(u):u,pr=priceTxt(p);
  const lk=f=>{if(ok(t[f]))return t[f];const x=(p.recs||[]).find(r=>ok(r.a[f]));return x?x.a[f]:''};
@@ -646,7 +585,7 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  const notes=r&&r.note?`<span class="tg warn">${r.note}</span>`:'';
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
-<div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
+<div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>
 <div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}${p.warn2?`<span class="tg warn">${esc(p.warn2)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
 <div class="pc-st"><div><b>${(p.counted||[]).length?'نشط':'متوقف'}</b><span>الحالة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
@@ -737,7 +676,12 @@ const kpi=(i,v,l)=>`<div class="kpi"><div class="ic"><svg viewBox="0 0 24 24" fi
  W.__btnBusy=(ev,p)=>{const b=ev&&ev.target&&ev.target.closest&&ev.target.closest('.btn');if(!b||!p||!p.then)return p;const t=setTimeout(()=>b.classList.add('is-busy'),180);p.finally(()=>{clearTimeout(t);b.classList.remove('is-busy')}).catch(()=>{});return p}})();
 W.__toast=(m,t)=>{const d=document.createElement('div');d.className='toast'+(t==='err'?' err':'');d.textContent=m;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),4500)};
 const toast=W.__toast;
-const api=async(m,u,b)=>{W.__act(1);let r;try{r=await fetch('/api'+u,{method:m,headers:b?{'content-type':'application/json'}:{},body:b?JSON.stringify(b):void 0})}finally{W.__act(-1)}
+/* الأداء: بيانات الأقسام تُعرض فوراً من الذاكرة إن جُلبت خلال 30 ثانية (بلا انتظار الخادم عند التنقل). أي حفظ أو تعديل يمسح الذاكرة كلها فلا تظهر بيانات قديمة */
+const AC=new Map(),ACT=30000,ACOK=/^\/(runs|saved|saved\/keys|lib\/dict|lib\/stats|lib\/fix|lib\/excluded\?limit=1|billing|sheets|notify|admin\/config|admin\/plans|gap|gap\/due|watch|tt|tt\/phrases|profit|activity|admin\/users|admin\/activity)$/;
+W.__apiFlush=()=>AC.clear();
+const api=async(m,u,b)=>{if(m!=='GET')AC.clear();else if(ACOK.test(u)){const c=AC.get(u);if(c&&Date.now()-c.t<ACT)return structuredClone(c.v)}
+ const j=await api0(m,u,b);if(m==='GET'&&ACOK.test(u))AC.set(u,{t:Date.now(),v:structuredClone(j)});return j};
+const api0=async(m,u,b)=>{W.__act(1);let r;try{r=await fetch('/api'+u,{method:m,headers:b?{'content-type':'application/json'}:{},body:b?JSON.stringify(b):void 0})}finally{W.__act(-1)}
  if(r.status===401){location.href='/login?next='+encodeURIComponent(location.pathname);throw new Error('auth')}
  const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||('خطأ '+r.status)),{status:r.status});return j};
 const csv=rows=>'\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""').replace(/[\r\n]+/g,' ')+'"').join(',')).join('\r\n');
@@ -769,7 +713,7 @@ async function rDash(){
  const nm=ME.name||ME.username||ME.email.split('@')[0];
  $('#d-head').innerHTML=`<div class="ph"><div><h1>مرحباً ${e(nm)} 👋</h1><p class="sub">${ME.active?'نظرة عامة على إعلاناتك الواردة وتحليلاتك ومنتجاتك الرابحة.':'انتهى اشتراكك.'}</p></div><div class="acts"><button class="btn" data-v="analyze">تحليل جديد</button><button class="btn ghost" data-v="inbox">الإعلانات الواردة</button></div></div>`;
  if(!ME.active){$('#d-body').innerHTML=`<div class="card"><h2>انتهى اشتراكك</h2><p class="sub">انتهى اشتراكك${ME.expires_at?' بتاريخ '+fd(ME.expires_at):''}. تواصل مع الإدارة لتجديده${ME.contact?`: <a href="${e(ME.contact)}" target="_blank" rel="noopener">تواصل الآن</a>`:''}. يمكنك تعديل حسابك من «الإعدادات».</p></div>`;return}
- const [rs,sv]=await Promise.all([api('GET','/runs'),api('GET','/saved')]);RUNS=rs;badge(rs);
+ const [rs,sv]=await Promise.all([api('GET','/runs'),api('GET','/saved/keys')]);RUNS=rs;badge(rs);
  const inbox=rs.filter(r=>r.source==='adlib'),anal=rs.filter(r=>r.summary),L=anal[0],prev=anal[1],pend=inbox.filter(r=>!r.summary).length;
  const gf=L?(L.counts?L.counts.gem+L.counts.fire:L.summary.filter(p=>p.tier==='gem'||p.tier==='fire').length):0;
  let h=`<div class="kps">${kpi('inbox',inbox.reduce((s,r)=>s+r.ads+(r.filtered||0),0),'إعلان وارد من الإضافة')}${kpi('clock',pend,'دفعات بانتظار التحليل')}${kpi('chart',anal.length,'تحليل مكتمل')}${kpi('award',gf,'💎🔥 في آخر تحليل')}${kpi('star',sv.length,'منتج محفوظ')}</div>`;
@@ -786,8 +730,8 @@ async function rDash(){
  $('#d-body').innerHTML=h}
 
 /* ---------- الإعلانات الواردة ---------- */
-async function rInbox(){const rs=await api('GET','/runs');RUNS=rs;badge(rs);const ib=rs.filter(r=>r.source==='adlib');
- let ex=0;try{ex=(await api('GET','/lib/excluded?limit=1')).total}catch(x){}
+async function rInbox(){const[rs,exr]=await Promise.all([api('GET','/runs'),api('GET','/lib/excluded?limit=1').catch(()=>({}))]);RUNS=rs;badge(rs);const ib=rs.filter(r=>r.source==='adlib');
+ let ex=exr.total||0;
  $('#x-inbox').innerHTML=(ex?`<p style="margin:0 0 12px"><button class="btn ghost sm" data-tool="excl">🛡️ المستبعد (${ex}): راجع ما رفضه الفحص واسترجعه</button></p>`:'')+ib.length?`<div class="alert info">${ib.length} دفعة، ${ib.reduce((s,r)=>s+r.ads+(r.filtered||0),0)} إعلان. للحصول على أدق نتيجة اجمع أكثر من 400 إعلان من 3 كلمات بحث فأكثر وحلّلها معاً.</div><div class="card pad0"><div class="tbw"><table class="tb"><tr><th style="width:36px"></th><th>وصل في</th><th>كلمة البحث / الوصف</th><th>الإعلانات</th><th>الحالة</th><th></th></tr>${ib.map(r=>`<tr><td><input type="checkbox" data-sel="${r.id}"></td><td>${fd(r.created_at)} <small>${ft(r.created_at)} · ${ago(r.created_at)}</small></td><td><b>${e(r.label)}</b></td><td>${r.ads+(r.filtered||0)}${r.filtered?`<br><small class="muted" title="استُبعدت عند الوصول لأنها ليست منتجات، وتظهر في «🚫 مستبعد» عند التحليل">منها ${r.filtered} مستبعدة</small>`:''}</td><td>${stPill(r)}</td><td style="white-space:nowrap"><button class="btn sm" data-a="ianalyze" data-id="${r.id}">${r.summary?'فتح':'تحليل'}</button> <button class="btn danger sm" data-a="del" data-id="${r.id}">حذف</button></td></tr>`).join('')}</table></div></div>`
  :`<div class="card"><h2>لم يصلك شيء بعد</h2><p class="sub">هنا تصل الإعلانات التي تجمعها من «جمع الإعلانات»، دفعة لكل عملية جمع، ثم تحلّلها بمعايير المنصة.</p><div class="steps"><div><div class="n">1</div><b>ثبّت الإضافة</b><p class="sub">من «جمع الإعلانات ← الإضافة».</p></div><div><div class="n">2</div><b>اجمع من المنصة</b><p class="sub">ابدأ البحث من قسم «الجمع».</p></div><div><div class="n">3</div><b>حلّل</b><p class="sub">افتح دفعة من «الإعلانات الواردة» واضغط تحليل.</p></div></div><p style="margin-top:14px"><button class="btn" data-v="collect">افتح جمع الإعلانات</button></p></div>`}
 async function analyzeIds(ids){if(!ids.length)return toast('حدّد دفعة واحدة على الأقل','err');toast('جارٍ تحميل البيانات…');
@@ -902,7 +846,7 @@ R.addEventListener('change',guard(async ev=>{const ps=ev.target.closest('[data-p
  if(ME.active&&W.WPRTOOLS)W.WPRTOOLS.init({api,toast,fd,ago,root:R,show:v=>show(v),refresh:()=>refreshSoon()});
  if(ME.active&&W.WPRWATCH)W.WPRWATCH.init({api,toast,fd,ago,root:R,cur:()=>cur,url:goUrl,show:v=>show(v)});
  if(ME.active&&W.WPRTT)W.WPRTT.init({api,toast,fd,ago,root:R,cur:()=>cur,url:goUrl,show:v=>show(v)});
- if(ME.active){try{const sv=await api('GET','/saved');W.WPR.setFav(sv.map(x=>x.k))}catch(x){}}
+ if(ME.active){try{W.WPR.setFav(await api('GET','/saved/keys'))}catch(x){}}
  addEventListener('popstate',()=>show(viewOf(location.pathname),{nopush:true,fromUrl:true}));
  show(viewOf(location.pathname),{nopush:true,fromUrl:true});
  setInterval(()=>{if(!ME.active||document.hidden)return;api('GET','/runs').then(rs=>{const n=RUNS.length;badge(rs);if(rs.length!==n){RUNS=rs;if(cur==='inbox')rInbox();if(cur==='dash')rDash()}}).catch(()=>{})},60000)})();
