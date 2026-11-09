@@ -247,7 +247,9 @@
     // decision
     const letters = (all.match(/\p{L}/gu) || []).length;
     let kind = '', best = 0;
-    for (const k of HARD) if (S[k] >= 2 && S[k] > best) { best = S[k]; kind = k; }
+    let warnK = '', wb = 0;
+    for (const k of HARD) if (S[k] >= 2 && S[k] > wb) { wb = S[k]; warnK = k; }
+    if (warnK && opts.hard !== false) { kind = warnK; best = wb; warnK = ''; }        // hard:false = تنبيه فقط بلا إقصاء
     if (!kind) {
       for (const k of SOFT) {
         const s = S[k];
@@ -257,14 +259,14 @@
     if (!kind && letters < 12 && !productLink) kind = 'insufficient';             // a button alone does not say which product
     const reasons = kind ? [LABEL[kind] + (terms[kind] && terms[kind].length ? ' (' + [...new Set(terms[kind])].slice(0, 3).join('، ') + ')' : '')] : [];
     // الجملة التي وُجدت فيها الكلمة، بحروفها الأصلية (ليرى المستخدم «لباس المرأة» لا «مرآة»)
-    let ctx = '';
-    if (kind && at[kind] && at[kind].size) {
-      const h = at[kind].values().next().value, before = (all.slice(0, h.s).match(TOK) || []).length, n = (all.slice(h.s, h.t).match(TOK) || []).length;
+    const ctxOf = (k) => {
+      if (!k || !at[k] || !at[k].size) return '';
+      const h = at[k].values().next().value, before = (all.slice(0, h.s).match(TOK) || []).length, n = (all.slice(h.s, h.t).match(TOK) || []).length;
       const RT = rawAll.match(TOK) || [];
-      if (RT.length) ctx = RT.slice(Math.max(0, before - 3), before).join(' ') + ' «' + RT.slice(before, before + n).join(' ') + '» ' + RT.slice(before + n, before + n + 3).join(' ');
-      ctx = ctx.trim();
-    }
-    return { ok: !kind, kind, label: kind ? LABEL[kind] : '', reasons, terms: kind ? [...new Set(textTerms[kind])] : [], ctx, score: S, product: Math.round(P * 10) / 10, productEvidence: pTerms.slice(0, 5), langs };
+      return RT.length ? (RT.slice(Math.max(0, before - 3), before).join(' ') + ' «' + RT.slice(before, before + n).join(' ') + '» ' + RT.slice(before + n, before + n + 3).join(' ')).trim() : '';
+    };
+    const ctx = ctxOf(kind), warn = warnK ? { kind: warnK, label: LABEL[warnK], terms: [...new Set(textTerms[warnK])], ctx: ctxOf(warnK) } : null;
+    return { ok: !kind, kind, label: kind ? LABEL[kind] : '', reasons, terms: kind ? [...new Set(textTerms[kind])] : [], ctx, warn, score: S, product: Math.round(P * 10) / 10, productEvidence: pTerms.slice(0, 5), langs };
   }
 
   const api = { check, KINDS, LABEL, langsFor, norm, _t: { scan, hits, lexicon } };

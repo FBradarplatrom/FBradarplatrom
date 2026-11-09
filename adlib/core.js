@@ -120,10 +120,10 @@ function withMarkets(base) {
 
 /* ---------- فحص صلاحية المنتج قبل الحفظ ---------- */
 // يُرفض إعلان الخدمة/الدورة/الفعالية/المحل/الشركة/التطبيق، والأكل والكبير والهش، بلغة الدولة المختارة.
-function eligibility(row, ignore) { return PC.check(row, { country: row.country, ignore }); }
+function eligibility(row, ignore) { return PC.check(row, { country: row.country, ignore, hard: false }); }   // الهش/الكبير/الأكل: تنبيه لا استبعاد
 
 /* ---------- من إعلان خام إلى صف بأعمدة المنصة ---------- */
-const cap = (s, n) => String(s == null ? '' : s).slice(0, n);
+const cap = (s, n) => String(s == null ? '' : s).slice(0, n).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');   // بلا أنصاف حروف (إيموجي مقطوع)
 const U = u => (u ? S.safeUrl(u) : '');
 const isoDay = sec => (sec ? new Date(sec * 1000).toISOString().slice(0, 10) : '');
 const bar = a => (a || []).filter(Boolean).join(' | ');

@@ -30,7 +30,7 @@ function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.l
 function findAll(txt,list){const ms=[];for(const {re,ord} of mxOf(list)){re.lastIndex=0;let m;while((m=re.exec(txt))){let i=1;while(m[i]===undefined&&i<m.length)i++;if(i<m.length)ms.push({e:ord[i-1],s:m.index,t:m.index+m[0].length});if(!m[0].length)re.lastIndex++}}
  ms.sort((a,b)=>(b.t-b.s)-(a.t-a.s));const kept=[];ms.forEach(x=>{if(!kept.some(k=>x.s>=k.s&&x.t<=k.t))kept.push(x)});return kept}
 /* ---------- الأعمدة ---------- */
-const ALIAS={ad_id:['ad_id','id','adid','ad_archive_id'],library_url:['library_url','ad_url','ad_library_url','snapshot_url','permalink'],page_id:['page_id','pageid'],page_name:['page_name','advertiser','page','pagename'],status:['status'],start_date:['start_date','start','startdate'],duplicates:['duplicates','collation_count','variants'],format:['format','media_type'],domain:['domain'],link_url:['link_url','url','link','landing_url'],title:['title','headline'],body:['body','text','ad_text','primary_text'],link_description:['link_description'],image_url:['image_url','image','images','image_urls','original_image_url','resized_image_url','picture','picture_url','thumbnail','thumbnail_url','cover','cover_url','preview_image_url','video_preview_image_url','video_preview_image','poster','media_url'],video_url:['video_url','video','videos','video_urls','video_hd_url','video_sd_url','video_link'],search:['search','keyword'],keywords:['keywords','tags'],product_name:['product_name','product'],store_name:['store_name','shop','store'],image_hash:['image_hash','image_id'],video_hash:['video_hash','video_id'],creative_id:['creative_id','media_id'],collected:['collected_at','scraped_at','collection_date','date_collected','fetched_at'],cta:['cta','cta_text'],cta_type:['cta_type'],cta_group:['cta_group'],page_categories:['page_categories','categories','page_category'],country:['country','market']};
+const ALIAS={end_date:['end_date','ad_delivery_stop_time','stop_date'],ad_id:['ad_id','id','adid','ad_archive_id'],library_url:['library_url','ad_url','ad_library_url','snapshot_url','permalink'],page_id:['page_id','pageid'],page_name:['page_name','advertiser','page','pagename'],status:['status'],start_date:['start_date','start','startdate'],duplicates:['duplicates','collation_count','variants'],format:['format','media_type'],domain:['domain'],link_url:['link_url','url','link','landing_url'],title:['title','headline'],body:['body','text','ad_text','primary_text'],link_description:['link_description'],image_url:['image_url','image','images','image_urls','original_image_url','resized_image_url','picture','picture_url','thumbnail','thumbnail_url','cover','cover_url','preview_image_url','video_preview_image_url','video_preview_image','poster','media_url'],video_url:['video_url','video','videos','video_urls','video_hd_url','video_sd_url','video_link'],search:['search','keyword'],keywords:['keywords','tags'],product_name:['product_name','product'],store_name:['store_name','shop','store'],image_hash:['image_hash','image_id'],video_hash:['video_hash','video_id'],creative_id:['creative_id','media_id'],collected:['collected_at','scraped_at','collection_date','date_collected','fetched_at'],cta:['cta','cta_text'],cta_type:['cta_type'],cta_group:['cta_group'],page_categories:['page_categories','categories','page_category'],country:['country','market']};
 const firstUrl=v=>{if(v==null||v==='')return'';if(typeof v==='object')try{v=JSON.stringify(v)}catch(e){return''}const m=/https?:\/\/[^\s"'\\\[\]<>,}]+/i.exec(String(v));return m?m[0]:''};
 const allUrls=v=>{if(v==null||v==='')return[];if(typeof v==='object')try{v=JSON.stringify(v)}catch(e){return[]}return String(v).match(/https?:\/\/[^\s"'\\\[\]<>,}]+/gi)||[]};
 const VID=/\.(mp4|webm|mov|m4v|m3u8)(\?|$)/i,IMG=/\.(jpe?g|png|webp|gif)(\?|$)/i,SKIPK=/^(body|text|ad_text|primary_text|title|headline|link_description|link_url|url|link|landing_url|library_url|ad_url|ad_library_url|permalink|snapshot_url|domain)$/;
@@ -42,14 +42,16 @@ const toDate=v=>{if(!v)return null;const d=v instanceof Date?v:new Date(v);retur
 function stat(s){s=String(s||'').trim().toLowerCase();if(!s)return'none';
  if(/inactive|غير نشط|متوقف|stopped|paused|ended|منتهي|انتهى|expired/.test(s))return'stopped';
  if(/active|نشط|running|جاري|ساري/.test(s))return'active';return'none'}
+/* أنصاف حروف (إيموجي مقطوع) تُحذف: تُسقط الترميز والروابط */
+const WF=s=>String(s).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,''),cut=(s,n)=>WF(String(s).slice(0,n));
 function normRow(r){const lo={};for(const k in r)lo[String(k).toLowerCase().trim()]=r[k];const o={};
  for(const f in ALIAS)for(const a of ALIAS[f]){const v=lo[a];if(v!==undefined&&v!==null&&v!==''){o[f]=v;break}}
  ['image_url','video_url','library_url'].forEach(k=>o[k]=firstUrl(o[k]));
  if(!o.video_url)o.video_url=findMedia(lo,'video');
  if(!o.image_url)o.image_url=findMedia(lo,'image');
  if(!o.library_url&&/^\d{8,}$/.test(String(o.ad_id||'').trim()))o.library_url='https://www.facebook.com/ads/library/?id='+String(o.ad_id).trim();
- o.start=toDate(o.start_date);o.collected=toDate(o.collected);o.stat=stat(o.status);o.format=String(o.format||'').toUpperCase();
- ['title','body','link_description','link_url','page_name','image_url','video_url','library_url','product_name','store_name','keywords','search','duplicates','image_hash','video_hash','creative_id','cta','cta_type','cta_group','page_categories','country'].forEach(k=>o[k]=o[k]!=null?String(o[k]):'');
+ o.start=toDate(o.start_date);o.end=toDate(o.end_date);o.collected=toDate(o.collected);o.stat=stat(o.status);o.format=String(o.format||'').toUpperCase();
+ ['title','body','link_description','link_url','page_name','image_url','video_url','library_url','product_name','store_name','keywords','search','duplicates','image_hash','video_hash','creative_id','cta','cta_type','cta_group','page_categories','country'].forEach(k=>o[k]=o[k]!=null?WF(o[k]):'');
  if(!o.domain&&o.link_url)try{o.domain=new URL(o.link_url).hostname}catch(e){}
  return o}
 const SOC=/^(facebook|fb|instagram|whatsapp|m|l\.facebook)\.(com|me)$|^(wa|fb)\.me$/;
@@ -116,7 +118,7 @@ const PFX=/^[وفبلك]/,AL=/^(?:[وفبلك]?ال|لل)(?=\S{2,})/;
 const forms=w=>{const o=[w],a=w.replace(AL,'');if(a!==w)o.push(a);if(PFX.test(w)&&w.length>3)o.push(w.slice(1));return o};
 const isProb=w=>forms(w).some(x=>PROB.has(x)||PSTEM.some(st=>x.startsWith(st)));
 const isSvc=w=>forms(w).some(x=>SERVICE.has(x));
-function benefitAd(a,L){const hr=a.title+' . '+a.body.slice(0,160),hn=N(hr);
+function benefitAd(a,L,rest){const hr=rest?cut(String(a.body).slice(160),1500)+' . '+a.link_description:a.title+' . '+cut(a.body,160),hn=N(hr);
  if(cache.get(L)&&cache.get(L).has(hn))return cache.get(L).get(hn);
  const W=[],re=/[\p{L}\p{N}]+/gu;let x;while((x=re.exec(hn)))W.push({w:x[0],s:x.index,t:x.index+x[0].length});
  const after=(pos,k)=>{let i=0;while(i<W.length&&W[i].s<pos)i++;return W.slice(i,i+k).map(o=>o.w)};
@@ -137,7 +139,7 @@ function benefitAd(a,L){const hr=a.title+' . '+a.body.slice(0,160),hn=N(hr);
 /* ---------- الجداول ---------- */
 /* التصنيف تحدده المدة وحدها: 0-7 تجربة، 8-30 جوهرة، 31-60 رابح، 61+ قديم. من لم يبلغ الحد الأدنى ضعيف. بلا تاريخ = ضعيف */
 /* 0-3 تحت التجربة · 4-7 واعد (بشروط الجوهرة) · 8-30 جوهرة · 31-60 رابح · 61+ قديم */
-const MIN_SCORE=50,TIER=(ag,score)=>ag==null?'low':ag<=3?'trial':ag<=7?'prom':score<MIN_SCORE?'low':ag<=30?'gem':ag<=60?'fire':'old';
+const MIN_SCORE=0,TIER=ag=>ag==null?'low':ag<=3?'trial':ag<=7?'prom':ag<=30?'gem':ag<=60?'fire':'old';
 /* المواسم بكل اللغات (وسم فقط) */
 const SEAS=MKT&&MKT.SEASONS?new RegExp(MKT.SEASONS.map(x=>{const t=N(x),e=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return CJK.test(t)?e:'(?<![\\p{L}\\p{N}.])'+e+'(?![\\p{L}\\p{N}.])'}).join('|'),'u'):/رمضان|العيد|الاضحيه|الشتاء|شتاء|بلاك فرايداي|black friday|ramadan|الدخول المدرسي/;
 const seasonOf=t=>{const m=SEAS.exec(t);return m?m[0]:''};
@@ -191,25 +193,30 @@ function mkProduct(ads,NOW,L,proofs){
  const copies=n?sellers[0].copies:0;
  const P={ads,counted,stopped,sellers,n,copies,market,markets};
  const why=[];
- if(!counted.length)why.push('لا إعلان نشط: كل إعلاناته متوقفة');
+ /* كل إعلاناته متوقفة: إن استمر أحدها 8 أيام فأكثر = «توقف بعد نجاح» (فرصة لسوق آخر)، وإلا يُقصى */
+ if(!counted.length){const run=Math.max(-1,...ads.filter(a=>a.start&&a.end).map(a=>Math.floor((a.end-a.start)/D)));
+  if(run>=8)P.ended={days:run,last:Math.max(...ads.filter(a=>a.end).map(a=>+a.end))};else why.push('لا إعلان نشط: كل إعلاناته متوقفة'+(run>=0?' بعد '+run+' أيام فقط':''))}
  if(counted.length){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
   const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
   if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));
-  /* الهش وكبير الحجم: يحكم فيهما فحص الصلاحية أدناه (موازنة أدلة + استثناء الإكسسوارات)، لا كلمة واحدة في أي مكان */
-  /* هل يبيع منتجاً مادياً يُشحن؟ يُقصى المنتج إن كان نصف إعلاناته أو أكثر خدمة/دورة/فعالية/محلاً/شركة/تطبيقاً/أكلاً/كبيراً/هشاً */
+  /* هل يبيع منتجاً مادياً؟ يُقصى إن كان نصف إعلاناته أو أكثر خدمة/دورة/فعالية/محلاً/شركة/تطبيقاً */
   if(PCK&&L.check!==false){const ig=L.ignore&&L.ignore.size?L.ignore:null,ap=L.allowPages;
-   const rs=counted.map(a=>ap&&ap.has(String(a.page_id))?{ok:true}:(a._pc||(a._pc=PCK.check(a,{country:a.country||L.market,ignore:ig})))),bad=rs.filter(r=>!r.ok);
+   const rs=counted.map(a=>ap&&ap.has(String(a.page_id))?{ok:true}:(a._pc||(a._pc=PCK.check(a,{country:a.country||L.market,ignore:ig,hard:false})))),bad=rs.filter(r=>!r.ok);
+   /* الهش وكبير الحجم والأكل: تنبيه فقط (وسم)، لا إقصاء */
+   const wr=rs.filter(r=>r.warn);if(wr.length&&wr.length*2>=counted.length){const w=wr[0].warn;P.warn='⚠️ قد يكون '+w.label+(w.terms&&w.terms.length?' ('+w.terms.slice(0,2).join('، ')+')':'')}
    if(bad.length&&bad.length*2>=counted.length){const by={};bad.forEach(r=>{by[r.kind]=(by[r.kind]||0)+1});const top=Object.keys(by).sort((x,y)=>by[y]-by[x])[0],r=bad.find(x=>x.kind===top);
     why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(r.ctx?' · في النص: …'+r.ctx+'…':'')+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''));
     P.fix={terms:[...new Set(bad.filter(x=>x.kind===top).flatMap(x=>x.terms||[]))].slice(0,6),pages:[...new Set(counted.filter((a,i)=>!rs[i].ok).map(a=>String(a.page_id||'')).filter(Boolean))].slice(0,10)}}}}
  P.why=why;P.excl=why.length>0;
  const mk=counted.map(a=>hostOf(a)).find(h=>MARKET.test(h));P.mktTag=mk?MKN(mk):'';
- let tags=[],tg=new Set(),benOk=false,strong=false;
- counted.forEach(a=>{const r=benefitAd(a,L);if(r.ok&&r.tag){benOk=true;if(r.strong)strong=true;if(!tags.includes(r.tag)&&tags.length<3)tags.push(r.tag);r.tg.forEach(x=>tg.add(x))}});   // الفائدة لا تُحتسب إلا بوسم واحد على الأقل يصفها
- P.benOk=benOk;P.strong=strong;P.tags=tags;P.tg=tg;P.proofs=proofs||new Map();
- P.trend=trendOf(P,NOW);
- const txt=N(counted.map(a=>a.title+' '+a.body).join(' '));P.seasTag=seasonOf(txt);P.seas=!!P.seasTag;
+ /* الفائدة: 2 = في العنوان/أول النص، 1 = في باقي النص فقط، 0 = بلا فائدة واضحة. تُرتِّب داخل التصنيف ولا تُقصي */
+ const pool=counted.length?counted:ads;let tags=[],tg=new Set(),ben=0;
+ const take=r=>{if(r.ok&&r.tag){if(!tags.includes(r.tag)&&tags.length<3)tags.push(r.tag);r.tg.forEach(x=>tg.add(x));return true}return false};
+ pool.forEach(a=>{if(take(benefitAd(a,L)))ben=2});
+ if(!ben)pool.forEach(a=>{if(String(a.body).length>160&&take(benefitAd(a,L,true)))ben=1});
+ P.ben=ben;P.benOk=ben>0;P.strong=ben===2;P.tags=tags;P.tg=tg;P.proofs=proofs||new Map();P.trend='';
+ const txt=N(pool.map(a=>a.title+' '+a.body).join(' '));P.seasTag=seasonOf(txt);P.seas=!!P.seasTag;
  P.q=N(txt+' '+sellers.map(s=>s.name).join(' '));
  return P}
 function similar(P){const idx=new Map();P.forEach((p,i)=>p.tg.forEach(t=>{let s=idx.get(t);if(!s)idx.set(t,s=new Set());s.add(i)}));
@@ -218,40 +225,33 @@ function similar(P){const idx=new Map();P.forEach((p,i)=>p.tg.forEach(t=>{let s=
   p.sim=s.size;p.simNames=[...s].slice(0,4).map(j=>P[j].name);p.simOk=p.tg.size>0&&p.sim<=2})}
 /* ---------- تقييم كل إعلان: المدة تخصه، والباقي مشترك بين إعلانات المنتج ---------- */
 function scoreAd(a,P,NOW){
- const ag=age(a,NOW),dated=ag!=null,pct=!dated||ag<=3?0:ag<=7?.5:ag<=30?1:ag<=60?.85:.8;
+ const ag=age(a,NOW),dated=ag!=null,cat=TIER(dated?ag:null);
+ const BL=['بلا فائدة واضحة','في نص الإعلان','في العنوان'];
  const ev=[
-  {k:'dur',name:'مدة الإعلان',w:37,present:dated&&ag>=4,pct,tag:!dated||ag<=3?'':ag<=7?'اجتاز التجربة الأولى':ag<=30?'مدة جولد':ag<=60?'قديم نسبياً في السوق':'قديم في السوق'},
-  {k:'ben',name:'الفائدة',w:26,present:P.benOk,pct:P.benOk?1:0,tag:P.benOk&&P.tags&&P.tags[0]?P.tags[0]:''},
-  {k:'sell',name:'قلة البائعين',w:19,present:P.n<=SELL(P.market),pct:P.n<=SELL(P.market)?1:0,tag:'الحد في هذا السوق: '+SELL(P.market)+' بائعين'},
-  {k:'copies',name:'عدد النسخ',w:13,present:P.copies>=2,pct:P.copies>=2?1:0},
-  {k:'sim',name:'قلة المنتجات المشابهة',w:5,present:!!P.simOk,pct:P.simOk?1:0},
-  {k:'trd',name:'اتجاه السوق (وسم فقط)',w:0,present:false,pct:0,val:P.trend||''}];
- ev.forEach(e=>e.pts=e.w*e.pct);
- const raw=ev.reduce((s,e)=>s+e.pts,0),score=NF(raw);
- let cat,range='';
- cat=TIER(dated?ag:null,score);
- /* الجوهرة تشترط الفائدة + (قلة البائعين أو تعدد النسخ). وإلا «رابح محتمل» مع ما ينقصه */
- const miss=[];if(cat==='gem'||cat==='prom'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat=cat==='gem'?'maybe':'trial'}
- const promising=false;   // «الواعد» صار تصنيفاً مستقلاً
+  {k:'dur',name:'مدة الإعلان (أساس التصنيف)',present:dated,val:dated?ag+' يوم':'بلا تاريخ',tag:!dated||ag<=3?'':ag<=7?'اجتاز التجربة الأولى':ag<=30?'مدة جولد':ag<=60?'قديم نسبياً في السوق':'قديم في السوق'},
+  {k:'ben',name:'الفائدة (ترتيب داخل التصنيف)',present:P.ben>0,val:BL[P.ben||0],tag:P.tags&&P.tags[0]?P.tags[0]:''}];
+ const score=(P.ben||0)*50;   // 100 فائدة في العنوان · 50 في النص · 0 بلا فائدة
  const nS=a.stat==='none',note=nS&&!dated?'بلا حالة وبلا تاريخ':nS?'بلا حالة':!dated?'بلا تاريخ':'';
- return{a,age:ag,ev,raw,score,cat,range,promising,note,miss}}
+ return{a,age:ag,ev,raw:score,score,cat,range:'',promising:false,note,miss:[]}}
 /* ---------- الواجهة الرئيسية للنواة ---------- */
 function analyze(rows,NOW,L){
  const P=groupAds(rows).map(g=>mkProduct(g.ads,NOW,L,g.proofs));
  const fl=t=>t.split(/\n/).map(x=>x.replace(/[*#_]|[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu,'').trim()).find(x=>x.length>3)||'';
  P.forEach(p=>{
   const top=p.counted.slice().sort((x,y)=>(y.start?+y.start:0)-(x.start?+x.start:0))[0]||p.ads[0];
-  p.top=top;p.name=(top.title||fl(top.body)||top.domain||'منتج').slice(0,80);
-  p.k=(top.domain||'')+'|'+N(p.name).slice(0,24);
+  p.top=top;p.name=cut(top.title||fl(top.body)||top.domain||'منتج',80);
+  p.k=(top.domain||'')+'|'+cut(N(p.name),24);
   /* السعر بعملته (من النص أو عملة السوق) + ما يعادله بالدينار */
   p.counted.forEach(a=>{if(a._p&&!a._cur)a._cur=MKT?MKT.currencyOf(a.title+' '+a.body,a._mk):'DZD'});
   p.cur=modeOf(p.counted.filter(a=>a._p).map(a=>a._cur))||(MKT&&p.market&&MKT.COUNTRIES[p.market]?MKT.COUNTRIES[p.market].cur:'DZD');
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
- similar(P);
- const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,low:6,excl:7},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← رابح محتمل ← قديم ← ضعيف ← مقصاة
+ const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,ended:6,low:7,excl:8},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← توقف بعد نجاح ← ضعيف ← مقصاة
  P.forEach(p=>{
-  p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
+  p.recs=(p.ended?p.ads:p.counted).map(a=>scoreAd(a,p,NOW));
+  if(p.ended){const ref=p.recs.slice().sort((x,y)=>((y.a.end&&y.a.start?y.a.end-y.a.start:0)-(x.a.end&&x.a.start?x.a.end-x.a.start:0)))[0];
+   p.hits=p.tags.map(t=>({label:t,w:3}));p.pages=(p.ads[0]&&p.ads[0].page_name)||'—';p.also=[];
+   p.ref=ref;p.top=ref.a;p.cat=p.tier='ended';p.score=ref.score;p.promising=false;p.days=p.ended.days;p.rank=rank.ended;p.oldInfo=null;out.push(p);return}
   p.hits=p.tags.map(t=>({label:t,w:3}));
   p.pages=(p.sellers[0]?p.sellers[0].name:'—')+(p.n>1?' و'+(p.n-1)+' آخرين':'');
   p.also=[];
@@ -260,12 +260,12 @@ function analyze(rows,NOW,L){
   /* كل نسخة (إعلان) تُوضع في تصنيفها حسب عمرها: للمنتج مدخل في كل تصنيف تقع فيه نسخه */
   const by=new Map();p.recs.forEach(r=>{if(!by.has(r.cat))by.set(r.cat,[]);by.get(r.cat).push(r)});
   const cats=[...by.keys()].sort((x,y)=>rank[x]-rank[y]);
-  cats.forEach((c,i)=>{const q=i?{...p}:p,rs=by.get(c).slice().sort((x,y)=>y.score-x.score||(y.age==null?-1:y.age)-(x.age==null?-1:x.age));
+  cats.forEach((c,i)=>{const q=i?{...p}:p,rs=by.get(c).slice().sort((x,y)=>(y.age==null?-1:y.age)-(x.age==null?-1:x.age));
    q.ref=rs[0];q.top=q.ref.a;q.cat=q.tier=c;q.score=q.ref.score;q.promising=c==='trial'&&rs.some(r=>r.promising);
    q.days=q.ref.age!=null?q.ref.age:0;q.rank=rank[c];q.also=cats.filter(x=>x!==c);
-   q.oldInfo=null;if(c==='old'){const E=q.ref.ev.filter(e=>e.w&&e.k!=='dur'),miss=E.filter(e=>!e.present).map(e=>e.name);q.oldInfo={met:E.filter(e=>e.present).map(e=>e.name),miss,all:!miss.length,up:q.also.filter(x=>x==='gem'||x==='fire')}}
+   q.oldInfo=null;
    if(i)q.k=p.k+'#'+c;out.push(q)})});
- out.sort((a,b)=>a.rank-b.rank||(b.promising?1:0)-(a.promising?1:0)||b.score-a.score||(a.seas-b.seas));
+ out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
 return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
 })();

@@ -20,40 +20,64 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const rows = [
       ad('1', { title: 'جهاز يقضي على الناموس', body: 'السعر 2900 دج التوصيل 58 ولاية', start_date: day(2), link_url: 'https://a.dz/products/mosq' }),
       ad('2', { title: 'كريم مضاد للتعرق', body: 'السعر 1900 دج الدفع عند الاستلام', start_date: day(5), link_url: 'https://b.dz/products/anti-sweat-cream' }),
-      ad('3', { title: 'كريم مضاد للتعرق', body: 'السعر 1900 دج الدفع عند الاستلام', start_date: day(6), link_url: 'https://b.dz/products/anti-sweat-cream', page_id: 'p2', page_name: 'متجر 2' }),
       ad('4', { title: 'مصباح يساعد طفلك على النوم', body: 'السعر 3500 دج التوصيل مجاني', start_date: day(15), link_url: 'https://c.dz/products/lamp' }),
+      ad('7', { title: 'ساعة يد أنيقة', body: 'ساعة عادية بتصميم جميل. السعر 2500 دج', start_date: day(25), link_url: 'https://g.dz/products/watch' }),
       ad('5', { title: 'مرآة حائط كبيرة', body: 'مرآة جدارية كبيرة بإطار ذهبي للصالون. السعر 9000 دج', start_date: day(12), link_url: 'https://d.dz/products/mirror' }),
-      ad('6', { title: 'قشابية جزائرية أصيلة', body: 'لباس المرأة الجزائرية التقليدي، يحمي من البرد. السعر 6500 دج التوصيل لكل الولايات', start_date: day(12), link_url: 'https://e.dz/products/qachabia' })
+      ad('6', { title: 'قشابية جزائرية أصيلة', body: 'لباس المرأة الجزائرية التقليدي، يحمي من البرد. السعر 6500 دج التوصيل لكل الولايات', start_date: day(12), link_url: 'https://e.dz/products/qachabia' }),
+      ad('8', { title: 'منظف سحري للسيراميك', body: 'السعر 1200 دج. ' + 'منتج جديد بتركيبة فعالة وسهل الاستعمال في كل البيت والمطبخ والحمام وبدون مجهود كبير منك. '.repeat(2) + 'يزيل البقع الصعبة من الأرضيات', start_date: day(18), link_url: 'https://h.dz/products/cleaner' }),
+      ad('9', { status: 'inactive', title: 'جهاز يزيل الشعر', body: 'السعر 4500 دج', start_date: day(50), end_date: day(20), link_url: 'https://i.dz/products/epil' }),
+      ad('10', { page_name: 'Hair Pro', title: 'تكوين في الحلاقة سجل الآن', body: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج', start_date: day(15), link_url: 'https://j.dz/formation' })
     ];
     const f = path.join(DIR, 'ads.json'); fs.writeFileSync(f, JSON.stringify(rows));
     await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' });
     await pg.setInputFiles('#file', f); await pg.waitForSelector('.pc', { timeout: 15000 }); await pg.waitForTimeout(800);
     const tabs = await pg.$$eval('#tabs button', bs => bs.map(x => x.dataset.t));
-    ok(tabs.slice(1, 6).join(',') === 'trial,prom,gem,fire,maybe', 'ترتيب التبويبات: تحت التجربة ← واعد ← جوهرة ← رابح ← رابح محتمل');
-    const cats = await pg.evaluate(() => window.WPR.PROD().map(p => [p.cat, p.name]));
-    ok(cats[0][0] === 'trial' && cats[1][0] === 'prom', 'ترتيب البطاقات يبدأ بتحت التجربة ثم واعد: ' + JSON.stringify(cats));
-    ok(cats.some(c => c[0] === 'prom' && /تعرق/.test(c[1])), 'إعلان عمره 5-6 أيام بنسختين وفائدة = 🌱 واعد');
-    ok(cats.some(c => c[0] === 'gem' && /قشابية/.test(c[1])), 'القشابية لم تعد تُقصى بسبب «المرأة»');
-    // زر «سبب خاطئ» على المرآة
+    ok(tabs.slice(1, 8).join(',') === 'trial,prom,gem,fire,old,ended,low', 'التبويبات: تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← توقف بعد نجاح ← ضعيف: ' + tabs.join(','));
+    const P = await pg.evaluate(() => window.WPR.PROD().map(p => ({ cat: p.cat, name: p.name, ben: p.ben, warn: p.warn || '' })));
+    const names = P.map(p => p.cat + ':' + p.name);
+    ok(P[0].cat === 'trial' && P[1].cat === 'prom', 'الترتيب يبدأ بتحت التجربة ثم واعد: ' + JSON.stringify(names));
+    const gems = P.filter(p => p.cat === 'gem');
+    ok(gems.map(p => p.ben).join(',') === [...gems.map(p => p.ben)].sort((a, b) => b - a).join(',') && gems[gems.length - 1].ben === 0, 'داخل «جوهرة»: الفائدة في العنوان ← في النص ← بلا فائدة: ' + gems.map(p => p.name + '(' + p.ben + ')').join(' · '));
+    ok(gems.some(p => /منظف/.test(p.name) && p.ben === 1), 'الفائدة في باقي النص = ☑️ «فائدة في النص»');
+    ok(gems.some(p => /ساعة/.test(p.name)) , 'منتج بلا فائدة يبقى في تصنيف مدته (لا يختفي)');
+    ok(gems.some(p => /قشابية/.test(p.name)), 'القشابية لا تُقصى بسبب «المرأة»');
+    ok(gems.some(p => /مرآة/.test(p.name) && /قد يكون هش/.test(p.warn)), 'مرآة الحائط: تنبيه «قد يكون هشاً» بدل الإقصاء');
+    ok(P.some(p => p.cat === 'ended' && /الشعر/.test(p.name)), 'إعلان استمر 30 يوماً ثم توقف = ⏹️ توقف بعد نجاح');
+    if (process.env.SHOT) await pg.locator('#grid').screenshot({ path: process.env.SHOT + '/grid.png' });
+    const badges = await pg.$$eval('.pc .bn', b => b.map(x => x.textContent));
+    ok(badges.includes('✅ فائدة') && badges.includes('☑️ فائدة في النص') && badges.includes('بلا فائدة واضحة') && !(await pg.$('.pc .ring')), 'شارة الفائدة بدل دائرة النقاط');
+    ok(!/بائع/.test(await pg.locator('.pc .pc-st').first().textContent()), 'لا عدد بائعين في البطاقة');
+    // زر «سبب خاطئ» على إعلان تكوين
     await pg.click('#tabs [data-t="excl"]'); await pg.waitForSelector('[data-fix]');
     const why = await pg.locator('.pc .tg.bad').first().textContent();
-    ok(/«مرآة حائط»/.test(why), 'سبب الإقصاء يُظهر الكلمة في جملتها: ' + why.slice(0, 120));
-    const pre = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [{ ad_archive_id: '9001', page_id: '56', page_name: 'Deco', start_date: Math.floor(NOW / 1000) - 864000, is_active: true, collation_count: 1, publisher_platform: ['FACEBOOK'], snapshot: { title: 'مرآة حائط كبيرة', body: { text: 'مرآة جدارية كبيرة بإطار ذهبي. السعر 9000 دج' }, link_url: 'https://deco.dz/products/wall-mirror-1', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/9001.jpg' }] } }], ctx: { query: 'x', country: 'DZ' } } })).json();
-    ok(pre.filtered === 1, 'قبل التصحيح: مرآة الحائط تُستبعد عند الاستقبال');
+    ok(/«تكوين»/.test(why), 'سبب الإقصاء يُظهر الكلمة في جملتها: ' + why.slice(0, 120));
+    const crs = id => ({ ad_archive_id: id, page_id: '5' + id, page_name: 'Hair Pro', start_date: Math.floor(NOW / 1000) - 864000, is_active: true, collation_count: 1, publisher_platform: ['FACEBOOK'],
+      snapshot: { title: 'تكوين في الحلاقة سجل الآن', body: { text: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج' }, link_url: 'https://hair.dz/formation-' + id, display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/' + id + '.jpg' }] } });
+    const pre = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [crs('9001')], ctx: { query: 'x', country: 'DZ' } } })).json();
+    ok(pre.filtered === 1, 'قبل التصحيح: إعلان التكوين يُستبعد عند الاستقبال');
+    const mir = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [Object.assign(crs('9003'), { snapshot: { title: 'مرآة حائط كبيرة', body: { text: 'مرآة جدارية كبيرة بإطار. السعر 9000 دج' }, link_url: 'https://deco.dz/products/mirror-9003', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/9003.jpg' }] } })], ctx: { query: 'x', country: 'DZ' } } })).json();
+    ok(mir.added === 1 && !mir.filtered, 'الهش لا يُستبعد عند الاستقبال');
     await pg.click('[data-fix]'); await pg.waitForFunction(() => /تم التصحيح/.test(document.querySelector('#toasts').textContent), null, { timeout: 8000 });
     await pg.waitForFunction(() => !window.WPR.PROD().some(p => p.cat === 'excl'), null, { timeout: 8000 });
     ok(true, 'بعد «سبب خاطئ» عاد المنتج');
     const fx = await (await pg.request.get(BASE + '/api/lib/fix')).json();
-    ok(fx.ignore.includes('مرآة حائط'), 'التصحيح محفوظ في الحساب');
-    // يُطبَّق عند الاستقبال أيضاً
-    const mirror = id => ({ ad_archive_id: id, page_id: '55', page_name: 'Deco', start_date: Math.floor(NOW / 1000) - 864000, is_active: true, collation_count: 1, publisher_platform: ['FACEBOOK'],
-      snapshot: { title: 'مرآة حائط كبيرة', body: { text: 'مرآة جدارية كبيرة بإطار ذهبي. السعر 9000 دج' }, link_url: 'https://deco.dz/products/wall-mirror-' + id, cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/' + id + '.jpg' }] } });
-    const ing = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [mirror('9002')], ctx: { query: 'x', country: 'DZ' } } })).json();
-    ok(ing.added === 1 && !ing.filtered, 'الاستقبال يحترم التصحيح (لا استبعاد بنفس الكلمة): ' + JSON.stringify(ing).slice(0, 120));
-    await pg.reload(); await pg.waitForSelector('[data-unfix="مرآة حائط"]', { state: 'attached', timeout: 8000 });
-    await pg.evaluate(() => document.querySelector('[data-unfix="مرآة حائط"]').click());
+    ok(fx.ignore.includes('تكوين'), 'التصحيح محفوظ في الحساب: ' + fx.ignore.join('،'));
+    const ing = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [crs('9002')], ctx: { query: 'x', country: 'DZ' } } })).json();
+    ok(ing.added === 1 && !ing.filtered, 'الاستقبال يحترم التصحيح: ' + JSON.stringify(ing).slice(0, 120));
+    await pg.reload(); await pg.waitForSelector('[data-unfix="تكوين"]', { state: 'attached', timeout: 8000 });
+    await pg.evaluate(() => document.querySelector('[data-unfix="تكوين"]').click());
     await pg.waitForFunction(() => /تم التراجع/.test(document.querySelector('#toasts').textContent), null, { timeout: 8000 });
-    ok(!(await (await pg.request.get(BASE + '/api/lib/fix')).json()).ignore.includes('مرآة حائط'), 'التراجع عن التصحيح من إعدادات التحليل');
+    ok(!(await (await pg.request.get(BASE + '/api/lib/fix')).json()).ignore.includes('تكوين'), 'التراجع عن التصحيح من إعدادات التحليل');
+    // «URI malformed»: نص فيه نصف إيموجي (من بيانات قديمة) يُفتح من الأرشيف ويُحلَّل بلا خطأ
+    const half = '😀'.slice(0, 1);
+    const bad = [ad('u1', { title: 'منتج رائع ' + half, body: 'يزيل البقع ' + half + ' السعر 2000 دج', start_date: day(10), link_url: 'https://u.dz/products/x' + half }),
+      ad('u2', { title: 'x'.repeat(79) + '😀', body: 'جهاز يقضي على الناموس', start_date: day(12), link_url: 'https://u.dz/products/y' })];
+    const run = await (await pg.request.post(BASE + '/api/runs', { data: { label: 'بيانات بإيموجي مقطوع', rows: bad } })).json();
+    await pg.goto(BASE + '/archive'); await pg.waitForSelector('[data-a="open"][data-id="' + run.id + '"]');
+    await pg.click('[data-a="open"][data-id="' + run.id + '"]'); await pg.waitForSelector('.pc', { timeout: 15000 }); await pg.waitForTimeout(600);
+    const toasts = await pg.locator('#toasts').textContent();
+    ok(!/URI malformed/.test(toasts) && (await pg.$$('.pc')).length >= 2, 'فتح نتيجة فيها نصف إيموجي من الأرشيف يعمل (بلا «URI malformed»)');
+    ok(await pg.evaluate(() => { try { encodeURIComponent('a' + '😀'.slice(0, 1)); return true; } catch (e) { return false; } }), 'الترميز في الصفحة لا يسقط بنصف حرف');
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log('\n✅ اختبار المعايير:', pass, 'فحصاً ناجحاً');
   } catch (e) { console.error('✖', e.message, '\n', log.slice(-1500)); process.exitCode = 1; }

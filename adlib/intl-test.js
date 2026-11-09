@@ -27,13 +27,14 @@ function client() {
 
 const MARKETS = {
   US: { keep: [raw('Helps your child sleep through the night', 'White noise night light. Free shipping, $29.99.'), raw('Say goodbye to pet hair', 'Reusable lint roller. Buy 1 get 1 free.')],
-    drop: [raw('Join our free masterclass', 'Learn Amazon FBA. Enroll now!', { cta: 'SIGN_UP' }), raw('Fresh homemade cookies', 'Chocolate chip cookies baked daily.', { cta: 'ORDER_NOW' }),
-      raw('Grand opening!', 'Visit our store at 12 Main St. Opening hours 9-9.', { cta: 'GET_DIRECTIONS', link: 'https://maps.app.goo.gl/x' })] },
+    drop: [raw('Join our free masterclass', 'Learn Amazon FBA. Enroll now!', { cta: 'SIGN_UP' }),
+      raw('Grand opening!', 'Visit our store at 12 Main St. Opening hours 9-9.', { cta: 'GET_DIRECTIONS', link: 'https://maps.app.goo.gl/x' })],
+    warn: [raw('Fresh homemade cookies', 'Chocolate chip cookies baked daily.', { cta: 'ORDER_NOW' })] },
   FR: { keep: [raw('Dites adieu aux moustiques', 'Lampe anti-moustique USB. Livraison gratuite, 24,90€.')],
-    drop: [raw('Formation en ligne certifiante', 'Inscrivez-vous, places limitées !', { cta: 'SIGN_UP' }), raw('Canapé d’angle 5 places', 'Livraison offerte. 899€')] },
+    drop: [raw('Formation en ligne certifiante', 'Inscrivez-vous, places limitées !', { cta: 'SIGN_UP' })], warn: [raw('Canapé d’angle 5 places', 'Livraison offerte. 899€')] },
   VN: { keep: [raw('Giúp bé ngủ ngon', 'Đèn ngủ cho bé. Freeship toàn quốc, 199k.')],
-    drop: [raw('Khóa học livestream', 'Đăng ký học ngay hôm nay!', { cta: 'SIGN_UP' }), raw('Bánh trung thu handmade', 'Hộp 4 bánh, giao toàn quốc.')] },
-  TW: { keep: [raw('告別腰痛', '人體工學護腰坐墊，免運，NT$590')], drop: [raw('鳳梨酥禮盒', '在地手工鳳梨酥，限時優惠。'), raw('新店開幕', '歡迎蒞臨！營業時間 11:00-21:00', { cta: 'GET_DIRECTIONS' })] },
+    drop: [raw('Khóa học livestream', 'Đăng ký học ngay hôm nay!', { cta: 'SIGN_UP' })], warn: [raw('Bánh trung thu handmade', 'Hộp 4 bánh, giao toàn quốc.')] },
+  TW: { keep: [raw('告別腰痛', '人體工學護腰坐墊，免運，NT$590')], warn: [raw('鳳梨酥禮盒', '在地手工鳳梨酥，限時優惠。')], drop: [raw('新店開幕', '歡迎蒞臨！營業時間 11:00-21:00', { cta: 'GET_DIRECTIONS' })] },
   ID: { keep: [raw('Atasi jerawat dalam 7 hari', 'Serum anti jerawat. Gratis ongkir, bisa COD. Rp89.000')], drop: [raw('Kursus digital marketing', 'Kelas online bersertifikat. Daftar sekarang!', { cta: 'SIGN_UP' })] },
   PH: { keep: [raw('Wala nang lamok!', 'Mosquito killer lamp. COD nationwide, ₱399.')], drop: [raw("We're hiring!", 'Call center agents. Apply now!', { cta: 'APPLY_NOW' })] },
   IN: { keep: [raw('Get rid of back pain', 'Posture corrector belt. Cash on delivery. ₹499.')], drop: [raw('Admissions open', 'NEET coaching classes. Enroll now.', { cta: 'SIGN_UP', cats: ['Education'] })] },
@@ -41,7 +42,7 @@ const MARKETS = {
   GB: { keep: [raw('Get rid of damp for good', 'Mini dehumidifier. Free UK delivery. £34.99')], drop: [raw('Summer Food Festival', 'Get your tickets now!', { cta: 'BUY_TICKETS' })] },
   ES: { keep: [raw('Adiós a las manchas de tu sofá', 'Limpiador portátil. Envío gratis, 29,95€.')], drop: [raw('Curso online de maquillaje', '¡Inscríbete hoy!', { cta: 'SIGN_UP' })] },
   DZ: { keep: [raw('يساعد طفلك على النوم', 'مصباح ليلي. التوصيل لـ 58 ولاية والدفع عند الاستلام. 3500 دج'), raw('وداعا لمشاكل التسرب', 'شريط لاصق يحبّس التسرب. خدمة التوصيل لجميع الولايات. 2200 دج')],
-    drop: [raw('دورة تكوينية في الحلاقة', 'التسجيلات مفتوحة! سجل الآن', { cta: 'SIGN_UP' }), raw('حلويات تقليدية', 'مقروط وبقلاوة. اطلب الآن')] }
+    drop: [raw('دورة تكوينية في الحلاقة', 'التسجيلات مفتوحة! سجل الآن', { cta: 'SIGN_UP' })], warn: [raw('حلويات تقليدية', 'مقروط وبقلاوة. اطلب الآن')] }
 };
 
 (async () => {
@@ -65,9 +66,10 @@ const MARKETS = {
     // ---- ingestion per country
     const summary = [];
     for (const [cc, set] of Object.entries(MARKETS)) {
-      const r = await A('POST', '/api/lib/ingest', { batch: 'b-' + cc, ads: set.keep.concat(set.drop), ctx: { query: 'q', country: cc, label: 'جمع ' + cc } });
+      const r = await A('POST', '/api/lib/ingest', { batch: 'b-' + cc, ads: set.keep.concat(set.drop, set.warn || []), ctx: { query: 'q', country: cc, label: 'جمع ' + cc } });
       ok(r.status === 200, cc + ' ingest ' + JSON.stringify(r.body));
-      ok(r.body.added === set.keep.length, `${cc}: ${set.keep.length} products kept (got ${r.body.added})`);
+      const kept = set.keep.length + (set.warn || []).length;   // الأكل/الكبير/الهش: تُحفظ مع تنبيه
+      ok(r.body.added === kept, `${cc}: ${kept} products kept (got ${r.body.added})`);
       ok(r.body.filtered === set.drop.length, `${cc}: ${set.drop.length} non-products filtered (got ${r.body.filtered} ${JSON.stringify(r.body.byKind)})`);
       summary.push(`${cc} +${r.body.added}/-${r.body.filtered}`);
     }
@@ -78,14 +80,15 @@ const MARKETS = {
     const runs = (await A('GET', '/api/runs')).body;
     const us = runs.find(x => /US/.test(x.label));
     const rows = (await A('GET', '/api/runs/' + us.id)).body.rows;
-    ok(rows.every(r => r.country === 'US' && r.cta_type === 'SHOP_NOW'), 'rows carry country and CTA type');
+    ok(rows.every(r => r.country === 'US' && r.cta_type) && rows.filter(r => r.cta_type === 'SHOP_NOW').length === MARKETS.US.keep.length, 'rows carry country and CTA type');
     const offRun = runs.find(x => x.ads === MARKETS.US.drop.length && !/US/.test(x.label));
     const offRows = (await A('GET', '/api/runs/' + offRun.id)).body.rows;
     const L = CORE.buildLists({ strong: 'Helps, Say goodbye to', normal: '', brands: '', bulky: '', fragile: '' });
     const res = CORE.analyze(offRows.map(CORE.normRow), Date.now(), L);
-    ok(res.length === 3 && res.every(p => p.excl && p.why.some(w => /ليس منتجاً صالحاً/.test(w))), 'analysis excludes non-products that were stored with the filter off');
+    ok(res.length === MARKETS.US.drop.length && res.every(p => p.excl && p.why.some(w => /ليس منتجاً صالحاً/.test(w))), 'analysis excludes non-products that were stored with the filter off');
     const resUs = CORE.analyze(rows.map(CORE.normRow), Date.now(), L);
     ok(resUs.every(p => !p.excl) && resUs.some(p => p.benOk), 'US products stay and English golden words count as benefit');
+    ok(resUs.some(p => /قد يكون/.test(p.warn || '') && /cookies/i.test(p.name)), 'food is kept with a warning tag');
     console.log('ingest by country:', summary.join(' · '));
     console.log(`PASS ${pass} international integration checks`);
   } catch (e) { console.error('FAIL', e.message); console.error(log.slice(-1500)); process.exitCode = 1; } finally { srv.kill(); fs.rmSync(DIR, { recursive: true, force: true }); }
