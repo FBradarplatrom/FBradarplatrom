@@ -55,7 +55,8 @@ async function vpass(){const G=window.RadarGapMatch;if(!G||!PROD.length)return;c
  if(!merged)return;
  await analyze();
  if($('#note').textContent.includes('🔗'))return;$('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
-async function load(files){VP++;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
+let RST=null;
+async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
  for(const f of files){lm=Math.max(lm,f.lastModified||0);if(Array.isArray(f.rows)){rows=rows.concat(f.rows);continue}   /* صفوف جاهزة من المنصة: بلا تحويل إلى ملف ثم قراءته */
   try{rows=rows.concat(await readFile(f))}catch(e){msg('تعذّرت قراءة الملف '+f.name+'. تأكد أنه JSON أو Excel أو CSV سليم.',1)}}
  const seen=new Set();ALL=[];
@@ -88,6 +89,11 @@ async function analyze(){
   '';
  render()}
 
+/* أرقام أعلى صفحة التحليل: كل إعلان وكل منتج يُعد مرة واحدة */
+function sumStats(){const U=new Map();PROD.forEach(p=>{if(!U.has(p.ads))U.set(p.ads,p)});   /* مداخل المنتج الواحد في عدة تصنيفات تتشارك نفس قائمة الإعلانات */const ps=[...U.values()],ok=ps.filter(p=>!p.excl);
+ const inAds=ok.flatMap(p=>p.ended?p.ads:p.counted),exclP=ps.filter(p=>p.excl).reduce((s,p)=>s+p.ads.length,0),stoppedIn=ok.reduce((s,p)=>s+(p.ended?0:p.ads.length-p.counted.length),0),flt=RST&&RST.filtered||0;
+ return{observed:RST&&RST.observed?RST.observed:null,searches:RST&&RST.searches||0,fetched:ALL.length+flt,analyzed:inAds.length,excluded:exclP+stoppedIn+flt,
+  excl_detail:`عند الاستقبال (ليست منتجات): ${flt} · في التحليل (علامة رسمية/ليس منتجاً/متوقف سريعاً): ${exclP} · متوقفة داخل منتجات نشطة: ${stoppedIn}`,products:ok.length,sellers:CORE.sellerCount(inAds)}}
 function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'+id)||{}).checked;
  const q=CORE.N(v('q')).trim(),md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
@@ -96,8 +102,11 @@ function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'
  VIEW=B.filter(p=>tab==='all'?p.cat!=='excl':tab==='fav'?FAV.has(p.k):p.cat===tab);
  const so=v('sort'),tk=p=>{const t=trackOf(p);return t?(t.act?t.n:-1):0};   /* المتابعة: رُصد نشطاً في أيام جمع أكثر = أوثق */
  VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='new'?a.days-b.days:a.rank-b.rank||(b.ben||0)-(a.ben||0)||tk(b)-tk(a)||(b.days||0)-(a.days||0));
- const act=PROD.reduce((s,p)=>s+p.counted.length,0);
- $('#sum').innerHTML=[[ALL.length,'إعلان'],[act,'نشط ويدخل التحليل'],[ALL.length-act,'متوقف (خارج التحليل)'],[new Set(PROD.map(p=>p.k.split('#')[0])).size,'منتج'],[PROD.length,'مدخل بتصنيفاته'],[cnt.gem,'💎 جوهرة'],[VIEW.length,'معروض الآن']].map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+ const S=sumStats(),nf=x=>x==null?'—':Number(x).toLocaleString('ar-DZ');
+ $('#sum').innerHTML=[[S.observed,'الإعلانات المرصودة',S.observed==null?'العدد الذي تعرضه مكتبة ميتا أعلى نتائج البحث. يظهر للدفعات التي جُمعت بالإضافة 1.5 فأحدث':'مجموع ما عرضته مكتبة ميتا أعلى نتائج '+S.searches+' بحث («~N نتيجة»)'],
+  [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار)'],[S.analyzed,'دخلت التحليل','إعلانات نشطة في منتجات غير مستبعدة (وإعلانات «توقف بعد نجاح»)'],
+  [S.excluded,'الإعلانات المستبعدة',S.excl_detail],[S.products,'عدد المنتجات','منتجات مختلفة غير مستبعدة (المنتج الواحد يُعد مرة واحدة ولو ظهر في تصنيفين)'],[S.sellers,'عدد البائعين','صفحات/متاجر مختلفة في الإعلانات التي دخلت التحليل']]
+  .map(x=>`<div class="kpi" title="${esc(x[2]||'')}"><b>${nf(x[0])}</b><span>${x[1]}</span></div>`).join('');
  draw()}
 const ok=u=>/^https?:/i.test(u||'');
 const T=(m,t)=>window.__toast&&window.__toast(m,t);
@@ -143,10 +152,10 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  const media=im?`<div class="pc-media" data-imgs="${esc(JSON.stringify(imgs))}" data-saved="${saved?1:0}" title="اضغط للتكبير"><img loading="lazy" referrerpolicy="no-referrer" alt="" src="${esc(src(im))}" data-o="${esc(im)}" onerror="if(!this.dataset.p&&!${saved?1:0}){this.dataset.p=1;this.src='/api/img?u='+encodeURIComponent(this.dataset.o)}else{this.parentNode.classList.add('noimg');this.remove()}"><span class="zoom">⤢ ${imgs.length>1?imgs.length+' صور':'تكبير'}</span></div>`:'<div class="pc-media noimg"></div>';
  const notes=r&&r.note?`<span class="tg warn">${r.note}</span>`:'';
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
-<div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span>${p.excl?'':benBadge(p)}</div>
+<div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
 <div class="pc-tags">${p.excl?'':`${p.ended?`<span class="tg">استمر ${p.ended.days} يوماً ثم توقف${p.ended.last?' في '+fd(p.ended.last):''}: فرصة لسوق آخر</span>`:r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
-<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div><div><b>${p.ended?p.ended.days:r&&r.age!=null?r.age:'—'}</b><span>${p.ended?'استمر (يوم)':'عمر (يوم)'}</span></div><div><b>${pr}</b><span>السعر</span></div></div>
+<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div>${p.versions>1?`<div title="مجموع نسخ إعلانات هذا المنتج كما تعرضها مكتبة ميتا («X إعلانات تستخدم هذا التصميم»)، معلومة فقط"><b>${p.versions}</b><span>نسخ</span></div>`:''}${p.n>1?`<div title="صفحات/متاجر مختلفة تعلن عن هذا المنتج، معلومة فقط"><b>${p.n}</b><span>بائعين</span></div>`:''}<div><b>${p.ended?p.ended.days:r&&r.age!=null?r.age:'—'}</b><span>${p.ended?'استمر (يوم)':'عمر (يوم)'}</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join('')+(p.fix&&(p.fix.terms.length||p.fix.pages.length)?`<button class="btn ghost sm" data-fix="${esc(p.k)}" title="أعد هذا المنتج ولا تستبعد بهذا السبب مستقبلاً">↩️ سبب خاطئ</button>`:''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
 ${srcBox(p,kw,imgs)}
@@ -163,11 +172,11 @@ function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.
  return{v:2,name:p.name,kw:p.kw||'',cat:p.cat,tier:p.cat,score:p.score,days:p.days,trend:p.trend,seas:p.seas,n:p.n,copies:p.copies,pr:p.pr,price:p.pr,pages:p.pages,why:p.why,stopped:p.stopped,fmt:p.fmt,
   counted:new Array(p.counted.length).fill(0),hits:p.hits.slice(0,8).map(h=>({label:h.label,w:h.w})),tags:p.tags,proofs:[...p.proofs],sim:p.sim,simNames:p.simNames,tgN:p.tg.size,promising:p.promising,also:p.also,oldInfo:p.oldInfo,benOk:p.benOk,top:slim(p.top),images:imgsOf(p),
   sellers:p.sellers.slice(0,12).map(s=>({pid:s.pid||'',name:s.name,host:s.host,copies:s.copies,p:s.p})),
-  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising,miss:r.miss})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||'',mktTag:p.mktTag||'',ben:p.ben||0,warn:p.warn||'',ended:p.ended||null}}
+  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising,miss:r.miss})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||'',mktTag:p.mktTag||'',ben:p.ben||0,versions:p.versions||0,warn:p.warn||'',ended:p.ended||null}}
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
   top:{library_url:s.lib,link_url:s.link},images:[],sellers:[],recs:[],ref:null,excl:false,saved_at:s.date}}
-function counts(){const c={ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
+function counts(){const c={ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);const S=sumStats();c.products=S.products;c.ads=ALL.length;c.active=S.analyzed;c.sellers=S.sellers;c.observed=S.observed;c.excluded=S.excluded;return c}
 
 $('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;
 $('#file').addEventListener('change',e=>load([...e.target.files]));

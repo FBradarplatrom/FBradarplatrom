@@ -30,7 +30,7 @@ function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.l
 function findAll(txt,list){const ms=[];for(const {re,ord} of mxOf(list)){re.lastIndex=0;let m;while((m=re.exec(txt))){let i=1;while(m[i]===undefined&&i<m.length)i++;if(i<m.length)ms.push({e:ord[i-1],s:m.index,t:m.index+m[0].length});if(!m[0].length)re.lastIndex++}}
  ms.sort((a,b)=>(b.t-b.s)-(a.t-a.s));const kept=[];ms.forEach(x=>{if(!kept.some(k=>x.s>=k.s&&x.t<=k.t))kept.push(x)});return kept}
 /* ---------- الأعمدة ---------- */
-const ALIAS={end_date:['end_date','ad_delivery_stop_time','stop_date'],ad_id:['ad_id','id','adid','ad_archive_id'],library_url:['library_url','ad_url','ad_library_url','snapshot_url','permalink'],page_id:['page_id','pageid'],page_name:['page_name','advertiser','page','pagename'],status:['status'],start_date:['start_date','start','startdate'],duplicates:['duplicates','collation_count','variants'],format:['format','media_type'],domain:['domain'],link_url:['link_url','url','link','landing_url'],title:['title','headline'],body:['body','text','ad_text','primary_text'],link_description:['link_description'],image_url:['image_url','image','images','image_urls','original_image_url','resized_image_url','picture','picture_url','thumbnail','thumbnail_url','cover','cover_url','preview_image_url','video_preview_image_url','video_preview_image','poster','media_url'],video_url:['video_url','video','videos','video_urls','video_hd_url','video_sd_url','video_link'],search:['search','keyword'],keywords:['keywords','tags'],product_name:['product_name','product'],store_name:['store_name','shop','store'],image_hash:['image_hash','image_id'],video_hash:['video_hash','video_id'],creative_id:['creative_id','media_id'],collected:['collected_at','scraped_at','collection_date','date_collected','fetched_at'],cta:['cta','cta_text'],cta_type:['cta_type'],cta_group:['cta_group'],page_categories:['page_categories','categories','page_category'],country:['country','market']};
+const ALIAS={collation_id:['collation_id','collationid'],end_date:['end_date','ad_delivery_stop_time','stop_date'],ad_id:['ad_id','id','adid','ad_archive_id'],library_url:['library_url','ad_url','ad_library_url','snapshot_url','permalink'],page_id:['page_id','pageid'],page_name:['page_name','advertiser','page','pagename'],status:['status'],start_date:['start_date','start','startdate'],duplicates:['duplicates','collation_count','variants'],format:['format','media_type'],domain:['domain'],link_url:['link_url','url','link','landing_url'],title:['title','headline'],body:['body','text','ad_text','primary_text'],link_description:['link_description'],image_url:['image_url','image','images','image_urls','original_image_url','resized_image_url','picture','picture_url','thumbnail','thumbnail_url','cover','cover_url','preview_image_url','video_preview_image_url','video_preview_image','poster','media_url'],video_url:['video_url','video','videos','video_urls','video_hd_url','video_sd_url','video_link'],search:['search','keyword'],keywords:['keywords','tags'],product_name:['product_name','product'],store_name:['store_name','shop','store'],image_hash:['image_hash','image_id'],video_hash:['video_hash','video_id'],creative_id:['creative_id','media_id'],collected:['collected_at','scraped_at','collection_date','date_collected','fetched_at'],cta:['cta','cta_text'],cta_type:['cta_type'],cta_group:['cta_group'],page_categories:['page_categories','categories','page_category'],country:['country','market']};
 const firstUrl=v=>{if(v==null||v==='')return'';if(typeof v==='object')try{v=JSON.stringify(v)}catch(e){return''}const m=/https?:\/\/[^\s"'\\\[\]<>,}]+/i.exec(String(v));return m?m[0]:''};
 const allUrls=v=>{if(v==null||v==='')return[];if(typeof v==='object')try{v=JSON.stringify(v)}catch(e){return[]}return String(v).match(/https?:\/\/[^\s"'\\\[\]<>,}]+/gi)||[]};
 const VID=/\.(mp4|webm|mov|m4v|m3u8)(\?|$)/i,IMG=/\.(jpe?g|png|webp|gif)(\?|$)/i,SKIPK=/^(body|text|ad_text|primary_text|title|headline|link_description|link_url|url|link|landing_url|library_url|ad_url|ad_library_url|permalink|snapshot_url|domain)$/;
@@ -51,7 +51,7 @@ function normRow(r){const lo={};for(const k in r)lo[String(k).toLowerCase().trim
  if(!o.image_url)o.image_url=findMedia(lo,'image');
  if(!o.library_url&&/^\d{8,}$/.test(String(o.ad_id||'').trim()))o.library_url='https://www.facebook.com/ads/library/?id='+String(o.ad_id).trim();
  o.start=toDate(o.start_date);o.end=toDate(o.end_date);o.collected=toDate(o.collected);o.stat=stat(o.status);o.format=String(o.format||'').toUpperCase();
- ['title','body','link_description','link_url','page_name','image_url','video_url','library_url','product_name','store_name','keywords','search','duplicates','image_hash','video_hash','creative_id','cta','cta_type','cta_group','page_categories','country'].forEach(k=>o[k]=o[k]!=null?WF(o[k]):'');
+ ['collation_id','title','body','link_description','link_url','page_name','image_url','video_url','library_url','product_name','store_name','keywords','search','duplicates','image_hash','video_hash','creative_id','cta','cta_type','cta_group','page_categories','country'].forEach(k=>o[k]=o[k]!=null?WF(o[k]):'');
  if(!o.domain&&o.link_url)try{o.domain=new URL(o.link_url).hostname}catch(e){}
  return o}
 const SOC=/^(facebook|fb|instagram|whatsapp|m|l\.facebook)\.(com|me)$|^(wa|fb)\.me$/;
@@ -95,6 +95,10 @@ function sameSeller(a,b){
  else{const x=N(a.page_name).trim();if(x&&x===N(b.page_name).trim())return true}
  const s=N(a.store_name).trim();if(s&&s===N(b.store_name).trim())return true;
  const h=hostOf(a);return!!h&&h===hostOf(b)&&!SOC.test(h)&&!MARKET.test(h)}
+function sellerCount(ads){const p=new Map(),f=k=>{while(p.get(k)!==k){p.set(k,p.get(p.get(k)));k=p.get(k)}return k},add=k=>{if(!p.has(k))p.set(k,k)};
+ ads.forEach(a=>{const ks=[];if(a.page_id)ks.push('p:'+a.page_id);else{const x=N(a.page_name).trim();if(x)ks.push('n:'+x)}const s=N(a.store_name).trim();if(s)ks.push('s:'+s);const h=hostOf(a);if(h&&!SOC.test(h)&&!MARKET.test(h))ks.push('h:'+h);
+  ks.forEach(add);for(let i=1;i<ks.length;i++){const x=f(ks[0]),y=f(ks[i]);if(x!==y)p.set(y,x)}});
+ return new Set([...p.keys()].map(f)).size}
 function clusterSellers(ads){const p=ads.map((_,i)=>i),f=i=>{while(p[i]!==i){p[i]=p[p[i]];i=p[i]}return i};
  for(let i=0;i<ads.length;i++)for(let j=i+1;j<ads.length;j++)if(f(i)!==f(j)&&sameSeller(ads[i],ads[j]))p[f(i)]=f(j);
  ads.forEach((a,i)=>a._s=f(i))}
@@ -191,7 +195,10 @@ function mkProduct(ads,NOW,L,proofs){
   const p=a._p??(a._p=price(a.title+' '+a.body));if(p)s.pr.push(p)});
  const sellers=Object.values(S).map(s=>({...s,p:med(s.pr),copies:s.ads.length,lib:s.ads[0].library_url})).sort((a,b)=>b.copies-a.copies),n=sellers.length;
  const copies=n?sellers[0].copies:0;
- const P={ads,counted,stopped,sellers,n,copies,market,markets};
+ /* عدد النسخ (معلومة فقط): مجموع «X إعلانات تستخدم هذا التصميم» من ميتا، مرة واحدة لكل مجموعة نسخ */
+ const vg=new Map();(counted.length?counted:ads).forEach(a=>{const k=a.collation_id?'c'+a.collation_id:'a'+(a.ad_id||a._i);vg.set(k,Math.max(vg.get(k)||1,Math.max(1,parseInt(a.duplicates,10)||1)))});
+ const versions=[...vg.values()].reduce((x,y)=>x+y,0);
+ const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
  const why=[];
  /* كل إعلاناته متوقفة: إن استمر أحدها 8 أيام فأكثر = «توقف بعد نجاح» (فرصة لسوق آخر)، وإلا يُقصى */
  if(!counted.length){const run=Math.max(-1,...ads.filter(a=>a.start&&a.end).map(a=>Math.floor((a.end-a.start)/D)));
@@ -267,6 +274,6 @@ function analyze(rows,NOW,L){
    if(i)q.k=p.k+'#'+c;out.push(q)})});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
-return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
+return{analyze,sellerCount,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
 })();
 if(typeof module!=='undefined')module.exports=CORE;

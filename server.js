@@ -48,6 +48,7 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
 create table if not exists activity(id integer primary key, user_id integer, kind text, ip text, ua text, detail text, at integer);
 create index if not exists activity_u on activity(user_id, at);`);
 try { db.exec('alter table users add column tv integer default 0'); } catch (e) {}
+try { db.exec('alter table runs add column batch text'); } catch (e) {}   // دفعة الجمع (لأرقام صفحة التحليل)
 // إعدادات المنصة المشفّرة (المفاتيح) وحدود الباقات
 require('./adlib/config.js').init(db, t => enc(t), t => dec(t));
 require('./adlib/limits.js').init(db);
@@ -160,10 +161,14 @@ app.get('/api/runs', auth, active, wrap((q, s) => {
     .map(r => ({ ...r, summary: r.summary ? JSON.parse(r.summary) : null, counts: r.counts ? JSON.parse(r.counts) : null })));
 }));
 app.get('/api/runs/:id', auth, active, wrap((q, s) => {
-  const r = db.prepare('select id,source,label,rows,created_at from runs where id=? and user_id=?').get(q.params.id, q.u.id);
+  const r = db.prepare('select id,source,label,rows,created_at,batch from runs where id=? and user_id=?').get(q.params.id, q.u.id);
   if (!r) return s.sendStatus(404);
+  // المرصود (ما تعرضه ميتا لكل بحث، مجموعاً) والمستبعد عند الاستقبال لهذه الدفعة
+  let stats = null;
+  if (r.batch) { try { const b = db.prepare('select observed from lib_bstats where user_id=? and batch_id=?').get(q.u.id, r.batch), ob = b ? JSON.parse(b.observed || '{}') : {};
+    stats = { batch: r.batch, observed: Object.values(ob).reduce((a, x) => a + (+x || 0), 0), searches: Object.keys(ob).length, filtered: db.prepare('select count(*) n from lib_bfilt where user_id=? and batch_id=?').get(q.u.id, r.batch).n }; } catch (e) {} }
   // بلا JSON.parse ثم JSON.stringify لملايين الأحرف: النص المخزَّن يُرسل كما هو
-  s.type('application/json').send('{"id":' + r.id + ',"source":' + JSON.stringify(r.source) + ',"label":' + JSON.stringify(r.label) + ',"created_at":' + r.created_at + ',"rows":' + rowsJson(r) + '}');
+  s.type('application/json').send('{"id":' + r.id + ',"source":' + JSON.stringify(r.source) + ',"label":' + JSON.stringify(r.label) + ',"created_at":' + r.created_at + ',"stats":' + JSON.stringify(stats) + ',"rows":' + rowsJson(r) + '}');
 }));
 app.delete('/api/runs/:id', auth, active, wrap((q, s) => { if (db.prepare('delete from runs where id=? and user_id=?').run(q.params.id, q.u.id).changes) db.prepare('delete from lib_rows where run_id=?').run(q.params.id); s.json({ ok: 1 }); }));
 app.post('/api/runs', auth, active, wrap((q, s) => {
@@ -238,7 +243,7 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
 }));
 app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
-  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
+  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log', 'lib_bstats', 'lib_bfilt'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
   ['delete from watch_ads where watch_id not in (select id from watch_pages)', 'delete from watch_scans where watch_id not in (select id from watch_pages)', 'delete from tt_items where run_id not in (select id from tt_runs)'].forEach(x => db.prepare(x).run());
   db.prepare('delete from users where id=?').run(id); act(q.u.id, 'admin_delete', q, '#' + id); s.json({ ok: 1 });

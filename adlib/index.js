@@ -34,10 +34,13 @@ create table if not exists lib_user(user_id integer primary key, diff text, upda
 create table if not exists lib_kv(k text primary key, v text);
 create table if not exists lib_usage(user_id integer, day text, searches integer default 0, primary key(user_id, day));
 create table if not exists lib_batch(user_id integer, batch_id text, run_id integer, created_at integer, primary key(user_id, batch_id));
+create table if not exists lib_bstats(user_id integer, batch_id text, observed text, primary key(user_id, batch_id));
+create table if not exists lib_bfilt(user_id integer, batch_id text, ad_id text, primary key(user_id, batch_id, ad_id));
 create table if not exists lib_rows(run_id integer, ad_id text, row text, primary key(run_id, ad_id));
 create table if not exists lib_excluded(user_id integer, ad_id text, kind text, why text, label text, row text, created_at integer, primary key(user_id, ad_id));
 create index if not exists lib_excl_t on lib_excluded(user_id, created_at);
 create table if not exists ad_track(user_id integer, ad_id text, first_seen integer, last_seen integer, days integer default 1, active integer, ended integer, start_date text, primary key(user_id, ad_id));`);
+  try { db.exec('alter table runs add column batch text'); } catch (e) {}
   const tx = f => { db.exec('BEGIN'); try { const r = f(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (x) {} throw e; } };
   const kvGet = k => { const r = db.prepare('select v from lib_kv where k=?').get(k); return r ? r.v : null; };
   const kvSet = (k, v) => db.prepare('insert into lib_kv(k,v) values(?,?) on conflict(k) do update set v=excluded.v').run(k, v);
@@ -104,6 +107,13 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
       }
       rows.push(r);
     }
+    // أرقام صفحة التحليل: ما تعرضه ميتا لكل بحث («~220 نتيجة»)، وما استُبعد عند الاستقبال (بلا تكرار)
+    const tot = Math.max(0, Math.floor(+c.total || 0));
+    if (tot && meta.query) {
+      const st = db.prepare('select observed from lib_bstats where user_id=? and batch_id=?').get(u.id, batch), ob = J(st && st.observed, {});
+      if (!(ob[meta.query] >= tot)) { ob[meta.query] = tot; db.prepare('insert into lib_bstats(user_id,batch_id,observed) values(?,?,?) on conflict(user_id,batch_id) do update set observed=excluded.observed').run(u.id, batch, JSON.stringify(ob)); }
+    }
+    if (excl.length) { const fi = db.prepare('insert or ignore into lib_bfilt(user_id,batch_id,ad_id) values(?,?,?)'); tx(() => { for (const [r] of excl) fi.run(u.id, batch, String(r.ad_id)); }); }
     if (excl.length) {
       const ins = db.prepare('insert into lib_excluded(user_id,ad_id,kind,why,label,row,created_at) values(?,?,?,?,?,?,?) on conflict(user_id,ad_id) do update set kind=excluded.kind, why=excluded.why, row=excluded.row, created_at=excluded.created_at');
       tx(() => { for (const [r, v] of excl) ins.run(u.id, r.ad_id, v.kind, String(v.reasons[0] || v.label).slice(0, 200), label, JSON.stringify(r), t); });
@@ -128,10 +138,10 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
         for (const r of J(run.rows, [])) ins0.run(run.id, String(r.ad_id), JSON.stringify(r));
         db.prepare("update runs set rows='@lib', fp=null where id=?").run(run.id);
       }
-      if (open) runId = run.id;
+      if (open) { runId = run.id; db.prepare('update runs set batch=coalesce(batch,?) where id=?').run(batch, run.id); }
       else if (rows.length) {
-        runId = Number(db.prepare("insert into runs(user_id,source,label,ads,rows,created_at,fp) values(?,?,?,0,'@lib',?,null)")
-          .run(u.id, 'adlib', String((label || 'جمع الإعلانات') + (run ? ' · تكملة' : '') + ' · ' + stamp(t)).slice(0, 200), t).lastInsertRowid);
+        runId = Number(db.prepare("insert into runs(user_id,source,label,ads,rows,created_at,fp,batch) values(?,?,?,0,'@lib',?,null,?)")
+          .run(u.id, 'adlib', String((label || 'جمع الإعلانات') + (run ? ' · تكملة' : '') + ' · ' + stamp(t)).slice(0, 200), t, batch).lastInsertRowid);
         db.prepare('insert into lib_batch(user_id,batch_id,run_id,created_at) values(?,?,?,?) on conflict(user_id,batch_id) do update set run_id=excluded.run_id, created_at=excluded.created_at').run(u.id, batch, runId, t);
       }
       if (!runId) return;

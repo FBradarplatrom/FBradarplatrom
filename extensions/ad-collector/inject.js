@@ -12,6 +12,7 @@
 
   // Find every object that looks like an ad: { ad_archive_id, snapshot:{...} }.
   // Structure-agnostic on purpose, so it survives path changes in Meta's JSON.
+  let total = 0;   // «~220 نتيجة»: العدد الذي تعرضه مكتبة الإعلانات أعلى النتائج
   function walk(root, out) {
     const stack = [root];
     while (stack.length) {
@@ -25,6 +26,8 @@
         out.push(o);
         continue;
       }
+      const sr = o.search_results_connection;
+      if (sr && typeof sr === 'object' && typeof sr.count === 'number' && sr.count > total) total = sr.count;
       for (const k in o) {
         const v = o[k];
         if (v && typeof v === 'object') stack.push(v);
@@ -47,8 +50,8 @@
         try { walk(JSON.parse(t), out); } catch (_) { /* ignore bad line */ }
       }
     }
-    if (out.length) {
-      try { window.postMessage({ tag: TAG, ads: out }, window.location.origin); } catch (_) { /* ignore */ }
+    if (out.length || total) {
+      try { window.postMessage({ tag: TAG, ads: out, total }, window.location.origin); } catch (_) { /* ignore */ }
     }
   }
 

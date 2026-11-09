@@ -177,7 +177,7 @@ async function pushAds(msg, q) {
   const seq = ((await get(SK)) || 0) + 1, it = q.items[q.idx];
   const entry = {
     seq, batchId: q.id, t: Date.now(), label: q.label || '', kind: (it && it.kind) || 'fb',
-    ctx: { query: String((msg.ctx && msg.ctx.query) || '').slice(0, 120), country: String((msg.ctx && msg.ctx.country) || '').slice(0, 10), niche: it ? it.niche || '' : '' },
+    ctx: { query: String((msg.ctx && msg.ctx.query) || '').slice(0, 120), country: String((msg.ctx && msg.ctx.country) || '').slice(0, 10), niche: it ? it.niche || '' : '', total: Math.max(0, Math.floor(+(msg.ctx && msg.ctx.total) || 0)) },
     ads: (Array.isArray(msg.raw) ? msg.raw : []).slice(0, 60)
   };
   out.push(entry);

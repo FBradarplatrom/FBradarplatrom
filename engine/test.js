@@ -73,6 +73,11 @@ n=C.normRow({ad_id:'5',snapshot_videos:'[{"video_preview_image_url":"https://s.f
 eq('فيديو من عمود متداخل (يتجاوز صورة المعاينة)',[n.video_url,n.image_url],['https://video.fbcdn.net/a.mp4?x=1','https://s.fbcdn.net/p.jpg']);
 n=C.normRow({ad_id:'6',media:'https://cdn.example.com/x/clip.mp4',other:'https://cdn.example.com/x/pic.jpg'});
 eq('فيديو وصورة من أعمدة بأسماء غير معروفة',[n.video_url,n.image_url],['https://cdn.example.com/x/clip.mp4','https://cdn.example.com/x/pic.jpg']);
+// ===== النسخ والبائعون (معلومة فقط) =====
+P=A([row({ad_id:'v1',page_id:'s1',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'3',collation_id:'G1'}),row({ad_id:'v2',page_id:'s1',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'3',collation_id:'G1'}),
+ row({ad_id:'v3',page_id:'s2',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'2',collation_id:'G2'}),row({ad_id:'v4',page_id:'s3',page_name:'متجر 3',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro'})]);
+eq('النسخ: مجموعة ميتا تُعد مرة واحدة (3 + 2 + 1 = 6)، و3 صفحات بنفس المتجر = بائع واحد',[P.length,P[0].versions,P[0].n],[1,6,1]);
+eq('البائعون بلا تكرار عبر المنتجات (صفحة + متجر)',C.sellerCount([{page_id:'1',link_url:'https://a.dz/x'},{page_id:'2',link_url:'https://a.dz/y'},{page_id:'3',link_url:'https://www.aliexpress.com/item/1.html'},{page_id:'4',link_url:'https://www.aliexpress.com/item/2.html'},{page_name:'متجر',link_url:''},{page_name:'متجر',link_url:''}].map(C.normRow)),4);
 // ===== الإقصاء والتنبيهات والمتوقف =====
 P=A([row({ad_id:'f1',page_id:'f1',title:'ثلاجة صغيرة للسيارة',body:'ثلاجة تبرد مشروباتك. السعر 15000 دج',image_url:'https://c/i/f1.jpg'})]);
 eq('كبير الحجم/هش/أكل: تنبيه لا إقصاء',[P[0].cat!=='excl',/قد يكون/.test(P[0].warn||'')],[true,true]);

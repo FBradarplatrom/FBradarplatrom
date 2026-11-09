@@ -16,6 +16,7 @@
   let settings = { speed: 'normal', maxAds: 200, waitSeconds: 20, activeOnly: true };
 
   const seen = new Set();            // ids surfaced by THIS search
+  let total = 0;                     // عدد النتائج الذي تعرضه مكتبة ميتا لهذا البحث («~220 نتيجة»)
   const sent = new Map();            // id -> signature of what was already handed over
   const early = [];                  // captured before the platform said "start" (kept in memory only)
   let pending = [], flushTimer = null, netCount = 0, lastNewAt = Date.now();
@@ -42,7 +43,8 @@
     flushTimer = null;
     while (pending.length) {
       const chunk = pending.splice(0, 40);
-      send({ cmd: 'ads', raw: chunk, href: location.href, ctx: { query: queryLabel(), country: countryParam() } });
+      if (!total) domTotal();
+      send({ cmd: 'ads', raw: chunk, href: location.href, ctx: { query: queryLabel(), country: countryParam(), total } });
     }
   }
 
@@ -79,6 +81,7 @@
     if (e.source !== window) return;
     const d = e.data;
     if (!d || d.tag !== TAG || !Array.isArray(d.ads)) return;
+    if (+d.total > total) total = +d.total;
     netCount += d.ads.length;
     take(d.ads, 'net');
   });
@@ -90,8 +93,15 @@
       if (!o || typeof o !== 'object') continue;
       if (Array.isArray(o)) { for (let i = 0; i < o.length; i++) stack.push(o[i]); continue; }
       if (o.ad_archive_id != null && o.snapshot && typeof o.snapshot === 'object') { out.push(o); continue; }
+      const sr = o.search_results_connection; if (sr && typeof sr.count === 'number' && sr.count > total) total = sr.count;
       for (const k in o) { const v = o[k]; if (v && typeof v === 'object') stack.push(v); }
     }
+  }
+  // احتياط: قراءة «~220 نتيجة / ~220 results» من الصفحة نفسها
+  const TOT_RE = /^~?\s*([\d][\d.,\s\u00a0\u202f]*)\s*(?:results?|résultats?|resultados|نتيجة|نتائج|ergebnisse|risultati|hasil|kết quả)\b/i;
+  function domTotal() {
+    try { for (const el of document.querySelectorAll('div[role="heading"], h2, h3, span, div')) { if (el.childElementCount > 2) continue; const t = (el.textContent || '').trim(); if (t.length > 40) continue;
+      const m = TOT_RE.exec(t.replace(/[٠-٩]/g, (x) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(x)))); if (m) { const n = parseInt(m[1].replace(/[^\d]/g, ''), 10); if (n > total && n < 1e7) total = n; return; } } } catch (_) { /* ignore */ }
   }
   function scanScripts() {
     const out = [];
@@ -191,7 +201,8 @@
     if (run.status !== 'running') return;
     run.status = 'done';
     flush();
-    send({ cmd: 'job_done', href: location.href, reason, seen: seen.size });
+    if (!total) domTotal();
+    send({ cmd: 'job_done', href: location.href, reason, seen: seen.size, total });
   }
 
   // زر «عرض المزيد / See more» إن ظهر بدل التمرير اللانهائي

@@ -34,7 +34,7 @@ h1{font-size:26px;margin:0;line-height:1.3;letter-spacing:-.2px}h2{font-size:18p
 .kps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:2px}
 .kpi b{font-size:28px;line-height:1.2;letter-spacing:-.5px}.kpi span{color:var(--mut);font-size:13px}.kpi .ic{width:38px;height:38px;border-radius:11px;background:var(--soft);color:var(--brand);display:grid;place-items:center;margin-bottom:8px}.kpi .ic svg{width:20px;height:20px}
-#sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}#sum .kpi b{font-size:24px}
+#sum{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:14px 0}@media(max-width:900px){#sum{grid-template-columns:repeat(3,1fr)}}@media(max-width:420px){#sum{grid-template-columns:repeat(2,1fr)}}#sum .kpi b{font-size:24px}
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 12px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--brand)}
 .pill.ok{background:rgba(5,150,105,.12);color:var(--ok)}.pill.warn{background:rgba(217,119,6,.14);color:var(--warn)}.pill.bad{background:rgba(220,38,38,.12);color:var(--bad)}
 .alert{border-radius:12px;padding:11px 14px;margin:10px 0;background:rgba(5,150,105,.1);color:var(--ok);font-size:14px}.alert.err{background:rgba(220,38,38,.1);color:var(--bad)}.alert.info{background:var(--soft);color:var(--ink)}
@@ -249,7 +249,7 @@ function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.l
 function findAll(txt,list){const ms=[];for(const {re,ord} of mxOf(list)){re.lastIndex=0;let m;while((m=re.exec(txt))){let i=1;while(m[i]===undefined&&i<m.length)i++;if(i<m.length)ms.push({e:ord[i-1],s:m.index,t:m.index+m[0].length});if(!m[0].length)re.lastIndex++}}
  ms.sort((a,b)=>(b.t-b.s)-(a.t-a.s));const kept=[];ms.forEach(x=>{if(!kept.some(k=>x.s>=k.s&&x.t<=k.t))kept.push(x)});return kept}
 /* ---------- الأعمدة ---------- */
-const ALIAS={end_date:['end_date','ad_delivery_stop_time','stop_date'],ad_id:['ad_id','id','adid','ad_archive_id'],library_url:['library_url','ad_url','ad_library_url','snapshot_url','permalink'],page_id:['page_id','pageid'],page_name:['page_name','advertiser','page','pagename'],status:['status'],start_date:['start_date','start','startdate'],duplicates:['duplicates','collation_count','variants'],format:['format','media_type'],domain:['domain'],link_url:['link_url','url','link','landing_url'],title:['title','headline'],body:['body','text','ad_text','primary_text'],link_description:['link_description'],image_url:['image_url','image','images','image_urls','original_image_url','resized_image_url','picture','picture_url','thumbnail','thumbnail_url','cover','cover_url','preview_image_url','video_preview_image_url','video_preview_image','poster','media_url'],video_url:['video_url','video','videos','video_urls','video_hd_url','video_sd_url','video_link'],search:['search','keyword'],keywords:['keywords','tags'],product_name:['product_name','product'],store_name:['store_name','shop','store'],image_hash:['image_hash','image_id'],video_hash:['video_hash','video_id'],creative_id:['creative_id','media_id'],collected:['collected_at','scraped_at','collection_date','date_collected','fetched_at'],cta:['cta','cta_text'],cta_type:['cta_type'],cta_group:['cta_group'],page_categories:['page_categories','categories','page_category'],country:['country','market']};
+const ALIAS={collation_id:['collation_id','collationid'],end_date:['end_date','ad_delivery_stop_time','stop_date'],ad_id:['ad_id','id','adid','ad_archive_id'],library_url:['library_url','ad_url','ad_library_url','snapshot_url','permalink'],page_id:['page_id','pageid'],page_name:['page_name','advertiser','page','pagename'],status:['status'],start_date:['start_date','start','startdate'],duplicates:['duplicates','collation_count','variants'],format:['format','media_type'],domain:['domain'],link_url:['link_url','url','link','landing_url'],title:['title','headline'],body:['body','text','ad_text','primary_text'],link_description:['link_description'],image_url:['image_url','image','images','image_urls','original_image_url','resized_image_url','picture','picture_url','thumbnail','thumbnail_url','cover','cover_url','preview_image_url','video_preview_image_url','video_preview_image','poster','media_url'],video_url:['video_url','video','videos','video_urls','video_hd_url','video_sd_url','video_link'],search:['search','keyword'],keywords:['keywords','tags'],product_name:['product_name','product'],store_name:['store_name','shop','store'],image_hash:['image_hash','image_id'],video_hash:['video_hash','video_id'],creative_id:['creative_id','media_id'],collected:['collected_at','scraped_at','collection_date','date_collected','fetched_at'],cta:['cta','cta_text'],cta_type:['cta_type'],cta_group:['cta_group'],page_categories:['page_categories','categories','page_category'],country:['country','market']};
 const firstUrl=v=>{if(v==null||v==='')return'';if(typeof v==='object')try{v=JSON.stringify(v)}catch(e){return''}const m=/https?:\/\/[^\s"'\\\[\]<>,}]+/i.exec(String(v));return m?m[0]:''};
 const allUrls=v=>{if(v==null||v==='')return[];if(typeof v==='object')try{v=JSON.stringify(v)}catch(e){return[]}return String(v).match(/https?:\/\/[^\s"'\\\[\]<>,}]+/gi)||[]};
 const VID=/\.(mp4|webm|mov|m4v|m3u8)(\?|$)/i,IMG=/\.(jpe?g|png|webp|gif)(\?|$)/i,SKIPK=/^(body|text|ad_text|primary_text|title|headline|link_description|link_url|url|link|landing_url|library_url|ad_url|ad_library_url|permalink|snapshot_url|domain)$/;
@@ -270,7 +270,7 @@ function normRow(r){const lo={};for(const k in r)lo[String(k).toLowerCase().trim
  if(!o.image_url)o.image_url=findMedia(lo,'image');
  if(!o.library_url&&/^\d{8,}$/.test(String(o.ad_id||'').trim()))o.library_url='https://www.facebook.com/ads/library/?id='+String(o.ad_id).trim();
  o.start=toDate(o.start_date);o.end=toDate(o.end_date);o.collected=toDate(o.collected);o.stat=stat(o.status);o.format=String(o.format||'').toUpperCase();
- ['title','body','link_description','link_url','page_name','image_url','video_url','library_url','product_name','store_name','keywords','search','duplicates','image_hash','video_hash','creative_id','cta','cta_type','cta_group','page_categories','country'].forEach(k=>o[k]=o[k]!=null?WF(o[k]):'');
+ ['collation_id','title','body','link_description','link_url','page_name','image_url','video_url','library_url','product_name','store_name','keywords','search','duplicates','image_hash','video_hash','creative_id','cta','cta_type','cta_group','page_categories','country'].forEach(k=>o[k]=o[k]!=null?WF(o[k]):'');
  if(!o.domain&&o.link_url)try{o.domain=new URL(o.link_url).hostname}catch(e){}
  return o}
 const SOC=/^(facebook|fb|instagram|whatsapp|m|l\.facebook)\.(com|me)$|^(wa|fb)\.me$/;
@@ -314,6 +314,10 @@ function sameSeller(a,b){
  else{const x=N(a.page_name).trim();if(x&&x===N(b.page_name).trim())return true}
  const s=N(a.store_name).trim();if(s&&s===N(b.store_name).trim())return true;
  const h=hostOf(a);return!!h&&h===hostOf(b)&&!SOC.test(h)&&!MARKET.test(h)}
+function sellerCount(ads){const p=new Map(),f=k=>{while(p.get(k)!==k){p.set(k,p.get(p.get(k)));k=p.get(k)}return k},add=k=>{if(!p.has(k))p.set(k,k)};
+ ads.forEach(a=>{const ks=[];if(a.page_id)ks.push('p:'+a.page_id);else{const x=N(a.page_name).trim();if(x)ks.push('n:'+x)}const s=N(a.store_name).trim();if(s)ks.push('s:'+s);const h=hostOf(a);if(h&&!SOC.test(h)&&!MARKET.test(h))ks.push('h:'+h);
+  ks.forEach(add);for(let i=1;i<ks.length;i++){const x=f(ks[0]),y=f(ks[i]);if(x!==y)p.set(y,x)}});
+ return new Set([...p.keys()].map(f)).size}
 function clusterSellers(ads){const p=ads.map((_,i)=>i),f=i=>{while(p[i]!==i){p[i]=p[p[i]];i=p[i]}return i};
  for(let i=0;i<ads.length;i++)for(let j=i+1;j<ads.length;j++)if(f(i)!==f(j)&&sameSeller(ads[i],ads[j]))p[f(i)]=f(j);
  ads.forEach((a,i)=>a._s=f(i))}
@@ -410,7 +414,10 @@ function mkProduct(ads,NOW,L,proofs){
   const p=a._p??(a._p=price(a.title+' '+a.body));if(p)s.pr.push(p)});
  const sellers=Object.values(S).map(s=>({...s,p:med(s.pr),copies:s.ads.length,lib:s.ads[0].library_url})).sort((a,b)=>b.copies-a.copies),n=sellers.length;
  const copies=n?sellers[0].copies:0;
- const P={ads,counted,stopped,sellers,n,copies,market,markets};
+ /* عدد النسخ (معلومة فقط): مجموع «X إعلانات تستخدم هذا التصميم» من ميتا، مرة واحدة لكل مجموعة نسخ */
+ const vg=new Map();(counted.length?counted:ads).forEach(a=>{const k=a.collation_id?'c'+a.collation_id:'a'+(a.ad_id||a._i);vg.set(k,Math.max(vg.get(k)||1,Math.max(1,parseInt(a.duplicates,10)||1)))});
+ const versions=[...vg.values()].reduce((x,y)=>x+y,0);
+ const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
  const why=[];
  /* كل إعلاناته متوقفة: إن استمر أحدها 8 أيام فأكثر = «توقف بعد نجاح» (فرصة لسوق آخر)، وإلا يُقصى */
  if(!counted.length){const run=Math.max(-1,...ads.filter(a=>a.start&&a.end).map(a=>Math.floor((a.end-a.start)/D)));
@@ -486,7 +493,7 @@ function analyze(rows,NOW,L){
    if(i)q.k=p.k+'#'+c;out.push(q)})});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
-return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
+return{analyze,sellerCount,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
 })();
 if(typeof module!=='undefined')module.exports=CORE;
 (function(){
@@ -546,7 +553,8 @@ async function vpass(){const G=window.RadarGapMatch;if(!G||!PROD.length)return;c
  if(!merged)return;
  await analyze();
  if($('#note').textContent.includes('🔗'))return;$('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
-async function load(files){VP++;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
+let RST=null;
+async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
  for(const f of files){lm=Math.max(lm,f.lastModified||0);if(Array.isArray(f.rows)){rows=rows.concat(f.rows);continue}   /* صفوف جاهزة من المنصة: بلا تحويل إلى ملف ثم قراءته */
   try{rows=rows.concat(await readFile(f))}catch(e){msg('تعذّرت قراءة الملف '+f.name+'. تأكد أنه JSON أو Excel أو CSV سليم.',1)}}
  const seen=new Set();ALL=[];
@@ -579,6 +587,11 @@ async function analyze(){
   '';
  render()}
 
+/* أرقام أعلى صفحة التحليل: كل إعلان وكل منتج يُعد مرة واحدة */
+function sumStats(){const U=new Map();PROD.forEach(p=>{if(!U.has(p.ads))U.set(p.ads,p)});   /* مداخل المنتج الواحد في عدة تصنيفات تتشارك نفس قائمة الإعلانات */const ps=[...U.values()],ok=ps.filter(p=>!p.excl);
+ const inAds=ok.flatMap(p=>p.ended?p.ads:p.counted),exclP=ps.filter(p=>p.excl).reduce((s,p)=>s+p.ads.length,0),stoppedIn=ok.reduce((s,p)=>s+(p.ended?0:p.ads.length-p.counted.length),0),flt=RST&&RST.filtered||0;
+ return{observed:RST&&RST.observed?RST.observed:null,searches:RST&&RST.searches||0,fetched:ALL.length+flt,analyzed:inAds.length,excluded:exclP+stoppedIn+flt,
+  excl_detail:`عند الاستقبال (ليست منتجات): ${flt} · في التحليل (علامة رسمية/ليس منتجاً/متوقف سريعاً): ${exclP} · متوقفة داخل منتجات نشطة: ${stoppedIn}`,products:ok.length,sellers:CORE.sellerCount(inAds)}}
 function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'+id)||{}).checked;
  const q=CORE.N(v('q')).trim(),md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
@@ -587,8 +600,11 @@ function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'
  VIEW=B.filter(p=>tab==='all'?p.cat!=='excl':tab==='fav'?FAV.has(p.k):p.cat===tab);
  const so=v('sort'),tk=p=>{const t=trackOf(p);return t?(t.act?t.n:-1):0};   /* المتابعة: رُصد نشطاً في أيام جمع أكثر = أوثق */
  VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='new'?a.days-b.days:a.rank-b.rank||(b.ben||0)-(a.ben||0)||tk(b)-tk(a)||(b.days||0)-(a.days||0));
- const act=PROD.reduce((s,p)=>s+p.counted.length,0);
- $('#sum').innerHTML=[[ALL.length,'إعلان'],[act,'نشط ويدخل التحليل'],[ALL.length-act,'متوقف (خارج التحليل)'],[new Set(PROD.map(p=>p.k.split('#')[0])).size,'منتج'],[PROD.length,'مدخل بتصنيفاته'],[cnt.gem,'💎 جوهرة'],[VIEW.length,'معروض الآن']].map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+ const S=sumStats(),nf=x=>x==null?'—':Number(x).toLocaleString('ar-DZ');
+ $('#sum').innerHTML=[[S.observed,'الإعلانات المرصودة',S.observed==null?'العدد الذي تعرضه مكتبة ميتا أعلى نتائج البحث. يظهر للدفعات التي جُمعت بالإضافة 1.5 فأحدث':'مجموع ما عرضته مكتبة ميتا أعلى نتائج '+S.searches+' بحث («~N نتيجة»)'],
+  [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار)'],[S.analyzed,'دخلت التحليل','إعلانات نشطة في منتجات غير مستبعدة (وإعلانات «توقف بعد نجاح»)'],
+  [S.excluded,'الإعلانات المستبعدة',S.excl_detail],[S.products,'عدد المنتجات','منتجات مختلفة غير مستبعدة (المنتج الواحد يُعد مرة واحدة ولو ظهر في تصنيفين)'],[S.sellers,'عدد البائعين','صفحات/متاجر مختلفة في الإعلانات التي دخلت التحليل']]
+  .map(x=>`<div class="kpi" title="${esc(x[2]||'')}"><b>${nf(x[0])}</b><span>${x[1]}</span></div>`).join('');
  draw()}
 const ok=u=>/^https?:/i.test(u||'');
 const T=(m,t)=>window.__toast&&window.__toast(m,t);
@@ -634,10 +650,10 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  const media=im?`<div class="pc-media" data-imgs="${esc(JSON.stringify(imgs))}" data-saved="${saved?1:0}" title="اضغط للتكبير"><img loading="lazy" referrerpolicy="no-referrer" alt="" src="${esc(src(im))}" data-o="${esc(im)}" onerror="if(!this.dataset.p&&!${saved?1:0}){this.dataset.p=1;this.src='/api/img?u='+encodeURIComponent(this.dataset.o)}else{this.parentNode.classList.add('noimg');this.remove()}"><span class="zoom">⤢ ${imgs.length>1?imgs.length+' صور':'تكبير'}</span></div>`:'<div class="pc-media noimg"></div>';
  const notes=r&&r.note?`<span class="tg warn">${r.note}</span>`:'';
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
-<div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span>${p.excl?'':benBadge(p)}</div>
+<div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
 <div class="pc-tags">${p.excl?'':`${p.ended?`<span class="tg">استمر ${p.ended.days} يوماً ثم توقف${p.ended.last?' في '+fd(p.ended.last):''}: فرصة لسوق آخر</span>`:r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
-<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div><div><b>${p.ended?p.ended.days:r&&r.age!=null?r.age:'—'}</b><span>${p.ended?'استمر (يوم)':'عمر (يوم)'}</span></div><div><b>${pr}</b><span>السعر</span></div></div>
+<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div>${p.versions>1?`<div title="مجموع نسخ إعلانات هذا المنتج كما تعرضها مكتبة ميتا («X إعلانات تستخدم هذا التصميم»)، معلومة فقط"><b>${p.versions}</b><span>نسخ</span></div>`:''}${p.n>1?`<div title="صفحات/متاجر مختلفة تعلن عن هذا المنتج، معلومة فقط"><b>${p.n}</b><span>بائعين</span></div>`:''}<div><b>${p.ended?p.ended.days:r&&r.age!=null?r.age:'—'}</b><span>${p.ended?'استمر (يوم)':'عمر (يوم)'}</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join('')+(p.fix&&(p.fix.terms.length||p.fix.pages.length)?`<button class="btn ghost sm" data-fix="${esc(p.k)}" title="أعد هذا المنتج ولا تستبعد بهذا السبب مستقبلاً">↩️ سبب خاطئ</button>`:''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
 ${srcBox(p,kw,imgs)}
@@ -654,11 +670,11 @@ function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.
  return{v:2,name:p.name,kw:p.kw||'',cat:p.cat,tier:p.cat,score:p.score,days:p.days,trend:p.trend,seas:p.seas,n:p.n,copies:p.copies,pr:p.pr,price:p.pr,pages:p.pages,why:p.why,stopped:p.stopped,fmt:p.fmt,
   counted:new Array(p.counted.length).fill(0),hits:p.hits.slice(0,8).map(h=>({label:h.label,w:h.w})),tags:p.tags,proofs:[...p.proofs],sim:p.sim,simNames:p.simNames,tgN:p.tg.size,promising:p.promising,also:p.also,oldInfo:p.oldInfo,benOk:p.benOk,top:slim(p.top),images:imgsOf(p),
   sellers:p.sellers.slice(0,12).map(s=>({pid:s.pid||'',name:s.name,host:s.host,copies:s.copies,p:s.p})),
-  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising,miss:r.miss})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||'',mktTag:p.mktTag||'',ben:p.ben||0,warn:p.warn||'',ended:p.ended||null}}
+  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising,miss:r.miss})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||'',mktTag:p.mktTag||'',ben:p.ben||0,versions:p.versions||0,warn:p.warn||'',ended:p.ended||null}}
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
   top:{library_url:s.lib,link_url:s.link},images:[],sellers:[],recs:[],ref:null,excl:false,saved_at:s.date}}
-function counts(){const c={ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
+function counts(){const c={ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);const S=sumStats();c.products=S.products;c.ads=ALL.length;c.active=S.analyzed;c.sellers=S.sellers;c.observed=S.observed;c.excluded=S.excluded;return c}
 
 $('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;
 $('#file').addEventListener('change',e=>load([...e.target.files]));
@@ -782,7 +798,8 @@ async function rInbox(){const rs=await api('GET','/runs');RUNS=rs;badge(rs);cons
 async function analyzeIds(ids){if(!ids.length)return toast('حدّد دفعة واحدة على الأقل','err');toast('جارٍ تحميل البيانات…');
  const rr=await Promise.all(ids.map(id=>api('GET','/runs/'+id))),rows=rr.flatMap(r=>r.rows),lm=Math.max(...rr.map(r=>r.created_at));
  show('analyze');reopenIds=ids.map(Number);
- await W.WPR.load([{rows,name:(ids.length>1?'تحليل مدمج ('+ids.length+' دفعات)':String(rr[0].label||'دفعة').replace(/[\\/:*?"<>|]/g,' '))+'.json',lastModified:lm}]);reopenIds=[]}
+ await W.WPR.load([{rows,name:(ids.length>1?'تحليل مدمج ('+ids.length+' دفعات)':String(rr[0].label||'دفعة').replace(/[\\/:*?"<>|]/g,' '))+'.json',lastModified:lm,stats:mergeStats(rr)}]);reopenIds=[]}
+function mergeStats(rr){const L=rr.map(r=>r.stats).filter(Boolean);if(!L.length)return null;const seen=new Set(),o={observed:0,searches:0,filtered:0};L.forEach(s=>{const k=s.batch;if(seen.has(k))return;seen.add(k);o.observed+=s.observed||0;o.searches+=s.searches||0;o.filtered+=s.filtered||0});return o}
 
 /* ---------- تحديث لحظي: ما يصل من الجمع يظهر فوراً بلا إعادة تحميل ---------- */
 let rfT=0,rfBusy=0;
@@ -892,7 +909,7 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='unsave'){if(!two(b))return;await api('DELETE','/saved?k='+encodeURIComponent(id));delete SV[id];W.WPR.setFav(Object.keys(SV));toast('أُزيل من المحفوظات');return rSaved()}
  if(a==='del'){if(!two(b))return;await api('DELETE','/runs/'+id);toast('تم الحذف');return show(cur)}
  const r=await api('GET','/runs/'+id);
- if(a==='open'){show('analyze');reopenIds=[+id];await W.WPR.load([{rows:r.rows,name:r.label||'archive.json',lastModified:r.created_at}]);reopenIds=[];W.WPR.msg('تم فتح التحليل المحفوظ بتاريخ '+fd(r.created_at)+'.')}}));
+ if(a==='open'){show('analyze');reopenIds=[+id];await W.WPR.load([{rows:r.rows,name:r.label||'archive.json',lastModified:r.created_at,stats:r.stats||null}]);reopenIds=[];W.WPR.msg('تم فتح التحليل المحفوظ بتاريخ '+fd(r.created_at)+'.')}}));
 R.addEventListener('change',guard(async ev=>{const ps=ev.target.closest('[data-plan]');if(ps){R.querySelector('[data-days="'+ps.dataset.plan+'"]').value=ps.value==='0'?30:ps.value;return}
  const i=ev.target.closest('[data-f]');if(!i)return;const p=SV[i.dataset.k];if(!p)return;p[i.dataset.f]=i.value;const{k,ref,...snap}=p;await api('PUT','/saved',{k,snap});toast('تم الحفظ')}));
 

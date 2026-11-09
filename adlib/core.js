@@ -140,7 +140,7 @@ function rowFromRaw(raw, meta, nowMs) {
     page_url: cap(U(ad.pageUrl), 500), page_likes: Math.max(0, Math.min(2e9, ad.pageLikes || 0)),
     status: ad.isActive === true ? 'active' : ad.isActive === false ? 'inactive' : '',
     start_date: isoDay(startS), end_date: isoDay(endS), days_running: startS ? Math.max(0, Math.floor(((endS || nowS) - startS) / 86400)) : '',
-    duplicates: Math.max(1, Math.min(9999, ad.collationCount || 1)), cta: cap(ad.ctaText, 60), cta_group: ad.ctaGroup || '', cta_type: cap(ad.ctaType, 40),
+    duplicates: Math.max(1, Math.min(9999, ad.collationCount || 1)), collation_id: cap(ad.collationId, 40), cta: cap(ad.ctaText, 60), cta_group: ad.ctaGroup || '', cta_type: cap(ad.ctaType, 40),
     page_categories: cap((ad.pageCategories || []).join(' | '), 200), country,
     format: ad.format, language: ad.lang, platforms: bar(ad.platforms), domain: cap(ad.domain, 120), link_url: cap(U(ad.link), 1000),
     title: cap(ad.title, 500), body: cap(ad.body, 6000), link_description: cap(ad.linkDescription, 800),

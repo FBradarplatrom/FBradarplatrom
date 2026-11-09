@@ -44,9 +44,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(gems.some(p => /مرآة/.test(p.name) && /قد يكون هش/.test(p.warn)), 'مرآة الحائط: تنبيه «قد يكون هشاً» بدل الإقصاء');
     ok(P.some(p => p.cat === 'ended' && /الشعر/.test(p.name)), 'إعلان استمر 30 يوماً ثم توقف = ⏹️ توقف بعد نجاح');
     if (process.env.SHOT) await pg.locator('#grid').screenshot({ path: process.env.SHOT + '/grid.png' });
-    const badges = await pg.$$eval('.pc .bn', b => b.map(x => x.textContent));
-    ok(badges.includes('✅ فائدة') && badges.includes('☑️ فائدة في النص') && badges.includes('بلا فائدة واضحة') && !(await pg.$('.pc .ring')), 'شارة الفائدة بدل دائرة النقاط');
-    ok(!/بائع/.test(await pg.locator('.pc .pc-st').first().textContent()), 'لا عدد بائعين في البطاقة');
+    ok(!(await pg.$('.pc .bn')) && !(await pg.$('.pc .ring')), 'لا وسم «فائدة/بلا فائدة» ولا دائرة نقاط: الفائدة للترتيب فقط');
     // زر «سبب خاطئ» على إعلان تكوين
     await pg.click('#tabs [data-t="excl"]'); await pg.waitForSelector('[data-fix]');
     const why = await pg.locator('.pc .tg.bad').first().textContent();
@@ -78,6 +76,42 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const toasts = await pg.locator('#toasts').textContent();
     ok(!/URI malformed/.test(toasts) && (await pg.$$('.pc')).length >= 2, 'فتح نتيجة فيها نصف إيموجي من الأرشيف يعمل (بلا «URI malformed»)');
     ok(await pg.evaluate(() => { try { encodeURIComponent('a' + '😀'.slice(0, 1)); return true; } catch (e) { return false; } }), 'الترميز في الصفحة لا يسقط بنصف حرف');
+    // ===== أرقام صفحة التحليل: المرصود/المجلوب/المحلَّل/المستبعد/المنتجات/البائعون =====
+    // 1) الإضافة تقرأ «~220 نتيجة» من رد مكتبة ميتا نفسه
+    await pg.goto(BASE + '/login');
+    await pg.route('**/api/graphql/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { ad_library_main: { search_results_connection: { count: 220, edges: [{ node: { collated_results: [{ ad_archive_id: '1', snapshot: {} }] } }] } } } }) }));
+    await pg.addScriptTag({ content: fs.readFileSync(path.join(__dirname, '..', 'extensions', 'ad-collector', 'inject.js'), 'utf8') });
+    const tot = await pg.evaluate(() => new Promise(ok => { addEventListener('message', e => { if (e.data && e.data.tag === 'WPR_AD_MAIN') ok(e.data.total); }); fetch('/api/graphql/x'); setTimeout(() => ok(-1), 4000); }));
+    ok(tot === 220, 'الإضافة تقرأ عدد النتائج من رد مكتبة ميتا (220)');
+    // 2) الوصول إلى المنصة مع العدد، وإعلان مكرر، وإعلان «تكوين» يُستبعد عند الاستقبال
+    const rawAd = (id, page, title, o) => Object.assign({ ad_archive_id: id, page_id: page, page_name: 'صفحة ' + page, start_date: Math.floor(NOW / 1000) - 12 * 86400, is_active: true, collation_count: 1, publisher_platform: ['FACEBOOK'],
+      snapshot: { title, body: { text: title + '. السعر 6500 دج التوصيل لكل الولايات' }, link_url: 'https://s' + page + '.dz/products/item-' + id, cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/k' + id + '.jpg' }] } }, o || {});
+    const fx0 = await (await pg.request.get(BASE + '/api/lib/fix')).json(); await pg.request.post(BASE + '/api/lib/fix', { data: { unignore: fx0.ignore } });   // بلا تصحيحات سابقة
+    const ctx = { query: 'قشابية', country: 'DZ', label: 'قشابية', total: 220 };
+    const c1 = [rawAd('7001', '901', 'قشابية رجالية دافئة'), rawAd('7002', '901', 'قشابية رجالية دافئة', { collation_count: 3, collation_id: 'K1', snapshot: { title: 'قشابية رجالية دافئة', body: { text: 'قشابية رجالية دافئة. السعر 6500 دج التوصيل لكل الولايات' }, link_url: 'https://s901.dz/products/item-7001', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/k7002.jpg' }] } }), rawAd('7003', '902', 'قشابية نسائية'), rawAd('7009', '909', 'تكوين في الحلاقة سجل الآن', { snapshot: { title: 'تكوين في الحلاقة سجل الآن', body: { text: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج' }, link_url: 'https://hair.dz/formation', cta_type: 'SIGN_UP', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/k7009.jpg' }] } })];
+    const c2 = [rawAd('7003', '902', 'قشابية نسائية'), rawAd('7004', '903', 'برنوس تقليدي', { snapshot: { title: 'برنوس تقليدي', body: { text: 'برنوس تقليدي. السعر 9000 دج' }, link_url: 'https://s903.dz/products/burnous', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/burnous-traditional-white.jpg' }] } }), rawAd('7005', '904', 'برنوس تقليدي', { snapshot: { title: 'برنوس تقليدي', body: { text: 'برنوس تقليدي. السعر 9000 دج' }, link_url: 'https://s904.dz/products/burnous', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/burnous-traditional-white.jpg' }] } })];
+    await pg.request.post(BASE + '/api/lib/ingest', { data: { batch: 'QB', ads: c1, ctx } });
+    await pg.request.post(BASE + '/api/lib/ingest', { data: { batch: 'QB', ads: c2, ctx: Object.assign({}, ctx, { total: 214 }) } });
+    const runs = await (await pg.request.get(BASE + '/api/runs')).json(), qr = runs.find(r => /قشابية/.test(r.label));
+    const det = await (await pg.request.get(BASE + '/api/runs/' + qr.id)).json();
+    ok(det.stats && det.stats.observed === 220 && det.stats.filtered === 1 && det.rows.length === 5, 'الخادم يحفظ المرصود (أكبر عدد للبحث) والمستبعد عند الاستقبال: ' + JSON.stringify(det.stats));
+    // 3) صفحة التحليل
+    await pg.goto(BASE + '/archive'); await pg.waitForSelector('[data-a="open"][data-id="' + qr.id + '"]');
+    await pg.click('[data-a="open"][data-id="' + qr.id + '"]'); await pg.waitForSelector('#sum .kpi', { timeout: 15000 }); await pg.waitForTimeout(500);
+    if (process.env.DBG) console.log(JSON.stringify(await pg.evaluate(() => window.WPR.PROD().map(p => [p.k, p.cat, p.ads.length, p.counted.length, p.ads.map(a => a.ad_id + ':' + a.stat)]))));
+    if (process.env.SHOT) { await pg.locator('#sum').screenshot({ path: process.env.SHOT + '/sum.png' }); await pg.locator('.pc').first().screenshot({ path: process.env.SHOT + '/card2.png' }); }
+    const K = Object.fromEntries(await pg.$$eval('#sum .kpi', ks => ks.map(k => [k.querySelector('span').textContent, k.querySelector('b').textContent])));
+    const num = t => +String(t).replace(/[^\d٠-٩]/g, '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    ok(Object.keys(K).join('|') === 'الإعلانات المرصودة|الإعلانات التي تم جلبها|دخلت التحليل|الإعلانات المستبعدة|عدد المنتجات|عدد البائعين', 'الأرقام الستة بالترتيب المطلوب');
+    ok(num(K['الإعلانات المرصودة']) === 220 && num(K['الإعلانات التي تم جلبها']) === 6 && num(K['دخلت التحليل']) === 5 && num(K['الإعلانات المستبعدة']) === 1, 'المرصود 220 · المجلوب 6 (بلا تكرار) · التحليل 5 · المستبعد 1: ' + JSON.stringify(K));
+    ok(num(K['دخلت التحليل']) + num(K['الإعلانات المستبعدة']) === num(K['الإعلانات التي تم جلبها']), 'المجلوب = دخلت التحليل + المستبعدة');
+    const PR = await pg.evaluate(() => { const u = new Map(); window.WPR.PROD().forEach(p => { if (!u.has(p.ads)) u.set(p.ads, p); }); return [...u.values()].filter(p => !p.excl).map(p => ({ name: p.name, v: p.versions, n: p.n })); });
+    ok(num(K['عدد المنتجات']) === PR.length && num(K['عدد البائعين']) === 4, 'المنتجات بلا تكرار، والبائعون 4 صفحات مختلفة: ' + JSON.stringify(PR));
+    const qm = PR.find(p => /رجالية/.test(p.name)), br = PR.find(p => /برنوس/.test(p.name));
+    ok(qm && qm.v === 4 && qm.n === 1, 'النسخ: إعلان عادي + مجموعة من 3 = 4 نسخ، بائع واحد');
+    ok(br && br.n === 2, 'البرنوس: بائعان');
+    const st = await pg.$$eval('.pc .pc-st', b => b.map(x => x.textContent));
+    ok(st.some(t => /4\s*نسخ/.test(t)) && st.some(t => /2\s*بائعين/.test(t)) && !(await pg.$('.pc .bn')), 'البطاقة: «نسخ» و«بائعين» كمعلومة، ولا وسم فائدة');
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log('\n✅ اختبار المعايير:', pass, 'فحصاً ناجحاً');
   } catch (e) { console.error('✖', e.message, '\n', log.slice(-1500)); process.exitCode = 1; }
