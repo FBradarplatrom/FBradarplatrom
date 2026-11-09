@@ -11,3 +11,5 @@ proofs/
 stderr.log
 *.log
 tmp/
+# حزم التوزيع
+radar-platform-*.zip
