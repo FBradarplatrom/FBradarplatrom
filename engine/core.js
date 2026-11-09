@@ -22,7 +22,7 @@ function compile(entry){
  const cjk=alts.some(t=>CJK.test(t)),re=cjk?new RegExp('(?:'+body+')','gu'):new RegExp('(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+body+')(?![\\p{L}\\p{M}\\p{N}])','gu');   // الصينية والتايلاندية بلا مسافات
  re._body=body;re._cjk=cjk;re._len=Math.max(...alts.map(t=>t.length));return re}
 function parseList(txt,w){const out=[],seen=new Set();String(txt||'').split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean).forEach(e=>{if(seen.has(e))return;seen.add(e);const re=compile(e);if(re)out.push({id:w+':'+e,label:e.split('/')[0],w,re})});return out}
-function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1).filter(e=>!MKSET.has(N(e.label).trim())),bulky:parseList(t.bulky,1),fragile:parseList(t.fragile,1)}}
+function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1).filter(e=>!MKSET.has(N(e.label).trim())),ignore:new Set((t.ignore||[]).map(String)),allowPages:new Set((t.allowPages||[]).map(String))}}
 /* الأداء: كل قائمة تُدمج في تعبير واحد (مجموعة لكل مدخل، الأطول أولاً) فيُقرأ النص مرة واحدة بدل مرة لكل كلمة */
 function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.length)return null;const ord=arr.slice().sort((a,b)=>b.re._len-a.re._len),src=ord.map(e=>'('+e.re._body+')').join('|');
   return{re:new RegExp(bound?'(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+src+')(?![\\p{L}\\p{M}\\p{N}])':'(?:'+src+')','gu'),ord}};
@@ -102,17 +102,42 @@ const cache=new Map();
 function snippet(hr,hn,m){const raw=hr.split(/\s+/).filter(Boolean),pre=hn.slice(0,m.s).trim(),wi=pre?pre.split(/\s+/).length:0;
  let t=raw.slice(wi,wi+7).join(' ');const c=t.search(/[.!؟?،,;:\n]/);if(c>=4)t=t.slice(0,c);
  return t.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu,'').replace(/[.!؟?،,;:\s]+$/,'').trim()}
+/* الفائدة = فعل ذهبي يتبعه (خلال 4 كلمات) مشكلة أو نتيجة، أو صيغة اسمية: مضاد/ضد/بدون/وداعاً + مشكلة.
+   الأفعال العامة (يساعد، يحمي، يوفر…) لا تُحتسب إلا مع مشكلة. وفعل يتبعه مباشرة «التوصيل/الطلب/المقاس…» ليس فائدة. */
+const NS=t=>t.split(/\s*,\s*/).map(x=>N(x).trim()).filter(Boolean);
+const GENERIC=new Set(NS('يساعد, يساعد على, يحمي, يحمي من, يوفر, يوفر عليك, يسهل, يحسن, يعطي, يجعل, يقوم, helps, help, aide, aider, protects, protect, protège, makes'));
+const SERVICE=new Set(NS('توصيل, التوصيل, طلب, الطلب, طلبك, طلبيتك, اختيار, الاختيار, مقاس, مقاسك, المقاس, الدفع, دفع, الشحن, شحن, الحجز, حجز, التسجيل, تسجيل, الاتصال, التواصل, زبائننا, livraison, commande, taille, paiement, delivery, order, shipping, size, checkout, payment, choisir, choose'));
+const PROB=new Set(NS(`ألم, آلام, الام, وجع, أوجاع, اوجاع, شخير, بقع, بقعة, رطوبة, عرق, تعرق, رائحة, روائح, ريحة, تساقط, قشرة, حبوب, حب الشباب, تجاعيد, هالات, ناموس, بعوض, حشرات, صراصير, فئران, ذباب, نمل, قمل, غبار, أوساخ, وسخ, صدأ, دهون, كرش, وزن, سمنة, ترهل, إمساك, انتفاخ, أرق, نوم, تعب, إرهاق, شعر, شيب, صلع, كلف, تشققات, شقوق, جفاف, برد, حرارة, سخانة, تسرب, انسداد, فوضى, وقت, مال, مصاريف, كسر, خدوش, حروق, ضياع, سرقة, قلق, توتر, صداع, دوخة, حساسية, التهاب, سيلوليت, اصفرار, ضجيج, إزعاج, ضوضاء, جراثيم, بكتيريا, ميكروبات, فيروسات, تلوث, كلس, جير, دخان, حوادث, خطر, انزلاق, تشابك, راحة, نظافة, لمعان, نعومة, ترتيب, تنظيم, أمان,
+ douleur, douleurs, maux, ronflement, tache, taches, humidité, transpiration, sueur, odeur, odeurs, chute, pellicules, acné, rides, moustiques, moustique, insectes, cafards, poussière, saleté, rouille, graisse, ventre, poids, insomnie, sommeil, fatigue, poils, fuite, fuites, bouchon, désordre, temps, argent, rayures, stress, migraine, cellulite, calcaire, bactéries, germes, froid, chaleur, bruit,
+ pain, aches, snoring, stain, stains, moisture, sweat, sweating, odor, odour, smell, odors, hair, dandruff, acne, wrinkles, mosquito, mosquitoes, bugs, insects, pests, roaches, mice, dust, dirt, rust, fat, belly, weight, insomnia, sleep, fatigue, leak, leaks, clog, clogs, mess, time, money, scratches, stress, headache, cellulite, limescale, germs, bacteria, cold, heat, noise, back, neck, knee, joints, lawj3, rri7a, nemous, lkerch`));
+const PSTEM=NS('تساقط, تجاعيد, حشر, صرصور, بكتير, جراثيم, douleur, tache, moustiq, insect, odeur, wrinkl, stain, mosquit, sweat, snor, ronfl');
+const NOUN=new Set(NS('مضاد, ضد, بدون, بلا, نهاية, وداعا, ودع, anti, sans, without, goodbye, adieu, fini, stop'));
+const PFX=/^[وفبلك]/,AL=/^(?:[وفبلك]?ال|لل)(?=\S{2,})/;
+const forms=w=>{const o=[w],a=w.replace(AL,'');if(a!==w)o.push(a);if(PFX.test(w)&&w.length>3)o.push(w.slice(1));return o};
+const isProb=w=>forms(w).some(x=>PROB.has(x)||PSTEM.some(st=>x.startsWith(st)));
+const isSvc=w=>forms(w).some(x=>SERVICE.has(x));
 function benefitAd(a,L){const hr=a.title+' . '+a.body.slice(0,160),hn=N(hr);
  if(cache.get(L)&&cache.get(L).has(hn))return cache.get(L).get(hn);
- const ms=findAll(hn,L.goldB||(L.goldB=L.gold.filter(e=>e.w>=1))).sort((x,y)=>x.s-y.s),strong=ms.filter(m=>m.e.w===3),normal=new Set(ms.filter(m=>m.e.w===1).map(m=>m.e.id));
- const ok=strong.length>0||normal.size>=2,tg=new Set();
- if(ok)ms.forEach(m=>{const x=/^[^\p{L}\p{N}]*([\p{L}\p{N}]+)(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?/u.exec(hn.slice(m.t));
+ const W=[],re=/[\p{L}\p{N}]+/gu;let x;while((x=re.exec(hn)))W.push({w:x[0],s:x.index,t:x.index+x[0].length});
+ const after=(pos,k)=>{let i=0;while(i<W.length&&W[i].s<pos)i++;return W.slice(i,i+k).map(o=>o.w)};
+ const ms=findAll(hn,L.goldB||(L.goldB=L.gold.filter(e=>e.w>=1))).sort((x,y)=>x.s-y.s),good=[],normal=new Set();let strongN=0;
+ for(const m of ms){const nx=after(m.t,4),prob=nx.some(isProb);
+  if(!prob&&nx.slice(0,2).some(isSvc))continue;                                  // «يساعدك في التوصيل/الطلب»
+  if(!prob&&GENERIC.has(N(m.e.label).trim()))continue;                          // فعل عام بلا مشكلة
+  if(m.e.w===3||prob){strongN++;good.push(m)}else{normal.add(m.e.id);good.push(m)}}
+ for(let i=0;i<W.length;i++){const w=W[i].w,fs=forms(w);
+  if(fs.some(f=>NOUN.has(f))||(w==='no'&&W[i+1]&&W[i+1].w==='more')){const nx=W.slice(i+1,i+4).map(o=>o.w);
+   if(nx.some(isProb)){strongN++;good.push({e:{w:3,id:'noun:'+w},s:W[i].s,t:W[i].t})}}}
+ good.sort((p,q)=>p.s-q.s);
+ const ok=strongN>0||normal.size>=2,tg=new Set();
+ if(ok)good.forEach(m=>{const x=/^[^\p{L}\p{N}]*([\p{L}\p{N}]+)(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?/u.exec(hn.slice(m.t));
   if(x)[x[1],x[2],x[3]].forEach(w=>{if(!w)return;w=w.replace(/^[وفبلك]?ال/,'');if(w.length>=4&&!STOPT.has(w))tg.add(w)})});
- const r={ok,strong:strong.length>0,tag:ok?snippet(hr,hn,(strong[0]||ms[0])):'',tg};
+ const r={ok,strong:strongN>0,tag:ok?snippet(hr,hn,(good.find(m=>m.e.w===3)||good[0])):'',tg};
  if(!cache.has(L))cache.set(L,new Map());cache.get(L).set(hn,r);return r}
 /* ---------- الجداول ---------- */
 /* التصنيف تحدده المدة وحدها: 0-7 تجربة، 8-30 جوهرة، 31-60 رابح، 61+ قديم. من لم يبلغ الحد الأدنى ضعيف. بلا تاريخ = ضعيف */
-const MIN_SCORE=50,TIER=(ag,score)=>ag==null?'low':ag<=7?'trial':score<MIN_SCORE?'low':ag<=30?'gem':ag<=60?'fire':'old';
+/* 0-3 تحت التجربة · 4-7 واعد (بشروط الجوهرة) · 8-30 جوهرة · 31-60 رابح · 61+ قديم */
+const MIN_SCORE=50,TIER=(ag,score)=>ag==null?'low':ag<=3?'trial':ag<=7?'prom':score<MIN_SCORE?'low':ag<=30?'gem':ag<=60?'fire':'old';
 /* المواسم بكل اللغات (وسم فقط) */
 const SEAS=MKT&&MKT.SEASONS?new RegExp(MKT.SEASONS.map(x=>{const t=N(x),e=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return CJK.test(t)?e:'(?<![\\p{L}\\p{N}.])'+e+'(?![\\p{L}\\p{N}.])'}).join('|'),'u'):/رمضان|العيد|الاضحيه|الشتاء|شتاء|بلاك فرايداي|black friday|ramadan|الدخول المدرسي/;
 const seasonOf=t=>{const m=SEAS.exec(t);return m?m[0]:''};
@@ -171,14 +196,13 @@ function mkProduct(ads,NOW,L,proofs){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
   const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
   if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));
-  const tx=N([...new Set(counted.map(a=>a.title+' '+a.body+' '+a.link_description))].join(' \n ')),
-   vm=findAll(tx,L.bulky),fm=findAll(tx,L.fragile);
-  if(vm.length)why.push('كبير الحجم، لا يصلح للدفع عند الاستلام: '+[...new Set(vm.map(m=>m.e.label))].slice(0,3).join('، '));
-  if(fm.length)why.push('هش، لا يصلح للدفع عند الاستلام: '+[...new Set(fm.map(m=>m.e.label))].slice(0,3).join('، '))
+  /* الهش وكبير الحجم: يحكم فيهما فحص الصلاحية أدناه (موازنة أدلة + استثناء الإكسسوارات)، لا كلمة واحدة في أي مكان */
   /* هل يبيع منتجاً مادياً يُشحن؟ يُقصى المنتج إن كان نصف إعلاناته أو أكثر خدمة/دورة/فعالية/محلاً/شركة/تطبيقاً/أكلاً/كبيراً/هشاً */
-  if(PCK&&L.check!==false){const rs=counted.map(a=>a._pc||(a._pc=PCK.check(a,{country:a.country||L.market}))),bad=rs.filter(r=>!r.ok);
+  if(PCK&&L.check!==false){const ig=L.ignore&&L.ignore.size?L.ignore:null,ap=L.allowPages;
+   const rs=counted.map(a=>ap&&ap.has(String(a.page_id))?{ok:true}:(a._pc||(a._pc=PCK.check(a,{country:a.country||L.market,ignore:ig})))),bad=rs.filter(r=>!r.ok);
    if(bad.length&&bad.length*2>=counted.length){const by={};bad.forEach(r=>{by[r.kind]=(by[r.kind]||0)+1});const top=Object.keys(by).sort((x,y)=>by[y]-by[x])[0],r=bad.find(x=>x.kind===top);
-    why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''))}}}
+    why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(r.ctx?' · في النص: …'+r.ctx+'…':'')+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''));
+    P.fix={terms:[...new Set(bad.filter(x=>x.kind===top).flatMap(x=>x.terms||[]))].slice(0,6),pages:[...new Set(counted.filter((a,i)=>!rs[i].ok).map(a=>String(a.page_id||'')).filter(Boolean))].slice(0,10)}}}}
  P.why=why;P.excl=why.length>0;
  const mk=counted.map(a=>hostOf(a)).find(h=>MARKET.test(h));P.mktTag=mk?MKN(mk):'';
  let tags=[],tg=new Set(),benOk=false,strong=false;
@@ -194,9 +218,9 @@ function similar(P){const idx=new Map();P.forEach((p,i)=>p.tg.forEach(t=>{let s=
   p.sim=s.size;p.simNames=[...s].slice(0,4).map(j=>P[j].name);p.simOk=p.tg.size>0&&p.sim<=2})}
 /* ---------- تقييم كل إعلان: المدة تخصه، والباقي مشترك بين إعلانات المنتج ---------- */
 function scoreAd(a,P,NOW){
- const ag=age(a,NOW),dated=ag!=null,pct=!dated||ag<=7?0:ag<=30?1:ag<=60?.85:.8;
+ const ag=age(a,NOW),dated=ag!=null,pct=!dated||ag<=3?0:ag<=7?.5:ag<=30?1:ag<=60?.85:.8;
  const ev=[
-  {k:'dur',name:'مدة الإعلان',w:37,present:dated&&ag>=8,pct,tag:!dated||ag<=7?'':ag<=30?'مدة جولد':ag<=60?'قديم نسبياً في السوق':'قديم في السوق'},
+  {k:'dur',name:'مدة الإعلان',w:37,present:dated&&ag>=4,pct,tag:!dated||ag<=3?'':ag<=7?'اجتاز التجربة الأولى':ag<=30?'مدة جولد':ag<=60?'قديم نسبياً في السوق':'قديم في السوق'},
   {k:'ben',name:'الفائدة',w:26,present:P.benOk,pct:P.benOk?1:0,tag:P.benOk&&P.tags&&P.tags[0]?P.tags[0]:''},
   {k:'sell',name:'قلة البائعين',w:19,present:P.n<=SELL(P.market),pct:P.n<=SELL(P.market)?1:0,tag:'الحد في هذا السوق: '+SELL(P.market)+' بائعين'},
   {k:'copies',name:'عدد النسخ',w:13,present:P.copies>=2,pct:P.copies>=2?1:0},
@@ -207,8 +231,8 @@ function scoreAd(a,P,NOW){
  let cat,range='';
  cat=TIER(dated?ag:null,score);
  /* الجوهرة تشترط الفائدة + (قلة البائعين أو تعدد النسخ). وإلا «رابح محتمل» مع ما ينقصه */
- const miss=[];if(cat==='gem'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat='maybe'}
- const promising=dated&&ag>=4&&ag<=7&&P.copies>=2;
+ const miss=[];if(cat==='gem'||cat==='prom'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat=cat==='gem'?'maybe':'trial'}
+ const promising=false;   // «الواعد» صار تصنيفاً مستقلاً
  const nS=a.stat==='none',note=nS&&!dated?'بلا حالة وبلا تاريخ':nS?'بلا حالة':!dated?'بلا تاريخ':'';
  return{a,age:ag,ev,raw,score,cat,range,promising,note,miss}}
 /* ---------- الواجهة الرئيسية للنواة ---------- */
@@ -225,7 +249,7 @@ function analyze(rows,NOW,L){
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
  similar(P);
- const rank={gem:0,fire:1,trial:2,maybe:3,old:4,low:5,excl:6},out=[];   // الجوهرة أولاً ثم الرابح ثم التجربة (الواعد أولاً)
+ const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,low:6,excl:7},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← رابح محتمل ← قديم ← ضعيف ← مقصاة
  P.forEach(p=>{
   p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
   p.hits=p.tags.map(t=>({label:t,w:3}));

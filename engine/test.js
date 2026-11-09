@@ -14,10 +14,13 @@ eq('أوزان المجموع 100',S(20,ALL).ev.reduce((s,e)=>s+e.w,0),100);
 eq('عمر8 مدة كاملة جولد',[S(8,ALL).ev[0].pct,S(8,ALL).ev[0].tag,S(8,ALL).cat],[1,'مدة جولد','gem']);
 eq('عمر30 جولد جوهرة، عمر31 85% رابح',[S(30,ALL).ev[0].pct,S(30,ALL).cat,S(31,ALL).ev[0].pct,S(31,ALL).cat],[1,'gem',.85,'fire']);
 eq('عمر60 85% رابح، عمر61 80% قديم',[S(60,ALL).ev[0].pct,S(60,ALL).cat,S(61,ALL).ev[0].pct,S(61,ALL).cat],[.85,'fire',.8,'old']);
-r=S(7,ALL);eq('عمر7: تحت التجربة وبلا مدة',[r.cat,r.ev[0].pct,r.promising],['trial',0,true]);
+r=S(7,ALL);eq('عمر7 بكل الأدلة: واعد ونصف نقاط المدة',[r.cat,r.ev[0].pct,r.ev[0].tag],['prom',.5,'اجتاز التجربة الأولى']);
+r=S(3,ALL);eq('عمر3: تحت التجربة بلا نقاط مدة',[r.cat,r.ev[0].pct],['trial',0]);
+r=S(5,{copies:1,n:9,benOk:true,simOk:true});eq('عمر5 بلا قلة بائعين ولا نسخ: يبقى تحت التجربة',r.cat,'trial');
+r=S(5,{copies:2,n:9,benOk:false,simOk:true});eq('عمر5 بلا فائدة: يبقى تحت التجربة',r.cat,'trial');
 eq('عمر0: تحت التجربة',S(0,ALL).cat,'trial');
 eq('تحت التجربة تبقى تجربة حتى بدرجة منخفضة',S(5,{copies:1,n:9,benOk:false,simOk:false}).cat,'trial');
-eq('عمر4 مع نسخ: واعد',S(4,ALL).promising,true);
+eq('عمر4 مع كل الأدلة: واعد',S(4,ALL).cat,'prom');
 eq('عمر3 مع نسخ: ليس واعداً',S(3,ALL).promising,false);
 eq('عمر5 بلا نسخ: ليس واعداً',S(5,{...ALL,copies:1}).promising,false);
 r=S(20,{copies:1,n:9,benOk:false,simOk:false});eq('مدة جولد وحدها (37) لا تكفي: ضعيف',[r.score,r.cat],[37,'low']);
@@ -70,11 +73,11 @@ P=A([row({ad_id:'e1',page_id:'z1',start_date:old(90),image_url:'https://c/i/o.jp
  row({ad_id:'e3',page_id:'z3',start_date:old(3),image_url:'https://c/i/t.jpg',title:'يساعد طفلك على النوم'}),
  row({ad_id:'e4',page_id:'z4',status:'Inactive',start_date:old(20),image_url:'https://c/i/x.jpg',title:'يساعد طفلك على النوم'}),
  row({ad_id:'e5',page_id:'z5',start_date:old(20),image_url:'https://c/i/g.jpg',title:'يساعد طفلك على النوم'})]);
-eq('الترتيب: جوهرة ثم رابح ثم تجربة ثم قديم ثم مقصاة',P.map(p=>p.cat),['gem','fire','trial','old','excl']);
+eq('الترتيب: تجربة ثم جوهرة ثم رابح ثم قديم ثم مقصاة',P.map(p=>p.cat),['trial','gem','fire','old','excl']);
 eq('لا فئة للمراقبة',P.some(p=>p.cat==='watch'),false);
 // ===== كل نسخة في تصنيفها =====
 P=A([row({ad_id:'c1',start_date:old(25),image_url:'https://cdn.example.com/i/same.jpg',title:'يساعد طفلك على النوم'}),row({ad_id:'c2',start_date:old(3),image_url:'https://cdn.example.com/i/same.jpg?x=1',title:'يساعد طفلك على النوم'})]);
-eq('إعلان عمره 25 ونسخة عمرها 3: مدخلان جوهرة وتجربة',[P.length,P.map(p=>p.cat)],[2,['gem','trial']]);
+eq('إعلان عمره 25 ونسخة عمرها 3: مدخلان جوهرة وتجربة',[P.length,P.map(p=>p.cat)],[2,['trial','gem']]);
 eq('كل مدخل يرى تصنيف النسخ الأخرى',P.map(p=>p.also.join()).sort(),['gem','trial']);
 eq('مفاتيح المدخلين مختلفة',new Set(P.map(p=>p.k)).size,2);
 // ===== الصور والروابط والقديم =====
@@ -115,5 +118,29 @@ eq('موقع العلامة نفسه (philips.com) يُقصى',P[0].cat,'excl');
 // الواعد أولاً داخل «التجربة»
 P=A([B({ad_id:'t1',page_id:'q1',start_date:old(2),image_url:'https://c/i/t1.jpg',title:'منتج أ يزيل البقع'}),
  B({ad_id:'t2',page_id:'q2',start_date:old(5),link_url:'https://hairshop.dz/products/hair-remover-pro',image_url:'https://c/i/t2.jpg',title:'منتج ب يزيل الشعر'}),B({ad_id:'t3',page_id:'q2',start_date:old(6),link_url:'https://hairshop.dz/products/hair-remover-pro',image_url:'https://c/i/t3.jpg',title:'منتج ب يزيل الشعر'})]);
-eq('داخل التجربة: الواعد أولاً',P.filter(p=>p.cat==='trial').map(p=>p.promising),[true,false]);
+eq('عمر 5-6 بنسختين وفائدة: واعد، وعمر 2: تحت التجربة، والترتيب تجربة ثم واعد',P.map(p=>p.cat),['trial','prom']);
+// ===== الفائدة: فعل + مشكلة، والصيغ الاسمية =====
+const bo=(t,b)=>ben(t,b||'x').benOk;
+eq('«نساعدك في اختيار مقاسك» ليست فائدة',bo('نساعدك في اختيار مقاسك'),false);
+eq('«يساعد في التوصيل» ليست فائدة',bo('فريقنا يساعد في التوصيل السريع'),false);
+eq('«يساعد على النوم» فائدة',bo('مصباح يساعد طفلك على النوم'),true);
+eq('«يحمي هاتفك من الكسر» فائدة',bo('غطاء يحمي هاتفك من الكسر'),true);
+eq('«يحمي» وحده بلا مشكلة ليس فائدة',bo('غطاء يحمي هاتفك الجميل'),false);
+eq('«مضاد للتعرق» فائدة',bo('كريم مضاد للتعرق'),true);
+eq('«بدون ألم» فائدة',bo('آلة إزالة الشعر بدون ألم'),true);
+eq('«وداعاً للبقع» فائدة',bo('بخاخ سحري وداعا للبقع'),true);
+eq('«ينظف البقع» (فعل عادي + مشكلة) فائدة',bo('جهاز ينظف البقع من الكنبة'),true);
+eq('«يقضي على الناموس» فائدة',bo('جهاز يقضي على الناموس'),true);
+eq('«Say goodbye to back pain» فائدة',bo('Say goodbye to back pain'),true);
+eq('«anti-ronflement» فائدة',bo('Clip anti ronflement'),true);
+// ===== الإقصاء الخاطئ: «المرأة» ليست «مرآة» =====
+P=A([B({ad_id:'m1',page_id:'pm',page_name:'Dz Style',title:'قشابية جزائرية أصيلة',body:'لباس المرأة الجزائرية التقليدي، قماش دافئ يحمي من البرد. السعر 6500 دج التوصيل لكل الولايات',image_url:'https://c/i/m1.jpg'})]);
+eq('قشابية فيها «المرأة» لا تُقصى كمرآة',[P[0].cat!=='excl',P[0].why.join(' ')],[true,'']);
+P=A([B({ad_id:'m2',page_id:'pm2',page_name:'Deco Home',title:'مرآة حائط كبيرة',body:'مرآة جدارية كبيرة بإطار ذهبي للصالون. السعر 9000 دج',image_url:'https://c/i/m2.jpg'})]);
+eq('مرآة حائط حقيقية تُقصى مع الجملة',[P[0].cat,/في النص: …«مرآة حائط» كبيرة/.test(P[0].why.join(' ')),P[0].fix&&P[0].fix.terms[0]],['excl',true,'مرآة حائط']);
+const Lig=Object.assign({},L,{ignore:new Set(['مرآة حائط'])});
+P=C.analyze([B({ad_id:'m3',page_id:'pm3',page_name:'Deco Home',title:'مرآة حائط كبيرة',body:'مرآة جدارية كبيرة بإطار ذهبي للصالون. السعر 9000 دج',image_url:'https://c/i/m3.jpg'})].map(C.normRow),NOW,Lig);
+eq('بعد «سبب خاطئ» لا تُقصى بنفس الكلمة',P[0].cat!=='excl',true);
+P=C.analyze([B({ad_id:'m4',page_id:'777',page_name:'Deco Home',title:'مرآة حائط كبيرة',body:'مرآة جدارية كبيرة بإطار ذهبي للصالون. السعر 9000 دج',image_url:'https://c/i/m4.jpg'})].map(C.normRow),NOW,Object.assign({},L,{allowPages:new Set(['777'])}));
+eq('صفحة مسموح بها لا تُقصى',P[0].cat!=='excl',true);
 console.log(fail?`\n${fail} FAILED`:'\nALL PASSED');process.exit(fail?1:0)

@@ -120,7 +120,7 @@ function withMarkets(base) {
 
 /* ---------- فحص صلاحية المنتج قبل الحفظ ---------- */
 // يُرفض إعلان الخدمة/الدورة/الفعالية/المحل/الشركة/التطبيق، والأكل والكبير والهش، بلغة الدولة المختارة.
-function eligibility(row) { return PC.check(row, { country: row.country }); }
+function eligibility(row, ignore) { return PC.check(row, { country: row.country, ignore }); }
 
 /* ---------- من إعلان خام إلى صف بأعمدة المنصة ---------- */
 const cap = (s, n) => String(s == null ? '' : s).slice(0, n);

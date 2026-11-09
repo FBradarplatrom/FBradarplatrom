@@ -88,13 +88,14 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
     const batch = str(b.batch || c.batch || 'manual', 40), label = str(c.label, 160);
     const rows = [], byKind = {}, samples = [], excl = [];
     let skipped = 0, filtered = 0;
+    const ignoreW = new Set(J((db.prepare("select v from user_kv where user_id=? and k='pc_ignore'").get(u.id) || {}).v, []) || []);   // كلمات صحّحها («سبب خاطئ»)
     const allowPages = new Set((J((db.prepare("select v from user_kv where user_id=? and k='allow_pages'").get(u.id) || {}).v, []) || []).map(String));
     for (const raw of b.ads) {
       let r = null;
       try { meta.src = raw && raw._src === 'dom' ? 'dom' : 'net'; r = C.rowFromRaw(raw, meta, t); } catch (e) { r = null; }
       if (!r) { skipped++; continue; }
       if (strict) {
-        const v = allowPages.has(String(r.page_id)) ? { ok: true } : C.eligibility(r);   // صفحة سمح بها المستخدم: لا تُستبعد
+        const v = allowPages.has(String(r.page_id)) ? { ok: true } : C.eligibility(r, ignoreW);   // صفحة سمح بها المستخدم: لا تُستبعد
         if (!v.ok) {                                                   // ليس منتجاً مادياً صالحاً: لا يدخل «الواردة» بل «المستبعد» (قابل للاسترجاع)
           filtered++; byKind[v.kind] = (byKind[v.kind] || 0) + 1; excl.push([r, v]);
           if (samples.length < 5) samples.push({ title: (r.title || r.body || '').slice(0, 80), page: r.page_name, why: v.reasons[0] || v.label });
@@ -184,6 +185,18 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
     s.json({ run: runId, restored: rows.length });
   }));
   app.delete('/api/lib/excluded', auth, active, wrap((q, s) => { db.prepare('delete from lib_excluded where user_id=?').run(q.u.id); s.json({ ok: 1 }); }));
+  // «سبب خاطئ»: كلمات لا تُستبعد بها المنتجات بعد الآن، وصفحات يُسمح بها دائماً (للتحليل وللاستقبال)
+  const kvJ = (u, k) => J((db.prepare('select v from user_kv where user_id=? and k=?').get(u, k) || {}).v, []) || [];
+  const kvW = (u, k, v) => db.prepare('insert into user_kv(user_id,k,v) values(?,?,?) on conflict(user_id,k) do update set v=excluded.v').run(u, k, JSON.stringify(v));
+  app.get('/api/lib/fix', auth, active, wrap((q, s) => s.json({ ignore: kvJ(q.u.id, 'pc_ignore'), allowPages: kvJ(q.u.id, 'allow_pages') })));
+  app.post('/api/lib/fix', auth, active, wrap((q, s) => {
+    const b = q.body || {}, ig = new Set(kvJ(q.u.id, 'pc_ignore')), ap = new Set(kvJ(q.u.id, 'allow_pages').map(String));
+    (Array.isArray(b.ignore) ? b.ignore : []).slice(0, 20).map(x => str(x, 60).trim()).filter(Boolean).forEach(x => ig.add(x));
+    (Array.isArray(b.allowPages) ? b.allowPages : []).slice(0, 20).map(x => str(x, 40)).filter(x => /^\d+$/.test(x)).forEach(x => ap.add(x));
+    (Array.isArray(b.unignore) ? b.unignore : []).forEach(x => ig.delete(String(x)));
+    kvW(q.u.id, 'pc_ignore', [...ig].slice(-500)); kvW(q.u.id, 'allow_pages', [...ap].slice(-2000));
+    s.json({ ignore: [...ig], allowPages: [...ap] });
+  }));
   app.delete('/api/lib/allow-pages', auth, active, wrap((q, s) => { db.prepare("delete from user_kv where user_id=? and k='allow_pages'").run(q.u.id); s.json({ ok: 1 }); }));
 
   /* ---------- الحالة والحدود ---------- */

@@ -1,5 +1,5 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#4f46e5"><title>رادار المنتجات الرابحة</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><style>:root{--bg:#f5f7fb;--card:#fff;--card2:#f8fafc;--ink:#0f172a;--mut:#64748b;--line:#e5e9f2;--brand:#4f46e5;--brand-h:#4338ca;--soft:#eef2ff;--ok:#059669;--warn:#d97706;--bad:#dc2626;--sh:0 1px 2px rgba(15,23,42,.05),0 10px 28px -14px rgba(15,23,42,.14);--r:16px;
---c-gem:#8b5cf6;--c-fire:#f97316;--c-watch:#3b82f6;--c-low:#94a3b8;--c-old:#78716c;--c-new:#14b8a6;--c-trial:#06b6d4;--c-maybe:#d97706;--c-excl:#b45309}
+--c-gem:#8b5cf6;--c-fire:#f97316;--c-watch:#3b82f6;--c-low:#94a3b8;--c-old:#78716c;--c-new:#14b8a6;--c-trial:#06b6d4;--c-maybe:#d97706;--c-prom:#16a34a;--c-excl:#b45309}
 @media(prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#131a2e;--card2:#18213a;--ink:#e8ecf8;--mut:#93a0bd;--line:#232c47;--brand:#818cf8;--brand-h:#a5b4fc;--soft:#1c2347;--sh:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.6)}}
 *{box-sizing:border-box}html{scroll-behavior:smooth}[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.75 "IBM Plex Sans Arabic",Tahoma,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -73,11 +73,11 @@ details.fx{background:var(--card);border:1px solid var(--line);border-radius:var
 .pc-media .zoom{position:absolute;inset-inline-start:10px;bottom:10px;background:rgba(15,23,42,.7);color:#fff;border-radius:8px;padding:2px 10px;font-size:12px;backdrop-filter:blur(4px);opacity:0;transition:.2s}.pc-media:hover .zoom{opacity:1}
 .pc-top{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
 .bdg{display:inline-block;border-radius:99px;padding:3px 12px;font-size:12.5px;font-weight:700;color:#fff;box-shadow:0 4px 12px -4px rgba(0,0,0,.4)}
-.cat-gem{background:var(--c-gem)}.cat-fire{background:var(--c-fire)}.cat-watch{background:var(--c-watch)}.cat-old{background:var(--c-old)}.cat-low{background:var(--c-low)}.cat-new{background:var(--c-new)}.cat-trial{background:var(--c-trial)}.cat-maybe{background:var(--c-maybe)}.cat-excl{background:var(--c-excl)}
-.pc-media.cat-gem,.pc-media.cat-fire,.pc-media.cat-watch,.pc-media.cat-old,.pc-media.cat-low,.pc-media.cat-new,.pc-media.cat-trial,.pc-media.cat-maybe,.pc-media.cat-excl{background-color:var(--card2)}
+.cat-gem{background:var(--c-gem)}.cat-fire{background:var(--c-fire)}.cat-watch{background:var(--c-watch)}.cat-old{background:var(--c-old)}.cat-low{background:var(--c-low)}.cat-new{background:var(--c-new)}.cat-trial{background:var(--c-trial)}.cat-maybe{background:var(--c-maybe)}.cat-prom{background:var(--c-prom)}.cat-excl{background:var(--c-excl)}
+.pc-media.cat-gem,.pc-media.cat-fire,.pc-media.cat-watch,.pc-media.cat-old,.pc-media.cat-low,.pc-media.cat-new,.pc-media.cat-trial,.pc-media.cat-maybe,.pc-media.cat-prom,.pc-media.cat-excl{background-color:var(--card2)}
 .ring{--c:var(--brand);width:50px;height:50px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(255,255,255,.35) 0);display:grid;place-items:center;position:relative;box-shadow:0 4px 14px -4px rgba(0,0,0,.45)}
 .ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:#0f172a}.ring b{position:relative;color:#fff;font-size:15px}
-.pc.gem .ring{--c:var(--c-gem)}.pc.fire .ring{--c:var(--c-fire)}.pc.watch .ring{--c:var(--c-watch)}.pc.old .ring{--c:var(--c-old)}.pc.low .ring{--c:var(--c-low)}.pc.new .ring{--c:var(--c-new)}.pc.trial .ring{--c:var(--c-trial)}.pc.maybe .ring{--c:var(--c-maybe)}
+.pc.gem .ring{--c:var(--c-gem)}.pc.fire .ring{--c:var(--c-fire)}.pc.watch .ring{--c:var(--c-watch)}.pc.old .ring{--c:var(--c-old)}.pc.low .ring{--c:var(--c-low)}.pc.new .ring{--c:var(--c-new)}.pc.trial .ring{--c:var(--c-trial)}.pc.maybe .ring{--c:var(--c-maybe)}.pc.prom .ring{--c:var(--c-prom)}
 .pc.excl{opacity:.9}.pc.excl .pc-media{filter:grayscale(.6)}
 .pc-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px}.pc-ti{font-size:16px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pc-sub{margin:-6px 0 0;color:var(--mut);font-size:13px}.pc-tags,.pc-ch,.pc-lk{display:flex;flex-wrap:wrap;gap:6px}
@@ -195,10 +195,10 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <label class="fl">كلمات ذهبية قوية (وزن 3)<textarea id="d_strong" rows="5"></textarea></label>
 <label class="fl">كلمات ذهبية عادية (وزن 1)<textarea id="d_mid" rows="5"></textarea></label>
 <label class="fl">العلامات الكبيرة المؤكَّدة (إقصاء)<textarea id="d_brand" rows="5"></textarea></label>
-<label class="fl">كبير الحجم (إقصاء الدفع عند الاستلام)<textarea id="d_bulky" rows="5"></textarea></label>
-<label class="fl">هش (إقصاء الدفع عند الاستلام)<textarea id="d_fragile" rows="5"></textarea></label></div>
+<div class="fl" id="d_fix"></div>
+</div>
 <button id="apply" type="button" class="btn">تطبيق وإعادة الحساب</button></details>
-<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="maybe">🔸 رابح محتمل<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
+<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="prom">🌱 واعد<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="maybe">🔸 رابح محتمل<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
 <div class="acts" style="display:flex;gap:8px"><button id="copy" type="button" class="btn ghost sm">نسخ للجدول</button><button id="csv" type="button" class="btn ghost sm">تحميل CSV</button><button id="gsheet" type="button" class="btn ghost sm" data-tool="sheet" data-src="results">📤 إلى Google Sheets</button></div></div>
 <div id="grid" class="grid"></div><div style="text-align:center;margin-top:20px"><button id="more" type="button" class="btn ghost" hidden>عرض المزيد</button></div>
 </div></section>
@@ -240,7 +240,7 @@ function compile(entry){
  const cjk=alts.some(t=>CJK.test(t)),re=cjk?new RegExp('(?:'+body+')','gu'):new RegExp('(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+body+')(?![\\p{L}\\p{M}\\p{N}])','gu');   // الصينية والتايلاندية بلا مسافات
  re._body=body;re._cjk=cjk;re._len=Math.max(...alts.map(t=>t.length));return re}
 function parseList(txt,w){const out=[],seen=new Set();String(txt||'').split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean).forEach(e=>{if(seen.has(e))return;seen.add(e);const re=compile(e);if(re)out.push({id:w+':'+e,label:e.split('/')[0],w,re})});return out}
-function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1).filter(e=>!MKSET.has(N(e.label).trim())),bulky:parseList(t.bulky,1),fragile:parseList(t.fragile,1)}}
+function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1).filter(e=>!MKSET.has(N(e.label).trim())),ignore:new Set((t.ignore||[]).map(String)),allowPages:new Set((t.allowPages||[]).map(String))}}
 /* الأداء: كل قائمة تُدمج في تعبير واحد (مجموعة لكل مدخل، الأطول أولاً) فيُقرأ النص مرة واحدة بدل مرة لكل كلمة */
 function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.length)return null;const ord=arr.slice().sort((a,b)=>b.re._len-a.re._len),src=ord.map(e=>'('+e.re._body+')').join('|');
   return{re:new RegExp(bound?'(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+src+')(?![\\p{L}\\p{M}\\p{N}])':'(?:'+src+')','gu'),ord}};
@@ -320,17 +320,42 @@ const cache=new Map();
 function snippet(hr,hn,m){const raw=hr.split(/\s+/).filter(Boolean),pre=hn.slice(0,m.s).trim(),wi=pre?pre.split(/\s+/).length:0;
  let t=raw.slice(wi,wi+7).join(' ');const c=t.search(/[.!؟?،,;:\n]/);if(c>=4)t=t.slice(0,c);
  return t.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu,'').replace(/[.!؟?،,;:\s]+$/,'').trim()}
+/* الفائدة = فعل ذهبي يتبعه (خلال 4 كلمات) مشكلة أو نتيجة، أو صيغة اسمية: مضاد/ضد/بدون/وداعاً + مشكلة.
+   الأفعال العامة (يساعد، يحمي، يوفر…) لا تُحتسب إلا مع مشكلة. وفعل يتبعه مباشرة «التوصيل/الطلب/المقاس…» ليس فائدة. */
+const NS=t=>t.split(/\s*,\s*/).map(x=>N(x).trim()).filter(Boolean);
+const GENERIC=new Set(NS('يساعد, يساعد على, يحمي, يحمي من, يوفر, يوفر عليك, يسهل, يحسن, يعطي, يجعل, يقوم, helps, help, aide, aider, protects, protect, protège, makes'));
+const SERVICE=new Set(NS('توصيل, التوصيل, طلب, الطلب, طلبك, طلبيتك, اختيار, الاختيار, مقاس, مقاسك, المقاس, الدفع, دفع, الشحن, شحن, الحجز, حجز, التسجيل, تسجيل, الاتصال, التواصل, زبائننا, livraison, commande, taille, paiement, delivery, order, shipping, size, checkout, payment, choisir, choose'));
+const PROB=new Set(NS(`ألم, آلام, الام, وجع, أوجاع, اوجاع, شخير, بقع, بقعة, رطوبة, عرق, تعرق, رائحة, روائح, ريحة, تساقط, قشرة, حبوب, حب الشباب, تجاعيد, هالات, ناموس, بعوض, حشرات, صراصير, فئران, ذباب, نمل, قمل, غبار, أوساخ, وسخ, صدأ, دهون, كرش, وزن, سمنة, ترهل, إمساك, انتفاخ, أرق, نوم, تعب, إرهاق, شعر, شيب, صلع, كلف, تشققات, شقوق, جفاف, برد, حرارة, سخانة, تسرب, انسداد, فوضى, وقت, مال, مصاريف, كسر, خدوش, حروق, ضياع, سرقة, قلق, توتر, صداع, دوخة, حساسية, التهاب, سيلوليت, اصفرار, ضجيج, إزعاج, ضوضاء, جراثيم, بكتيريا, ميكروبات, فيروسات, تلوث, كلس, جير, دخان, حوادث, خطر, انزلاق, تشابك, راحة, نظافة, لمعان, نعومة, ترتيب, تنظيم, أمان,
+ douleur, douleurs, maux, ronflement, tache, taches, humidité, transpiration, sueur, odeur, odeurs, chute, pellicules, acné, rides, moustiques, moustique, insectes, cafards, poussière, saleté, rouille, graisse, ventre, poids, insomnie, sommeil, fatigue, poils, fuite, fuites, bouchon, désordre, temps, argent, rayures, stress, migraine, cellulite, calcaire, bactéries, germes, froid, chaleur, bruit,
+ pain, aches, snoring, stain, stains, moisture, sweat, sweating, odor, odour, smell, odors, hair, dandruff, acne, wrinkles, mosquito, mosquitoes, bugs, insects, pests, roaches, mice, dust, dirt, rust, fat, belly, weight, insomnia, sleep, fatigue, leak, leaks, clog, clogs, mess, time, money, scratches, stress, headache, cellulite, limescale, germs, bacteria, cold, heat, noise, back, neck, knee, joints, lawj3, rri7a, nemous, lkerch`));
+const PSTEM=NS('تساقط, تجاعيد, حشر, صرصور, بكتير, جراثيم, douleur, tache, moustiq, insect, odeur, wrinkl, stain, mosquit, sweat, snor, ronfl');
+const NOUN=new Set(NS('مضاد, ضد, بدون, بلا, نهاية, وداعا, ودع, anti, sans, without, goodbye, adieu, fini, stop'));
+const PFX=/^[وفبلك]/,AL=/^(?:[وفبلك]?ال|لل)(?=\S{2,})/;
+const forms=w=>{const o=[w],a=w.replace(AL,'');if(a!==w)o.push(a);if(PFX.test(w)&&w.length>3)o.push(w.slice(1));return o};
+const isProb=w=>forms(w).some(x=>PROB.has(x)||PSTEM.some(st=>x.startsWith(st)));
+const isSvc=w=>forms(w).some(x=>SERVICE.has(x));
 function benefitAd(a,L){const hr=a.title+' . '+a.body.slice(0,160),hn=N(hr);
  if(cache.get(L)&&cache.get(L).has(hn))return cache.get(L).get(hn);
- const ms=findAll(hn,L.goldB||(L.goldB=L.gold.filter(e=>e.w>=1))).sort((x,y)=>x.s-y.s),strong=ms.filter(m=>m.e.w===3),normal=new Set(ms.filter(m=>m.e.w===1).map(m=>m.e.id));
- const ok=strong.length>0||normal.size>=2,tg=new Set();
- if(ok)ms.forEach(m=>{const x=/^[^\p{L}\p{N}]*([\p{L}\p{N}]+)(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?/u.exec(hn.slice(m.t));
+ const W=[],re=/[\p{L}\p{N}]+/gu;let x;while((x=re.exec(hn)))W.push({w:x[0],s:x.index,t:x.index+x[0].length});
+ const after=(pos,k)=>{let i=0;while(i<W.length&&W[i].s<pos)i++;return W.slice(i,i+k).map(o=>o.w)};
+ const ms=findAll(hn,L.goldB||(L.goldB=L.gold.filter(e=>e.w>=1))).sort((x,y)=>x.s-y.s),good=[],normal=new Set();let strongN=0;
+ for(const m of ms){const nx=after(m.t,4),prob=nx.some(isProb);
+  if(!prob&&nx.slice(0,2).some(isSvc))continue;                                  // «يساعدك في التوصيل/الطلب»
+  if(!prob&&GENERIC.has(N(m.e.label).trim()))continue;                          // فعل عام بلا مشكلة
+  if(m.e.w===3||prob){strongN++;good.push(m)}else{normal.add(m.e.id);good.push(m)}}
+ for(let i=0;i<W.length;i++){const w=W[i].w,fs=forms(w);
+  if(fs.some(f=>NOUN.has(f))||(w==='no'&&W[i+1]&&W[i+1].w==='more')){const nx=W.slice(i+1,i+4).map(o=>o.w);
+   if(nx.some(isProb)){strongN++;good.push({e:{w:3,id:'noun:'+w},s:W[i].s,t:W[i].t})}}}
+ good.sort((p,q)=>p.s-q.s);
+ const ok=strongN>0||normal.size>=2,tg=new Set();
+ if(ok)good.forEach(m=>{const x=/^[^\p{L}\p{N}]*([\p{L}\p{N}]+)(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?(?:[^\p{L}\p{N}]+([\p{L}\p{N}]+))?/u.exec(hn.slice(m.t));
   if(x)[x[1],x[2],x[3]].forEach(w=>{if(!w)return;w=w.replace(/^[وفبلك]?ال/,'');if(w.length>=4&&!STOPT.has(w))tg.add(w)})});
- const r={ok,strong:strong.length>0,tag:ok?snippet(hr,hn,(strong[0]||ms[0])):'',tg};
+ const r={ok,strong:strongN>0,tag:ok?snippet(hr,hn,(good.find(m=>m.e.w===3)||good[0])):'',tg};
  if(!cache.has(L))cache.set(L,new Map());cache.get(L).set(hn,r);return r}
 /* ---------- الجداول ---------- */
 /* التصنيف تحدده المدة وحدها: 0-7 تجربة، 8-30 جوهرة، 31-60 رابح، 61+ قديم. من لم يبلغ الحد الأدنى ضعيف. بلا تاريخ = ضعيف */
-const MIN_SCORE=50,TIER=(ag,score)=>ag==null?'low':ag<=7?'trial':score<MIN_SCORE?'low':ag<=30?'gem':ag<=60?'fire':'old';
+/* 0-3 تحت التجربة · 4-7 واعد (بشروط الجوهرة) · 8-30 جوهرة · 31-60 رابح · 61+ قديم */
+const MIN_SCORE=50,TIER=(ag,score)=>ag==null?'low':ag<=3?'trial':ag<=7?'prom':score<MIN_SCORE?'low':ag<=30?'gem':ag<=60?'fire':'old';
 /* المواسم بكل اللغات (وسم فقط) */
 const SEAS=MKT&&MKT.SEASONS?new RegExp(MKT.SEASONS.map(x=>{const t=N(x),e=t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return CJK.test(t)?e:'(?<![\\p{L}\\p{N}.])'+e+'(?![\\p{L}\\p{N}.])'}).join('|'),'u'):/رمضان|العيد|الاضحيه|الشتاء|شتاء|بلاك فرايداي|black friday|ramadan|الدخول المدرسي/;
 const seasonOf=t=>{const m=SEAS.exec(t);return m?m[0]:''};
@@ -389,14 +414,13 @@ function mkProduct(ads,NOW,L,proofs){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
   const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
   if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));
-  const tx=N([...new Set(counted.map(a=>a.title+' '+a.body+' '+a.link_description))].join(' \n ')),
-   vm=findAll(tx,L.bulky),fm=findAll(tx,L.fragile);
-  if(vm.length)why.push('كبير الحجم، لا يصلح للدفع عند الاستلام: '+[...new Set(vm.map(m=>m.e.label))].slice(0,3).join('، '));
-  if(fm.length)why.push('هش، لا يصلح للدفع عند الاستلام: '+[...new Set(fm.map(m=>m.e.label))].slice(0,3).join('، '))
+  /* الهش وكبير الحجم: يحكم فيهما فحص الصلاحية أدناه (موازنة أدلة + استثناء الإكسسوارات)، لا كلمة واحدة في أي مكان */
   /* هل يبيع منتجاً مادياً يُشحن؟ يُقصى المنتج إن كان نصف إعلاناته أو أكثر خدمة/دورة/فعالية/محلاً/شركة/تطبيقاً/أكلاً/كبيراً/هشاً */
-  if(PCK&&L.check!==false){const rs=counted.map(a=>a._pc||(a._pc=PCK.check(a,{country:a.country||L.market}))),bad=rs.filter(r=>!r.ok);
+  if(PCK&&L.check!==false){const ig=L.ignore&&L.ignore.size?L.ignore:null,ap=L.allowPages;
+   const rs=counted.map(a=>ap&&ap.has(String(a.page_id))?{ok:true}:(a._pc||(a._pc=PCK.check(a,{country:a.country||L.market,ignore:ig})))),bad=rs.filter(r=>!r.ok);
    if(bad.length&&bad.length*2>=counted.length){const by={};bad.forEach(r=>{by[r.kind]=(by[r.kind]||0)+1});const top=Object.keys(by).sort((x,y)=>by[y]-by[x])[0],r=bad.find(x=>x.kind===top);
-    why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''))}}}
+    why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(r.ctx?' · في النص: …'+r.ctx+'…':'')+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''));
+    P.fix={terms:[...new Set(bad.filter(x=>x.kind===top).flatMap(x=>x.terms||[]))].slice(0,6),pages:[...new Set(counted.filter((a,i)=>!rs[i].ok).map(a=>String(a.page_id||'')).filter(Boolean))].slice(0,10)}}}}
  P.why=why;P.excl=why.length>0;
  const mk=counted.map(a=>hostOf(a)).find(h=>MARKET.test(h));P.mktTag=mk?MKN(mk):'';
  let tags=[],tg=new Set(),benOk=false,strong=false;
@@ -412,9 +436,9 @@ function similar(P){const idx=new Map();P.forEach((p,i)=>p.tg.forEach(t=>{let s=
   p.sim=s.size;p.simNames=[...s].slice(0,4).map(j=>P[j].name);p.simOk=p.tg.size>0&&p.sim<=2})}
 /* ---------- تقييم كل إعلان: المدة تخصه، والباقي مشترك بين إعلانات المنتج ---------- */
 function scoreAd(a,P,NOW){
- const ag=age(a,NOW),dated=ag!=null,pct=!dated||ag<=7?0:ag<=30?1:ag<=60?.85:.8;
+ const ag=age(a,NOW),dated=ag!=null,pct=!dated||ag<=3?0:ag<=7?.5:ag<=30?1:ag<=60?.85:.8;
  const ev=[
-  {k:'dur',name:'مدة الإعلان',w:37,present:dated&&ag>=8,pct,tag:!dated||ag<=7?'':ag<=30?'مدة جولد':ag<=60?'قديم نسبياً في السوق':'قديم في السوق'},
+  {k:'dur',name:'مدة الإعلان',w:37,present:dated&&ag>=4,pct,tag:!dated||ag<=3?'':ag<=7?'اجتاز التجربة الأولى':ag<=30?'مدة جولد':ag<=60?'قديم نسبياً في السوق':'قديم في السوق'},
   {k:'ben',name:'الفائدة',w:26,present:P.benOk,pct:P.benOk?1:0,tag:P.benOk&&P.tags&&P.tags[0]?P.tags[0]:''},
   {k:'sell',name:'قلة البائعين',w:19,present:P.n<=SELL(P.market),pct:P.n<=SELL(P.market)?1:0,tag:'الحد في هذا السوق: '+SELL(P.market)+' بائعين'},
   {k:'copies',name:'عدد النسخ',w:13,present:P.copies>=2,pct:P.copies>=2?1:0},
@@ -425,8 +449,8 @@ function scoreAd(a,P,NOW){
  let cat,range='';
  cat=TIER(dated?ag:null,score);
  /* الجوهرة تشترط الفائدة + (قلة البائعين أو تعدد النسخ). وإلا «رابح محتمل» مع ما ينقصه */
- const miss=[];if(cat==='gem'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat='maybe'}
- const promising=dated&&ag>=4&&ag<=7&&P.copies>=2;
+ const miss=[];if(cat==='gem'||cat==='prom'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat=cat==='gem'?'maybe':'trial'}
+ const promising=false;   // «الواعد» صار تصنيفاً مستقلاً
  const nS=a.stat==='none',note=nS&&!dated?'بلا حالة وبلا تاريخ':nS?'بلا حالة':!dated?'بلا تاريخ':'';
  return{a,age:ag,ev,raw,score,cat,range,promising,note,miss}}
 /* ---------- الواجهة الرئيسية للنواة ---------- */
@@ -443,7 +467,7 @@ function analyze(rows,NOW,L){
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
  similar(P);
- const rank={gem:0,fire:1,trial:2,maybe:3,old:4,low:5,excl:6},out=[];   // الجوهرة أولاً ثم الرابح ثم التجربة (الواعد أولاً)
+ const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,low:6,excl:7},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← رابح محتمل ← قديم ← ضعيف ← مقصاة
  P.forEach(p=>{
   p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
   p.hits=p.tags.map(t=>({label:t,w:3}));
@@ -489,7 +513,7 @@ const priceTxt=p=>{if(!p.pr)return'—';const m=MK(),c=p.cur||'DZD',sym=m?m.curS
 const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!m)return'';return`<span class="tg soft" title="السوق الذي جاء منه المنتج">${flag(m)} ${esc(mkName(m))}</span>`+(ms.length>1?`<span class="tg" title="${esc(ms.map(mkName).join('، '))}">🌍 يظهر في ${ms.length} أسواق: ${ms.map(flag).join(' ')}</span>`:'')};
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
-const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
+const CL={trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
 const TRL={emerging:'بداية انتشار',rising:'صاعد',steady:'مستقر',declining:'في هبوط',saturated:'متشبع'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
@@ -538,7 +562,8 @@ function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js');
 const VHI={};   /* بصمة الصورة: رقم الإعلان في ALL → مجموعة الدمج */
 async function analyze(){
  const MKT=window.RadarMarkets,mg=t=>MKT?', '+MKT.goldText(t):'';   /* الفائدة تُقرأ أيضاً بلغات الأسواق الدولية */
- const src={strong:$('#d_strong').value+mg('strong'),normal:$('#d_mid').value+mg('normal'),brands:$('#d_brand').value,bulky:$('#d_bulky').value,fragile:$('#d_fragile').value},lk=JSON.stringify(src);
+ const src={strong:$('#d_strong').value+mg('strong'),normal:$('#d_mid').value+mg('normal'),brands:$('#d_brand').value,ignore:FIX.ignore||[],allowPages:FIX.allowPages||[]},lk=JSON.stringify(src);
+ if(lk!==LK)ALL.forEach(a=>{delete a._pc});   /* التصحيحات تغيّرت: يُعاد فحص الصلاحية */
  const market=($('#mkt')||{}).value||'',rates=Object.assign({},MK()?MK().RATES_DZD:{},myRates());
  ALL.forEach((a,i)=>{a._i=i;if(VHI[i])a._vh=VHI[i]});
  window.__busy&&window.__busy('an','جارٍ التحليل…');
@@ -556,7 +581,7 @@ async function analyze(){
 function render(){shown=60;const v=id=>$('#'+id).value,ck=id=>$('#'+id).checked;
  const q=CORE.N(v('q')).trim(),min=+v('minScore')||0,mc=+v('maxComp')||1e9,md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>(p.excl||p.score>=min)&&p.n<=mc&&p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
- const cnt={all:0,trial:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
+ const cnt={all:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
  R.querySelectorAll('#tabs button').forEach(b=>{b.querySelector('b').textContent=cnt[b.dataset.t];b.classList.toggle('on',b.dataset.t===tab)});
  VIEW=B.filter(p=>tab==='all'?p.cat!=='excl':tab==='fav'?FAV.has(p.k):p.cat===tab);
  const so=v('sort');VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='comp'?a.n-b.n||b.score-a.score:so==='new'?a.days-b.days:a.rank-b.rank||(b.promising?1:0)-(a.promising?1:0)||b.score-a.score||(a.seas-b.seas));
@@ -611,7 +636,7 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
 <div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}<span class="tg">اتجاه السوق: ${TRL[p.trend]||''}</span>`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.cat==='maybe'&&r&&r.miss&&r.miss.length?`<span class="tg" style="color:#b45309">عمره عمر جوهرة لكن ينقصه: ${r.miss.join(' و')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
 <div class="pc-st"><div><b>${p.n}</b><span>بائع</span></div><div><b>${p.copies}</b><span>إعلانات/بائع</span></div><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
-<div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join(''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
+<div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join('')+(p.fix&&(p.fix.terms.length||p.fix.pages.length)?`<button class="btn ghost sm" data-fix="${esc(p.k)}" title="أعد هذا المنتج ولا تستبعد بهذا السبب مستقبلاً">↩️ سبب خاطئ</button>`:''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
 ${srcBox(p,kw,imgs)}
 <details class="pc-more" data-lz="${lzPut(()=>`${p.excl||!r?'':`<h4>الإعلان المرجعي</h4>${evTable(r)}`}${proofLine(p)}${simLine(p)}<h4>إعلانات المنتج، كلٌّ بتصنيفه</h4>${adsTable(p,saved)}
 <h4>البائعون</h4><table class="tb"><tr><th>البائع</th><th>المتجر</th><th>نسخ</th><th>السعر</th><th></th></tr>${(p.sellers||[]).slice(0,12).map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.host)}</td><td>${s.copies}</td><td>${s.p||'—'}</td><td>${/^\d{5,}$/.test(s.pid||'')?`<button class="btn ghost sm" data-tool="watch" data-pid="${esc(s.pid)}" data-name="${esc(s.name)}" title="راقب إعلانات هذه الصفحة">👁 راقب</button>`:''}</td></tr>`).join('')}</table>`)}"><summary>${p.excl||!r?'الإعلانات والبائعون':'تحليل الأدلة والإعلانات والبائعون'}</summary><p class="sub">…</p></details>
@@ -630,9 +655,9 @@ function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
   top:{library_url:s.lib,link_url:s.link},images:[],sellers:[],recs:[],ref:null,excl:false,saved_at:s.date}}
-function counts(){const c={trial:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
+function counts(){const c={trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
 
-$('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;$('#d_bulky').value=DEF.bulky;$('#d_fragile').value=DEF.fragile;
+$('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;
 $('#file').addEventListener('change',e=>load([...e.target.files]));
 ['dragover','dragenter'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('on')}));
 ['dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.remove('on')}));
@@ -642,7 +667,19 @@ R.querySelectorAll('.flt input,.flt select').forEach(el=>el.addEventListener('in
 $('#mkt')&&$('#mkt').addEventListener('change',()=>{if(ALL.length){analyze();setTimeout(()=>vpass().catch(()=>{}),300)}});
 R.addEventListener('change',e=>{const i=e.target.closest('[data-rate]');if(!i)return;const r=myRates();r[i.dataset.rate]=+i.value||undefined;try{localStorage.setItem(RK,JSON.stringify(r))}catch(x){}if(ALL.length)analyze()});
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(b){tab=b.dataset.t;render()}});
+let FIX={ignore:[],allowPages:[]};
+function drawFix(){const el=$('#d_fix');if(!el)return;const ig=FIX.ignore||[],ap=FIX.allowPages||[];
+ el.innerHTML=ig.length||ap.length?'<b>تصحيحاتك («سبب خاطئ»)</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'+ig.map(w=>`<button type="button" class="btn ghost sm" data-unfix="${esc(w)}" title="تراجع: عُد للاستبعاد بهذه الكلمة">${esc(w)} ✕</button>`).join('')+(ap.length?`<button type="button" class="btn ghost sm" data-unfix-pages="1" title="تراجع عن السماح الدائم">${ap.length} صفحة مسموح بها ✕</button>`:'')+'</div>':''}
+fetch('/api/lib/fix').then(r=>r.ok?r.json():null).then(j=>{if(j){FIX=j;drawFix()}}).catch(()=>{});
+document.addEventListener('click',async e=>{const u=e.target.closest('[data-unfix],[data-unfix-pages]');if(!u)return;
+ try{if(u.dataset.unfixPages){await fetch('/api/lib/allow-pages',{method:'DELETE'});FIX.allowPages=[]}else{const r=await fetch('/api/lib/fix',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({unignore:[u.dataset.unfix]})});FIX=await r.json()}
+  drawFix();T('تم التراجع. أعد التحليل لتطبيقه.')}catch(x){T('تعذّر التراجع','err')}});
 R.addEventListener('click',async e=>{
+ const fx=e.target.closest('[data-fix]');if(fx){const p=PROD.find(x=>x.k===fx.dataset.fix);if(!p||!p.fix)return;
+  const t=p.fix.terms||[],pg=p.fix.pages||[],msg=t.length?'لن تُستبعد المنتجات بعد الآن بسبب: «'+t.join('، ')+'».':'ستُقبل إعلانات صفحة هذا المنتج دائماً.';
+  if(!confirm('سبب خاطئ؟\n'+msg+'\nيمكن التراجع من «إعدادات التحليل».'))return;
+  try{const r=await fetch('/api/lib/fix',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(t.length?{ignore:t}:{allowPages:pg})});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'تعذّر الحفظ');
+   FIX=await r.json();drawFix();T('تم التصحيح، وأُعيد التحليل');analyze()}catch(x){T(x.message,'err')}return}
  const sv=e.target.closest('.save');if(sv){const k=sv.dataset.k;FAV.has(k)?FAV.delete(k):FAV.add(k);window.__onFav&&window.__onFav(k,FAV.has(k));render();return}
  const m=e.target.closest('.pc-media[data-imgs]');if(m){lbOpen(JSON.parse(m.dataset.imgs),0,m.dataset.saved==='1');return}
  const b=e.target.closest('[data-act]');if(!b)return;
@@ -661,14 +698,14 @@ $('#copy').addEventListener('click',async()=>{const tx=rows().map(r=>r.map(x=>St
  msg('تم نسخ '+VIEW.length+' منتجاً. الصقها في Excel أو Google Sheets.')});
 $('#csv').addEventListener('click',()=>{const tx='\uFEFF'+rows().map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""').replace(/[\r\n]+/g,' ')+'"').join(',')).join('\r\n');window.__dl('winning-products.csv',tx)});
 fillMarkets();
-window.WPR={sheetRows:()=>rows(),load,msg,PROD:()=>PROD,byKey:k=>PROD.find(p=>p.k===k),setFav:a=>{FAV=new Set(a)},snapshot,hydrate,cardHTML,counts,imgsOf};
+window.WPR={fix:()=>FIX,setFix:f=>{FIX=f;LK=null},sheetRows:()=>rows(),load,msg,PROD:()=>PROD,byKey:k=>PROD.find(p=>p.k===k),setFav:a=>{FAV=new Set(a)},snapshot,hydrate,cardHTML,counts,imgsOf};
 })();
 </script><script src="/collect.js"></script><script src="/radar-lib/gapmatch.js"></script><script src="/gap.js"></script><script src="/tools.js"></script><script src="/watch.js"></script><script src="/tiktok.js"></script><script src="/account.js"></script><script src="/profit.js"></script><script>(function(){
 'use strict';
 const R=document.getElementById('wpr-app'),$=s=>R.querySelector(s),W=window;
 const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
-const CC={gem:'#8b5cf6',fire:'#f97316',old:'#78716c',watch:'#3b82f6',low:'#94a3b8',new:'#14b8a6',trial:'#06b6d4',maybe:'#d97706',excl:'#b45309'};
+const CL={trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
+const CC={gem:'#8b5cf6',fire:'#f97316',old:'#78716c',watch:'#3b82f6',low:'#94a3b8',new:'#14b8a6',trial:'#06b6d4',maybe:'#d97706',prom:'#16a34a',excl:'#b45309'};
 const SRC={adlib:'📡 جمع الإعلانات',upload:'⬆️ رفع يدوي'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'}),ft=d=>new Date(d).toLocaleTimeString('ar-DZ',{hour:'2-digit',minute:'2-digit'});
 const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'الآن':m<60?'منذ '+m+' دقيقة':m<1440?'منذ '+Math.round(m/60)+' ساعة':'منذ '+Math.round(m/1440)+' يوم'};
@@ -723,7 +760,7 @@ async function rDash(){
  const gf=L?(L.counts?L.counts.gem+L.counts.fire:L.summary.filter(p=>p.tier==='gem'||p.tier==='fire').length):0;
  let h=`<div class="kps">${kpi('inbox',inbox.reduce((s,r)=>s+r.ads,0),'إعلان وارد من الإضافة')}${kpi('clock',pend,'دفعات بانتظار التحليل')}${kpi('chart',anal.length,'تحليل مكتمل')}${kpi('award',gf,'💎🔥 في آخر تحليل')}${kpi('star',sv.length,'منتج محفوظ')}</div>`;
  if(!rs.length){h+=`<div class="card"><h2>ابدأ في ثلاث خطوات</h2><div class="steps"><div><div class="n">1</div><b>ثبّت الإضافة</b><p class="sub">من «جمع الإعلانات ← الإضافة» نزّلها وثبّتها في Chrome مرة واحدة.</p></div><div><div class="n">2</div><b>اجمع الإعلانات</b><p class="sub">ابدأ بحثاً سريعاً أو جماعياً بالكلمات الذهبية من المنصة نفسها، وتصل إلى «الإعلانات الواردة».</p></div><div><div class="n">3</div><b>حلّل واختر</b><p class="sub">تُصنَّف المنتجات، فاحفظ ما يعجبك وابحث عن مورّده.</p></div></div><p style="margin-top:14px"><button class="btn" data-v="collect">افتح جمع الإعلانات</button> <button class="btn ghost" data-v="analyze">أو ارفع ملفاً الآن</button></p></div>`;$('#d-body').innerHTML=h;return}
- const cn=L&&L.counts,keys=['gem','fire','trial','maybe','old','low','excl'].concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
+ const cn=L&&L.counts,keys=['trial','prom','gem','fire','maybe','old','low','excl'].concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
  const days=[...Array(14)].map((_,i)=>{const d=new Date(Date.now()-(13-i)*864e5);return{k:d.toLocaleDateString('en-CA'),n:0,l:d.getDate()}});
  rs.forEach(r=>{const k=new Date(r.created_at).toLocaleDateString('en-CA'),x=days.find(d=>d.k===k);if(x)x.n+=r.ads});const mx=Math.max(1,...days.map(d=>d.n));
  h+=`<div class="grid2"><div class="card"><h2>توزيع تصنيفات آخر تحليل</h2>${cn&&tot?`<div class="stack">${keys.map(k=>cn[k]?`<i style="width:${cn[k]/tot*100}%;background:${CC[k]}" title="${CL[k]}"></i>`:'').join('')}</div><div class="legend">${keys.map(k=>`<span><i style="background:${CC[k]}"></i>${CL[k]}<b>${cn[k]||0}</b></span>`).join('')}</div>`:'<p class="sub">افتح أي تحليل من الأرشيف ليظهر التوزيع هنا.</p>'}</div>

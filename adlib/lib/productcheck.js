@@ -42,7 +42,9 @@
     const L = { map: new Map(), first: new Set(), maxN: 1, sub: [], entries: [] };
     const put = (key, e) => { const old = L.map.get(key); if (!old || old.w < e.w) L.map.set(key, e); };
     for (const raw of list || []) {
-      const strong = raw[0] === '!', label = (strong ? raw.slice(1) : raw), e = { w: strong ? 2 : 1, label: label.split('/')[0] };
+      const exact = raw[0] === '=', r0 = exact ? raw.slice(1) : raw;
+      const strong = r0[0] === '!', label = (strong ? r0.slice(1) : r0), e = { w: strong ? 2 : 1, label: label.split('/')[0] };
+      if (exact) e.exact = new RegExp('(?:' + label.split('/').map((v) => esc(v.trim())).join('|') + ')', 'u');   // حرفياً بالهمزة
       L.entries.push(e);
       for (const v of label.split('/')) {
         const t = norm(v).trim(); if (!t) continue;
@@ -164,13 +166,16 @@
     while (b < text.length && !SENT.test(text[b])) b++;
     return text.slice(a, b);
   }
-  function hits(text, list, okList, toks) {
+  function hits(text, list, okList, toks, raw, ignore, pos) {
     const out = new Map();
     for (const h of scan(text, list, toks)) {
+      if (ignore && ignore.has(h.e.label)) continue;                           // كلمة صحّحها المستخدم («سبب خاطئ»)
+      if (h.e.exact && raw != null && !h.e.exact.test(raw)) continue;           // تشابه بعد توحيد الهمزات فقط
       if (okList && (okList.map.size || okList.sub.length)) {
         const win = windowAt(text, h.s, h.t);
         if (scan(win, okList).length) continue;                               // accessory / tool for it
       }
+      if (pos && !pos.has(h.e.label)) pos.set(h.e.label, h);
       const prev = out.get(h.e.label);
       if (!prev || prev < h.e.w) out.set(h.e.label, h.e.w);
     }
@@ -189,22 +194,23 @@
     a = a || {}; opts = opts || {};
     const title = String(a.title || ''), body = String(a.body || ''), desc = String(a.link_description || a.linkDescription || '');
     const pageName = String(a.page_name || a.pageName || '');
-    const all = norm([title, body, desc, a.cta || a.ctaText || ''].join(' \n '));
+    const rawAll = [title, body, desc, a.cta || a.ctaText || ''].join(' \n '), all = norm(rawAll), rawNoMarks = rawAll.replace(/[\u064B-\u065F\u0670\u0640]/g, '');
+    const ignore = opts.ignore instanceof Set ? opts.ignore : Array.isArray(opts.ignore) ? new Set(opts.ignore) : null;
     const head = norm(title + ' \n ' + body.slice(0, 220));
     const country = String(opts.country || a.country || '').toUpperCase();
     const langs = opts.langs || langsFor(country, all);
     const L = lexicon(langs);
-    const S = {}, terms = {};
-    KINDS.forEach((k) => { S[k] = 0; terms[k] = []; });
+    const S = {}, terms = {}, textTerms = {}, at = {};
+    KINDS.forEach((k) => { S[k] = 0; terms[k] = []; textTerms[k] = []; at[k] = new Map(); });
 
     // 1. ad text in the market's languages (a term in the headline / first lines counts 1.5×)
     const AT = tokensOf(all), HT = tokensOf(head);
     for (const k of KINDS) {
       const ok = k === 'food' ? L.foodOk : k === 'bulky' ? L.bulkyOk : k === 'fragile' ? L.fragileOk : null;
-      const h = hits(all, L[k], ok, AT);
+      const h = hits(all, L[k], ok, AT, rawNoMarks, ignore, at[k]);
       if (!h.size) continue;
-      const hh = hits(head, L[k], ok, HT);
-      h.forEach((w, t) => { S[k] += w + (hh.has(t) ? w / 2 : 0); terms[k].push(t); });
+      const hh = hits(head, L[k], ok, HT, rawNoMarks, ignore);
+      h.forEach((w, t) => { S[k] += w + (hh.has(t) ? w / 2 : 0); terms[k].push(t); textTerms[k].push(t); });
     }
     // 2. the page name ("Sweet Bakery", "Smart Academy", "City Dental Clinic")
     if (pageName) {
@@ -250,7 +256,15 @@
     }
     if (!kind && letters < 12 && !productLink) kind = 'insufficient';             // a button alone does not say which product
     const reasons = kind ? [LABEL[kind] + (terms[kind] && terms[kind].length ? ' (' + [...new Set(terms[kind])].slice(0, 3).join('، ') + ')' : '')] : [];
-    return { ok: !kind, kind, label: kind ? LABEL[kind] : '', reasons, score: S, product: Math.round(P * 10) / 10, productEvidence: pTerms.slice(0, 5), langs };
+    // الجملة التي وُجدت فيها الكلمة، بحروفها الأصلية (ليرى المستخدم «لباس المرأة» لا «مرآة»)
+    let ctx = '';
+    if (kind && at[kind] && at[kind].size) {
+      const h = at[kind].values().next().value, before = (all.slice(0, h.s).match(TOK) || []).length, n = (all.slice(h.s, h.t).match(TOK) || []).length;
+      const RT = rawAll.match(TOK) || [];
+      if (RT.length) ctx = RT.slice(Math.max(0, before - 3), before).join(' ') + ' «' + RT.slice(before, before + n).join(' ') + '» ' + RT.slice(before + n, before + n + 3).join(' ');
+      ctx = ctx.trim();
+    }
+    return { ok: !kind, kind, label: kind ? LABEL[kind] : '', reasons, terms: kind ? [...new Set(textTerms[kind])] : [], ctx, score: S, product: Math.round(P * 10) / 10, productEvidence: pTerms.slice(0, 5), langs };
   }
 
   const api = { check, KINDS, LABEL, langsFor, norm, _t: { scan, hits, lexicon } };
