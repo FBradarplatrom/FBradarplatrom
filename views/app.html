@@ -188,7 +188,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <label class="fl">السعر إلى (دج تقريباً)<input id="pmax" type="number" min="0"></label>
 <label class="fl">الصيغة<select id="fmt"><option value="">الكل</option><option>VIDEO</option><option>IMAGE</option><option>CAROUSEL</option></select></label>
 <label class="fl">الترتيب<select id="sort"><option value="score">التصنيف ثم الفائدة</option><option value="days">الأقدم إعلاناً</option><option value="new">الأحدث إعلاناً</option></select></label>
-<label class="fl chk"><input type="checkbox" id="cb">يبيع فائدة واضحة فقط</label>
+<label class="fl chk"><input type="checkbox" id="dd" checked>استبعاد المكرر</label><label class="fl chk"><input type="checkbox" id="cb">يبيع فائدة واضحة فقط</label>
 <label class="fl chk"><input type="checkbox" id="cs">إخفاء الموسمي</label></div></details>
 <details class="fx"><summary>القواميس والقوائم (قابلة للتعديل)</summary>
 <p class="sub">افصل بين الكلمات بفاصلة، واكتب الصيغ المترادفة للكلمة الواحدة مفصولة بشرطة مائلة /. تُطابَق الكلمة مستقلة مكتملة، مع إهمال التشكيل وقبول السوابق العربية، وجمع الفرنسية، واختلافات الأرابيزي.</p>
@@ -199,7 +199,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <div class="fl" id="d_fix"></div>
 </div>
 <button id="apply" type="button" class="btn">تطبيق وإعادة الحساب</button></details>
-<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="prom">🌱 واعد<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="excl">🚫 مستبعد<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
+<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="prom">🌱 واعد<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="excl">🚫 مستبعد<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav><span id="dupn" class="muted" style="font-size:13px;align-self:center"></span>
 <div class="acts" style="display:flex;gap:8px"><button id="copy" type="button" class="btn ghost sm">نسخ للجدول</button><button id="csv" type="button" class="btn ghost sm">تحميل CSV</button><button id="gsheet" type="button" class="btn ghost sm" data-tool="sheet" data-src="results">📤 إلى Google Sheets</button></div></div>
 <div id="grid" class="grid"></div><div style="text-align:center;margin-top:20px"><button id="more" type="button" class="btn ghost" hidden>عرض المزيد</button></div>
 </div></section>
@@ -301,6 +301,13 @@ function keysOf(a){const K=[],gm=(typeof globalThis!=='undefined'&&globalThis.Ra
  k=N(a.product_name).trim();if(k.length>=3)K.push(['name',k]);
  const b=N(a.body).replace(/[^\u0621-\u064Aa-z0-9]/g,'');a._p=a._p??price(a.title+' '+a.body);
  if(b.length>=80&&a._p)K.push(['txt',b.slice(0,400)+'|'+a._p]);return K}
+/* النسخ المكررة للإعلان الواحد: نفس الصفحة + واحد من: نفس الصورة/الفيديو، نفس النص مع نفس الرابط، نفس مجموعة ميتا */
+function dupKeys(a){const pg=String(a.page_id||'').trim()||N(a.page_name).trim();if(!pg)return[];const K=[];
+ [a.image_hash,a.video_hash,a.creative_id].forEach(v=>{if(v&&String(v).length>=6)K.push('m:'+v)});
+ let k=urlKey(a.image_url);if(k.length>12)K.push('i:'+k);k=urlKey(a.video_url);if(k.length>12)K.push('v:'+k);
+ const t=N(a.title+' '+a.body).replace(/[^\p{L}\p{N}]+/gu,'');if(t.length>=20)K.push('t:'+t.slice(0,800)+'|'+urlKey(a.link_url));
+ if(a.collation_id)K.push('c:'+a.collation_id);
+ return K.map(x=>pg+'|'+x)}
 function groupAds(ads){const p=ads.map((_,i)=>i),f=i=>{while(p[i]!==i){p[i]=p[p[i]];i=p[i]}return i},B=new Map();
  ads.forEach((a,i)=>keysOf(a).forEach(([t,k])=>{const key=t+'|'+k;let b=B.get(key);if(!b)B.set(key,b=[]);b.push(i)}));
  B.forEach(b=>{for(let i=1;i<b.length;i++)if(f(b[i])!==f(b[0]))p[f(b[i])]=f(b[0])});
@@ -449,7 +456,7 @@ function analyze(rows,NOW,L){
   p.also=[...new Set(p.recs.map(r=>r.cat))].filter(x=>x!==c).sort((x,y)=>rank[x]-rank[y]);out.push(p)});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
-return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,_t:{scoreAd,groupAds,compile,findAll}};
+return{analyze,dupKeys,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,_t:{scoreAd,groupAds,compile,findAll}};
 })();
 if(typeof module!=='undefined')module.exports=CORE;
 (function(){
@@ -522,7 +529,7 @@ async function analyze(){
   if(w){const r=await new Promise(ok=>{const id=++WKN;WKW.set(id,ok);w.postMessage({id,rows:ALL,NOW,src,market,rates,vh:VHI})});if(!r.error){PROD=r.P;done=true}}
   if(!done){/* الأداء: القوائم تُبنى مرة واحدة ما لم تتغير الإعدادات */if(LK!==lk){LK=lk;LCACHE=CORE.buildLists(src)}PROD=CORE.analyze(ALL,NOW,Object.assign({},LCACHE,{market,rates}))}
  }finally{window.__busy&&window.__busy('an')}
- LAST_L={market,rates};fillMarkets();
+ LAST_L={market,rates};fillMarkets();markDups();
  const kw=new Set(ALL.map(a=>a.search).filter(Boolean)).size,ds=Math.floor((Date.now()-NOW)/864e5);
  $('#note').innerHTML=`<div class="alert info">تاريخ جمع البيانات: ${fd(NOW)}، وتُقاس أعمار الإعلانات منه.${ds>3?` مرّ على الجمع ${ds} أيام، فقد تكون الأعمار والحالات متقادمة، والأفضل إعادة جمع البيانات.`:''}</div>`+
   '';
@@ -534,10 +541,17 @@ function sumStats(){const U=new Map();PROD.forEach(p=>{if(!U.has(p.ads))U.set(p.
  const pg=new Set(inAds.map(a=>CORE.N(a.page_name||'').trim()||'#'+(a.page_id||'')).filter(x=>x&&x!=='#'));   /* البائع = اسم صفحة الإعلان */
  return{observed:RST&&RST.observed?RST.observed:null,searches:RST&&RST.searches||0,fetched:ALL.length,analyzed:inAds.length,excluded:exclAds.length,
   excl_detail:`عند الاستقبال (ليست منتجات): ${pre} · في التحليل (علامة رسمية/ليس منتجاً/متوقف): ${exclAds.length-pre}`,sellers:pg.size}}
+/* استبعاد المكرر: نسخ متطابقة للإعلان الواحد من نفس الصفحة تُجمع، وتبقى الأقدم (دليل المدة) مع «+N نسخ مطابقة» */
+function markDups(){const ps=PROD.filter(p=>!p.excl),par=ps.map((_,i)=>i),f=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i},B=new Map();
+ PROD.forEach(p=>{p.dupOf=null;p.dupN=0});
+ ps.forEach((p,i)=>CORE.dupKeys(p.top||p.ads[0]).forEach(k=>{const j=B.get(k);if(j===undefined)B.set(k,i);else{const x=f(i),y=f(j);if(x!==y)par[x]=y}}));
+ const G=new Map();ps.forEach((p,i)=>{const r=f(i);if(!G.has(r))G.set(r,[]);G.get(r).push(p)});
+ G.forEach(g=>{if(g.length<2)return;g.sort((a,b)=>(b.days||0)-(a.days||0)||String((a.top||{}).ad_id).localeCompare(String((b.top||{}).ad_id)));const rep=g[0];rep.dupN=g.length-1;g.slice(1).forEach(p=>p.dupOf=rep.k)})}
 function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'+id)||{}).checked;
  const q=CORE.N(v('q')).trim(),md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
- const B=PROD.filter(p=>p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
+ const dd=ck('dd'),B0=PROD.filter(p=>!dd||!p.dupOf),hid=PROD.length-B0.length,B=B0.filter(p=>p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
  const cnt={all:0,ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;cnt.all++;if(FAV.has(p.k))cnt.fav++});
+ const dn=$('#dupn');if(dn)dn.textContent=dd&&hid?'أُخفيت '+hid+' نسخة مكررة':'';
  R.querySelectorAll('#tabs button').forEach(b=>{b.querySelector('b').textContent=cnt[b.dataset.t];b.classList.toggle('on',b.dataset.t===tab)});
  VIEW=B.filter(p=>tab==='all'?true:tab==='fav'?FAV.has(p.k):p.cat===tab);
  const so=v('sort'),tk=p=>{const t=trackOf(p);return t?(t.act?t.n:-1):0};   /* المتابعة: رُصد نشطاً في أيام جمع أكثر = أوثق */
@@ -586,7 +600,7 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>
-<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}${p.warn2?`<span class="tg warn">${esc(p.warn2)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
+<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.dupN&&($('#dd')||{}).checked?`<span class="tg" title="نسخ من نفس الصفحة بنفس الصورة أو النص أو مجموعة ميتا، أُخفيت وبقيت هذه (الأقدم)">+${p.dupN} نسخ مطابقة</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}${p.warn2?`<span class="tg warn">${esc(p.warn2)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
 <div class="pc-st"><div><b>${(p.counted||[]).length?'نشط':'متوقف'}</b><span>الحالة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join('')+(p.fix&&(p.fix.terms.length||p.fix.pages.length)?`<button class="btn ghost sm" data-fix="${esc(p.k)}" title="أعد هذا المنتج ولا تستبعد بهذا السبب مستقبلاً">↩️ سبب خاطئ</button>`:''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>

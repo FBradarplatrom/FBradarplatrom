@@ -111,7 +111,14 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(num(K['دخلت التحليل']) + num(K['الإعلانات المستبعدة']) === num(K['الإعلانات التي تم جلبها']), 'المجلوب = دخلت التحليل + المستبعدة');
     ok(num(K['عدد البائعين']) === 5, 'البائعون = أسماء صفحات مختلفة (5)');
     const tabN = await pg.$$eval('#tabs button', bs => Object.fromEntries(bs.map(b => [b.dataset.t, +b.querySelector('b').textContent])));
-    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) && ['trial', 'prom', 'gem', 'fire', 'old', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 0, '«الكل» = المجلوب = مجموع التبويبات، و«مستبعد» = 0: ' + JSON.stringify(tabN));
+    const dupTxt = await pg.locator('#dupn').innerText();
+    ok(/أُخفيت 1 نسخة مكررة/.test(dupTxt), 'استبعاد المكرر مفعّل افتراضياً: نسخة واحدة مكررة (نفس الصفحة والنص والرابط): ' + dupTxt);
+    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) - 1 && ['trial', 'prom', 'gem', 'fire', 'old', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 0, '«الكل» = المجلوب − المكرر المخفي = مجموع التبويبات: ' + JSON.stringify(tabN));
+    ok(/\+1 نسخ مطابقة/.test(await pg.locator('#grid').innerText()), 'النسخة الباقية عليها «+1 نسخ مطابقة»');
+    const setDd = v => pg.$eval('#dd', (el, v) => { el.checked = v; el.dispatchEvent(new Event('input', { bubbles: true })); }, v);
+    await setDd(false); await pg.waitForTimeout(300);
+    ok(+(await pg.locator('#tabs [data-t="all"] b').innerText()) === num(K['الإعلانات التي تم جلبها']) && !(await pg.locator('#dupn').innerText()), 'إلغاء «استبعاد المكرر» يُظهر كل النسخ');
+    await setDd(true); await pg.waitForTimeout(200);
     ok(await pg.$eval('#tabs [data-t="excl"]', b => /مستبعد/.test(b.textContent)), 'تبويب «🚫 مستبعد» موجود');
     await pg.click('#tabs [data-t="all"]'); await pg.waitForTimeout(300);
     const st = await pg.$$eval('.pc .pc-st', b => b.map(x => x.textContent));

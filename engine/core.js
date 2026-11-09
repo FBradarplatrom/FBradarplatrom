@@ -82,6 +82,13 @@ function keysOf(a){const K=[],gm=(typeof globalThis!=='undefined'&&globalThis.Ra
  k=N(a.product_name).trim();if(k.length>=3)K.push(['name',k]);
  const b=N(a.body).replace(/[^\u0621-\u064Aa-z0-9]/g,'');a._p=a._p??price(a.title+' '+a.body);
  if(b.length>=80&&a._p)K.push(['txt',b.slice(0,400)+'|'+a._p]);return K}
+/* النسخ المكررة للإعلان الواحد: نفس الصفحة + واحد من: نفس الصورة/الفيديو، نفس النص مع نفس الرابط، نفس مجموعة ميتا */
+function dupKeys(a){const pg=String(a.page_id||'').trim()||N(a.page_name).trim();if(!pg)return[];const K=[];
+ [a.image_hash,a.video_hash,a.creative_id].forEach(v=>{if(v&&String(v).length>=6)K.push('m:'+v)});
+ let k=urlKey(a.image_url);if(k.length>12)K.push('i:'+k);k=urlKey(a.video_url);if(k.length>12)K.push('v:'+k);
+ const t=N(a.title+' '+a.body).replace(/[^\p{L}\p{N}]+/gu,'');if(t.length>=20)K.push('t:'+t.slice(0,800)+'|'+urlKey(a.link_url));
+ if(a.collation_id)K.push('c:'+a.collation_id);
+ return K.map(x=>pg+'|'+x)}
 function groupAds(ads){const p=ads.map((_,i)=>i),f=i=>{while(p[i]!==i){p[i]=p[p[i]];i=p[i]}return i},B=new Map();
  ads.forEach((a,i)=>keysOf(a).forEach(([t,k])=>{const key=t+'|'+k;let b=B.get(key);if(!b)B.set(key,b=[]);b.push(i)}));
  B.forEach(b=>{for(let i=1;i<b.length;i++)if(f(b[i])!==f(b[0]))p[f(b[i])]=f(b[0])});
@@ -230,6 +237,6 @@ function analyze(rows,NOW,L){
   p.also=[...new Set(p.recs.map(r=>r.cat))].filter(x=>x!==c).sort((x,y)=>rank[x]-rank[y]);out.push(p)});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
-return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,_t:{scoreAd,groupAds,compile,findAll}};
+return{analyze,dupKeys,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,_t:{scoreAd,groupAds,compile,findAll}};
 })();
 if(typeof module!=='undefined')module.exports=CORE;

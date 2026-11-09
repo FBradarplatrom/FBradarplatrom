@@ -82,6 +82,14 @@ eq('بلا تجميع: 3 إعلانات = 3 بطاقات بمفاتيح مختل
 eq('«المستبعد عند الوصول» القديم يُحلَّل الآن كغيره (الاستبعاد للعلامات فقط)',P.filter(p=>p.excl).length,0);
 P=C.analyze([row({ad_id:'d1',page_id:'d',title:'جهاز يزيل البقع',start_date:''})],NOW,Object.assign({},L,{group:false}));
 eq('إعلان بلا تاريخ بدء: مستبعد بسببه (لا تصنيف «ضعيف»)',[P[0].cat,/بلا تاريخ بدء/.test(P[0].why[0])],['excl',true]);
+// ===== مفاتيح المكرر: نفس الصفحة + (نفس الصورة / نفس النص والرابط / نفس مجموعة ميتا) =====
+const dk=o=>C.dupKeys(C.normRow(Object.assign({page_id:'p1',title:'جهاز يزيل البقع من الملابس',body:'السعر 2900 دج التوصيل لكل الولايات',link_url:'https://s.dz/products/x'},o)));
+const share=(a,b)=>a.some(k=>b.includes(k));
+eq('نفس الصفحة ونفس الصورة = مكرر',share(dk({image_url:'https://cdn.x.com/i/abc123.jpg',title:'أ'}),dk({image_url:'https://cdn.x.com/i/abc123.jpg?s=2',title:'ب مختلف تماماً',body:'نص آخر'})),true);
+eq('نفس الصفحة ونفس النص والرابط = مكرر (رغم اختلاف الإيموجي والمسافات)',share(dk({image_url:'https://cdn.x.com/i/1.jpg'}),dk({image_url:'https://cdn.x.com/i/2.jpg',title:'جهاز  يزيل البقع من الملابس 🔥'})),true);
+eq('نفس مجموعة ميتا = مكرر',share(dk({collation_id:'G7',title:'أ',body:'ب'}),dk({collation_id:'G7',title:'ج',body:'د'})),true);
+eq('صفحة أخرى بنفس الصورة والنص = ليس مكرراً',share(dk({image_url:'https://cdn.x.com/i/abc123.jpg'}),dk({page_id:'p2',image_url:'https://cdn.x.com/i/abc123.jpg'})),false);
+eq('نفس الصفحة بصورة ونص مختلفين = ليس مكرراً',share(dk({image_url:'https://cdn.x.com/i/1.jpg'}),dk({image_url:'https://cdn.x.com/i/2.jpg',title:'منتج آخر يزيل الرطوبة',body:'وصف مختلف تماماً هنا'})),false);
 // ===== الإقصاء والتنبيهات والمتوقف =====
 P=A([row({ad_id:'f1',page_id:'f1',title:'ثلاجة صغيرة للسيارة',body:'ثلاجة تبرد مشروباتك. السعر 15000 دج',image_url:'https://c/i/f1.jpg'})]);
 eq('كبير الحجم/هش/أكل: تنبيه لا إقصاء',[P[0].cat!=='excl',/قد يكون/.test(P[0].warn||'')],[true,true]);
