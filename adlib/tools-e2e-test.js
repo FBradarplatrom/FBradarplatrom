@@ -82,7 +82,9 @@ const NOW = Math.floor(Date.now() / 1000);
     ok(/زاوية/.test(ai) && /أمهات 25-40/.test(ai) && /نص بالدارجة/.test(ai), 'AI analysis shows angle, audience and Algerian ad copy');
     await pg.click('[data-tm="x"]');
     // ---- 📤 Google Sheets
-    await pg.click('.nv[data-v="settings"]'); await pg.waitForSelector('#g-url');
+    await pg.click('.nv[data-v="settings"]'); await pg.waitForSelector('#x-billing');
+    ok(!(await pg.$('#g-url')) && !/مفتاح ربط الإضافات/.test(await pg.locator('#x-set').textContent()), 'الإعدادات بلا Google Sheets وبلا مفتاح الإضافات');
+    await pg.click('.nv[data-v="integrations"]'); await pg.waitForSelector('#g-url');
     await pg.fill('#g-url', 'http://127.0.0.1:' + MP + '/macros/exec'); await pg.fill('#g-tok', 'سر'); await pg.click('[data-a="gtest"]');
     await pg.waitForFunction(() => /وصل الصف التجريبي/.test(document.querySelector('#toasts').textContent), null, { timeout: 15000 });
     ok(sheetRows.length === 1, 'test row reaches the Google Sheet');

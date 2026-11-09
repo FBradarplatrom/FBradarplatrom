@@ -40,6 +40,7 @@ async function notify(uid, ev, text, path) {
   if (!db) return { sent: 0 };
   const u = db.prepare('select id,email from users where id=?').get(uid); if (!u) return { sent: 0 };
   const p = prefs(uid); if (ev !== 'test' && p.ev[ev] === false) return { sent: 0 };
+  if (['gap', 'watch', 'gem', 'test'].includes(ev)) { const uu = db.prepare('select * from users where id=?').get(uid); if (uu && !require('./limits.js').has(uu, 'alerts')) return { sent: 0 }; }
   const link = path && appUrl() ? appUrl() + path : '', out = { sent: 0, errors: [] };
   const msg = text + (link ? '\n' + link : '');
   if (p.tg && p.chat) { try { await tgSend(p.chat, esc(msg)); out.sent++; log(uid, ev, text, 'telegram', 1); } catch (e) { out.errors.push('تيليغرام: ' + e.message); log(uid, ev, text + ' — ' + e.message, 'telegram', 0); } }

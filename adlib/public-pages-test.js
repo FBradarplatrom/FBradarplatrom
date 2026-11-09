@@ -14,7 +14,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
   try {
     // prices for the pricing section
     const A = await b.newPage(); await A.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
-    const pls = (await (await A.request.get(BASE + '/api/admin/plans')).json()).plans.map((p, i) => Object.assign(p, p.free ? {} : { price: [2900, 7900, 24900][i - 1] || 0, price_usd: [19, 49, 149][i - 1] || 0 }));
+    const pls = (await (await A.request.get(BASE + '/api/admin/plans')).json()).plans.map((p, i) => Object.assign(p, p.free ? { features: p.features.filter(k => k !== 'tiktok' && k !== 'sheets') } : { price: [2900, 7900, 24900][i - 1] || 0, price_usd: [19, 49, 149][i - 1] || 0 }));
     await A.request.put(BASE + '/api/admin/plans', { data: { plans: pls } });
     const pub = await (await fetch(BASE + '/api/plans/public')).json();
     ok(pub.plans.length === 4 && pub.plans.filter(p => p.free).length === 1 && pub.methods.stripe === true && !JSON.stringify(pub).includes('"id"'), 'الأسعار العامة: 4 باقات (واحدة مجانية) بلا بيانات داخلية');
@@ -27,6 +27,10 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       ok((await pg.$$('#plans .plan')).length === 4 && /\$19/.test(txt), lg + ': الباقات الأربع بأسعارها');
       ok(!/الجزائري|algérien|Algerian market/i.test(await pg.locator('.hero').innerText()), lg + ': لا عبارة «للسوق الجزائري» في الواجهة');
       ok(!/(أوزان|weights|pondération|الكلمات الذهبية|golden word|mots dorés|عدد البائعين|number of sellers|37|26 نقطة)/i.test(txt), lg + ': لا كشف لطريقة التصنيف والأوزان');
+      ok(!/(للجزائر فقط|لكل الأسواق|Every market|Tous les marchés|only for one country|réservé à un seul pays)/i.test(txt) && (await pg.$$('#faqs details')).length >= 8, lg + ': أسئلة مفيدة، وبلا «للجزائر فقط» ولا «لكل الأسواق»');
+      ok(await pg.$eval('#lang', s => s.tagName) === 'SELECT', lg + ': اختيار اللغة قائمة منسدلة');
+      const free = pg.locator('#plans .plan').first(), offs = await free.locator('li.off').allTextContents(), ons = await pg.locator('#plans .plan').nth(1).locator('li.off').count();
+      ok(offs.length === 2 && offs.some(x => /TikTok/.test(x)) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (✕ لغير المشمول): ' + offs.join(' | '));
       if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/landing-' + lg + '.png', fullPage: true });
       await pg.close();
     }
@@ -37,12 +41,18 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(/Create your account/.test(await pg.locator('#ttl').innerText()) && /Email/.test(await pg.locator('#f-register').innerText()), 'التسجيل بالإنجليزية بعد اختيارها في الصفحة الرئيسية');
     await pg.fill('#r-em', 'bad'); await pg.click('#f-register .btn'); await pg.waitForSelector('#msg .msg');
     ok(/Enter a valid email/.test(await pg.locator('#msg').innerText()), 'رسائل الخطأ مترجمة');
-    await pg.click('[data-lang="fr"]'); await pg.waitForURL(/lang=fr/); await pg.waitForSelector('#ttl');
+    await pg.selectOption('#lang', 'fr'); await pg.waitForURL(/lang=fr/); await pg.waitForSelector('#ttl');
     ok(/Créez votre compte/.test(await pg.locator('#ttl').innerText()), 'تبديل اللغة إلى الفرنسية');
     if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/login-fr.png' });
     await pg.fill('#r-em', 'n@t.dz'); await pg.fill('#r-pw', 'password123'); await pg.fill('#r-pw2', 'password123'); await pg.click('#f-register .btn'); await pg.waitForURL(BASE + '/');
     const me = await (await pg.request.get(BASE + '/api/me')).json();
     ok(me.plan === 'تجربة مجانية' && me.active, 'الحساب الجديد يبدأ بالتجربة المجانية');
+    ok(!me.features.includes('tiktok') && me.features.includes('gap'), 'مميزات الحساب = مميزات باقته');
+    const tt = await pg.request.get(BASE + '/api/tt'), gp = await pg.request.get(BASE + '/api/gap');
+    ok(tt.status() === 403 && /غير متاح في باقتك/.test((await tt.json()).error) && gp.status() === 200, 'ميزة خارج الباقة تُرفض (TikTok) والمشمولة تعمل');
+    await pg.waitForSelector('.nv[data-v="gap"]', { state: 'attached' });
+    ok(await pg.$eval('.nv[data-v="tiktok"]', b => b.hidden) && !(await pg.$eval('.nv[data-v="gap"]', b => b.hidden)), 'قسم TikTok مخفي في القائمة لأنه خارج الباقة');
+    if (process.env.SHOT) { await pg.goto(BASE + '/login?lang=ar'); await pg.context().clearCookies(); await pg.goto(BASE + '/login?lang=ar'); await pg.waitForSelector('#ttl'); await pg.screenshot({ path: process.env.SHOT + '/login-ar.png' }); }
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log(`PASS ${pass} public pages checks`);
   } catch (e) { console.error('FAIL', e.message, log.slice(-800)); process.exitCode = 1; }

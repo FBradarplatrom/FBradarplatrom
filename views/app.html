@@ -173,7 +173,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <section id="v-analyze" class="view" hidden>
 <div class="ph"><div><h1>تحليل جديد</h1><p class="sub">ارفع ملف إعلانات (JSON أو CSV أو Excel). تُجمَّع الإعلانات حسب المنتج وتُصنَّف بالمعايير الثابتة، والمعالجة كلها داخل متصفحك، ويُحفظ التحليل في الأرشيف تلقائياً.</p></div></div>
 <label class="drop" id="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg><b>اسحب ملفات الإعلانات هنا أو اضغط للاختيار</b><span>JSON · CSV · Excel، ويمكن رفع عدة ملفات معاً</span><input id="file" type="file" multiple accept=".json,.jsonl,.csv,.tsv,.xlsx,.xls,.txt" hidden></label>
-<label class="fl" style="max-width:420px;margin-top:12px">🌍 سوق الملف <small>(للملفات التي لا تحتوي عمود الدولة: يحدد لغة فحص المنتج والعملة وحد البائعين)</small><select id="mkt"><option value="">تلقائي (من عمود الدولة في الملف)</option></select></label>
+
 <div id="msg"></div>
 <div id="app" hidden>
 <div id="note"></div><div id="sum"></div>
@@ -209,7 +209,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <section id="v-watch" class="view" hidden><div class="ph"><div><h1>👁 مراقبة المنافسين</h1><p class="sub">تابع صفحات المنافسين: كل فحص يجمع إعلانات الصفحة من مكتبة ميتا ويكشف الإعلانات الجديدة (منتجات يختبرونها الآن) والتي توقفت. يُعاد الفحص أسبوعياً.</p></div></div><div id="x-watch"></div></section>
 <section id="v-tiktok" class="view" hidden><div class="ph"><div><h1>🎵 منتجات TikTok</h1><p class="sub">ابحث في TikTok بأشهر عبارات المنتجات الرائجة، وتُرتَّب الفيديوهات بالمشاهدات والتفاعل والحداثة، واحفظ المنتجات لتبحث عن مورّدها وتحلّلها وتفحصها في الجزائر.</p></div></div><div id="x-tiktok"></div></section>
 <section id="v-integrations" class="view" hidden><div class="ph"><div><h1>🔌 الربط والتكامل</h1><p class="sub">كل ما يربط المنصة بالخارج في مكان واحد: الإضافة، TikTok، Google Sheets، التنبيهات، ومفاتيح المنصة (الذكاء الاصطناعي، الدفع، تيليغرام) للمدير.</p></div></div><div id="x-int"></div></section>
-<section id="v-settings" class="view" hidden><div class="ph"><div><h1>الإعدادات</h1><p class="sub">بيانات حسابك وكلمة المرور والاشتراك ومفتاح ربط الإضافات.</p></div></div><div id="x-set"></div></section>
+<section id="v-settings" class="view" hidden><div class="ph"><div><h1>الإعدادات</h1><p class="sub">بيانات حسابك وكلمة المرور والاشتراك والأمان.</p></div></div><div id="x-set"></div></section>
 <section id="v-admin" class="view" hidden><div class="ph"><div><h1>إدارة المشتركين</h1><p class="sub">أضف أياماً لاشتراك العضو بعد استلام الدفع (رقم سالب للإنقاص)، وعدّل بياناته أو ولّد له رابط استعادة كلمة المرور.</p></div></div><div id="x-link"></div><div id="x-users" class="card pad0"></div></section>
 </main>
 <div id="lb" class="lb" hidden><button id="lb-x" aria-label="إغلاق">✕</button><button id="lb-p" class="lb-nav" aria-label="السابق">›</button><img id="lb-img" alt=""><button id="lb-nx" class="lb-nav" aria-label="التالي">‹</button>
@@ -744,7 +744,7 @@ const csv=rows=>'\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""
 W.__dl=(n,t)=>{const b=new Blob([t],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600)};
 const guard=f=>(...a)=>W.__btnBusy(a[0],f(...a)).catch(x=>{if(x.message!=='auth')toast(x.message||'حدث خطأ','err')});
 
-let cur='dash',ME={},reopenIds=[],SV={},RUNS=[],KEYV=null;
+let cur='dash',ME={},reopenIds=[],SV={},RUNS=[];
 const V=['dash','collect','inbox','analyze','arch','saved','gap','watch','tiktok','integrations','settings','admin'];
 const DRAW={collect:async(sub,o)=>{if(!W.WPRLIB)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRLIB.render(sub,o)},dash:rDash,inbox:rInbox,arch:rArch,saved:rSaved,watch:async()=>{if(!W.WPRWATCH)throw new Error('تعذّر تحميل القسم');W.WPRWATCH.render()},tiktok:async()=>{if(!W.WPRTT)throw new Error('تعذّر تحميل القسم');W.WPRTT.render()},gap:async(sub,o)=>{if(!W.WPRGAP)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRGAP.render(sub,o);gapBadge()},integrations:async()=>{if(!W.WPRACC)throw new Error('تعذّر تحميل القسم');await W.WPRACC.integrations()},settings:rSettings,admin:rAdmin};
 /* الروابط: لكل قسم مسار حقيقي، فيعمل زر الرجوع والتحديث ونسخ الرابط */
@@ -758,7 +758,7 @@ function show(v,o){o=o||{};const forced=!ME.active&&v!=='settings';if(forced){v=
  DRAW[v]&&guard(DRAW[v])(o.fromUrl?location.pathname.split('/')[2]||'':'',o);scrollTo({top:0})}
 function badge(rs){const n=rs.filter(r=>r.source==='adlib'&&!r.summary).length,b=$('#nb-inbox');b.hidden=!n;b.textContent=n}
 const planName=()=>ME.role==='admin'?'مدير':ME.active?(ME.plan&&ME.plan!=='none'?ME.plan:'تجريبي'):'منتهي';
-function updateMe(){const n=ME.name||ME.username||ME.email.split('@')[0];$('#me-name').textContent=n;$('#me-av').textContent=n.trim().charAt(0).toUpperCase();$('#me-plan').textContent=planName()+(ME.active&&ME.role!=='admin'?' · باقي '+Math.max(0,Math.ceil((ME.expires_at-Date.now())/864e5))+' يوم':'');$('#nav-admin').hidden=ME.role!=='admin'}
+function updateMe(){const n=ME.name||ME.username||ME.email.split('@')[0];$('#me-name').textContent=n;$('#me-av').textContent=n.trim().charAt(0).toUpperCase();$('#me-plan').textContent=planName()+(ME.active&&ME.role!=='admin'?' · باقي '+Math.max(0,Math.ceil((ME.expires_at-Date.now())/864e5))+' يوم':'');$('#nav-admin').hidden=ME.role!=='admin';const F=ME.features||[];[['gap','gap'],['watch','watch'],['tiktok','tiktok']].forEach(([v,k])=>{const b=R.querySelector('.nv[data-v="'+v+'"]');if(b)b.hidden=!F.includes(k)})}
 
 /* ---------- صفوف مشتركة ---------- */
 const stPill=r=>r.summary?'<span class="pill ok">تم تحليله</span>':'<span class="pill warn">جديد</span>';
@@ -828,30 +828,21 @@ $('#x-svcsv').addEventListener('click',()=>{const L=Object.values(SV);if(!L.leng
 async function gapBadge(){try{const n=(await api('GET','/gap/due')).due,b=$('#nb-gap');b.hidden=!n;b.textContent=n}catch(x){}}
 
 /* ---------- الإعدادات ---------- */
-let KST='load';
+
 const AK={login:'✅ دخول',login_fail:'⚠️ محاولة دخول فاشلة',password:'🔑 تغيير كلمة المرور',reset:'🔑 استعادة كلمة المرور',logout_all:'🚪 خروج من كل الأجهزة',register:'🆕 تسجيل',admin_grant:'💳 تعديل اشتراك',admin_update:'✏️ تعديل مستخدم',admin_delete:'🗑 حذف مستخدم',admin_reset_link:'🔗 رابط استعادة'};
 const uaShort=u=>{u=String(u||'');return(/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iPhone':/Windows/.test(u)?'Windows':/Mac OS/.test(u)?'Mac':/Linux/.test(u)?'Linux':'')+(/Edg\//.test(u)?' · Edge':/Chrome\//.test(u)?' · Chrome':/Firefox\//.test(u)?' · Firefox':/Safari\//.test(u)?' · Safari':'')};
 let GSV={},ACTV=[];
 async function rSettings(){
- KST='load';KEYV=null;drawSet();
+ drawSet();
  try{GSV=await api('GET','/sheets')}catch(x){GSV={}}
  try{ACTV=await api('GET','/activity')}catch(x){ACTV=[]}   // تُرسم الصفحة فوراً ولا تتوقف على جلب المفتاح
- try{KEYV=ME.active?(await api('GET','/key')).key:null;KST='ok'}catch(x){if(x.message==='auth')throw x;KST='err:'+(x.message||'')}
  drawSet()}
 function drawSet(){try{
  const left=ME.role==='admin'?null:Math.max(0,Math.ceil((ME.expires_at-Date.now())/864e5));
  $('#x-set').innerHTML=`<div class="grid2">
 <form class="card" data-form="profile"><h2>الملف الشخصي</h2><div class="form"><label class="fl">الاسم<input name="name" value="${e(ME.name)}" autocomplete="name"></label><label class="fl">اسم المستخدم<input name="username" dir="ltr" value="${e(ME.username)}" placeholder="مثال: ahmed_dz" autocomplete="username"></label><label class="fl">البريد الإلكتروني<input name="email" type="email" dir="ltr" value="${e(ME.email)}" required autocomplete="email"></label><label class="fl">كلمة المرور الحالية <small>(عند تغيير البريد فقط)</small><input name="password" type="password" autocomplete="current-password"></label></div><button class="btn">حفظ التغييرات</button></form>
 <form class="card" data-form="password"><h2>تغيير كلمة المرور</h2><div class="form"><label class="fl">كلمة المرور الحالية<input name="old" type="password" required autocomplete="current-password"></label><label class="fl">الجديدة (8 أحرف فأكثر)<input name="password" type="password" minlength="8" required autocomplete="new-password"></label><label class="fl">تأكيد الجديدة<input name="again" type="password" minlength="8" required autocomplete="new-password"></label></div><button class="btn">تغيير كلمة المرور</button></form></div>
-<div class="grid2"><div class="card" id="x-billing"><h2>💳 الاشتراك</h2><p class="sub">جارٍ التحميل…</p></div>
-<div class="card"><h2>مفتاح ربط الإضافات</h2><p class="sub">للإضافات الخارجية التي ترسل دفعات جاهزة إلى «الإعلانات الواردة» (POST /api/ext/adlib). جمع الإعلانات وفحص الثغرات لا يحتاجان مفتاحاً: يتم من قسم «جمع الإعلانات» عبر الإضافة. يبقى المفتاح محفوظاً هنا ويمكنك إظهاره متى شئت.</p>
-<label class="fl">عنوان المنصة</label><div class="keyb"><code>${e(location.origin)}</code><button class="btn ghost sm" data-a="copyurl">نسخ</button></div>
-<label class="fl" style="margin-top:10px">المفتاح</label>${KST==='load'?'<p class="sub">جارٍ تحميل المفتاح…</p>':KST.startsWith('err')?`<p class="sub">تعذّر جلب المفتاح (${e(KST.slice(4))}). أنشئ مفتاحاً جديداً أو أعد المحاولة.</p><p style="margin:6px 0"><button class="btn" data-a="newkey">إنشاء مفتاح</button></p>`:KEYV?`<div class="keyb"><code id="k-val">${'•'.repeat(24)}</code><button class="btn ghost sm" data-a="showkey">إظهار</button><button class="btn ghost sm" data-a="copykey">نسخ</button></div><p style="margin:12px 0 0"><button class="btn danger sm" data-a="newkey">توليد مفتاح جديد (يُبطل القديم)</button></p>`:`<p style="margin:6px 0"><button class="btn" data-a="newkey">إنشاء مفتاح</button></p>`}</div></div>
-<div class="card" style="margin-top:16px"><h2>📤 الربط مع Google Sheets</h2><p class="sub">أرسل نتائج التحليل والمنتجات المحفوظة إلى جدولك مباشرة بزر «📤 إلى Google Sheets». الربط مرة واحدة:</p>
-<ol class="sub" style="line-height:2"><li>افتح جدولاً جديداً في Google Sheets، ثم <b>Extensions ← Apps Script</b>.</li><li>امسح ما فيه والصق الكود أدناه، وغيّر <code>TOKEN</code> إلى رمز سري من اختيارك.</li><li><b>Deploy ← New deployment ← Web app</b>: Execute as <b>Me</b> و Who has access <b>Anyone</b>، ثم <b>Deploy</b> ووافق على الأذونات.</li><li>انسخ رابط <b>Web app</b> (ينتهي بـ /exec) والصقه هنا مع نفس الرمز السري.</li></ol>
-<div style="display:flex;gap:8px;margin:6px 0"><button class="btn ghost sm" data-a="gcopy">نسخ كود Apps Script</button></div>
-<div class="grid2" style="margin:8px 0 0"><label class="fl">رابط Web app<input id="g-url" dir="ltr" value="${e(GSV.url||'')}" placeholder="https://script.google.com/macros/s/…/exec"></label><label class="fl">الرمز السري (TOKEN)<input id="g-tok" dir="ltr" value="${e(GSV.token||'')}"></label></div>
-<p style="margin:8px 0 0;display:flex;gap:8px"><button class="btn" data-a="gsave">حفظ الربط</button><button class="btn ghost" data-a="gtest">إرسال صف تجريبي</button></p></div>
+<div class="card" id="x-billing" style="margin-top:16px"><h2>💳 الاشتراك</h2><p class="sub">جارٍ التحميل…</p></div>
 <div class="card" style="margin-top:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">🔒 الأمان: آخر عمليات الدخول</h2><button class="btn danger sm" data-a="logoutall">تسجيل الخروج من كل الأجهزة</button></div>
 <p class="sub">إن رأيت دخولاً لا تعرفه: غيّر كلمة المرور فوراً (يُسجَّل خروج كل الأجهزة الأخرى تلقائياً).</p>
 <div class="tbw"><table class="tb"><tr><th>العملية</th><th>التاريخ</th><th>الجهاز</th><th>العنوان</th></tr>${ACTV.map(a=>`<tr><td>${AK[a.kind]||e(a.kind)}</td><td>${fd(a.at)} ${ft(a.at)}</td><td>${e(uaShort(a.ua))}</td><td dir="ltr">${e(a.ip)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">—</td></tr>'}</table></div></div>`;W.WPRACC&&W.WPRACC.billing()}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
@@ -892,10 +883,6 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='gcopy'){await navigator.clipboard.writeText(W.__sheetScript||'');return toast('نُسخ الكود. الصقه في Apps Script')}
  if(a==='gsave'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});GSV={url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()};return toast('حُفظ الربط مع Google Sheets')}
  if(a==='gtest'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});const r=await api('POST','/sheets/push',{sheet:'اختبار الربط',header:['الحالة','التاريخ'],rows:[['تم الربط بنجاح ✅',new Date().toLocaleString('ar-DZ')]]});toast('وصل الصف التجريبي إلى جدولك');if(r.url)W.open(r.url,'_blank','noopener');return}
- if(a==='copyurl'){await navigator.clipboard.writeText(location.origin);return toast('تم نسخ عنوان المنصة')}
- if(a==='showkey'){const c=$('#k-val');const on=c.dataset.on==='1';c.textContent=on?'•'.repeat(24):KEYV;c.dataset.on=on?'':'1';b.textContent=on?'إظهار':'إخفاء';return}
- if(a==='copykey'){await navigator.clipboard.writeText(KEYV);return toast('تم نسخ المفتاح')}
- if(a==='newkey'){if(KEYV&&!two(b))return;KEYV=(await api('POST','/key',{})).key;toast(KEYV?'تم إنشاء مفتاح جديد. حدّث الإضافات به.':'');return rSettings()}
  if(a==='grant'){const sel=R.querySelector('[data-plan="'+id+'"]');await api('POST','/admin/users/'+id,{days:+R.querySelector('[data-days="'+id+'"]').value,plan:sel.selectedOptions[0].dataset.n});toast('تم تحديث الاشتراك');return rAdmin()}
  if(a==='usave'){await api('POST','/admin/users/'+id+'/update',{email:R.querySelector('[data-em="'+id+'"]').value,role:R.querySelector('[data-role="'+id+'"]').value});toast('تم الحفظ');return rAdmin()}
  if(a==='rlink'){const j=await api('POST','/admin/users/'+id+'/reset-link',{});$('#x-link').innerHTML=`<div class="alert info">أرسل هذا الرابط للمشترك (صالح ساعة واحدة):<br><b dir="ltr" style="word-break:break-all;user-select:all">${e(j.url)}</b></div>`;return}

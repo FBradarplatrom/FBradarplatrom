@@ -51,8 +51,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       { ad_id: '13', page_name: 'DZ Store', title: 'يساعد طفلك على النوم', body: 'مصباح. التوصيل 58 ولاية. 3500 دج', start_date: day(12), status: 'active', link_url: 'https://dzstore.example/p/lamp', image_url: 'https://cdn.example.test/c.jpg', collected_at: new Date(NOW).toISOString() }
     ];
     const f = path.join(DIR, 'ads.json'); fs.writeFileSync(f, JSON.stringify(rows));
-    await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#mkt');
-    ok((await pg.$$eval('#mkt option', o => o.length)) > 40, 'file market selector lists the markets');
+    await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' });
+    ok(!(await pg.$('#mkt')), 'no «file market» selector (each ad carries its own country)');
     await pg.setInputFiles('#file', f); await pg.waitForSelector('.pc', { timeout: 15000 }); await pg.waitForTimeout(800);
     const cards = await pg.$$eval('.pc', cs => cs.map(c => c.textContent));
     const merged = cards.find(t => /US Shop/.test(t));

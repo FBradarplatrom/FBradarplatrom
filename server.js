@@ -72,15 +72,6 @@ app.use((q, s, n) => { s.set({ 'X-Frame-Options': 'DENY', 'X-Content-Type-Option
 app.use(express.json({ limit: '50mb', verify: (q, s, buf) => { if (q.url.startsWith('/api/billing/webhook')) q.rawBody = buf; } }), cookie());   // الجسم الخام لتحقق توقيع بوابة الدفع
 app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });   // البيانات حيّة: لا تُخزَّن في المتصفح (تظهر فور وصولها)
 
-// CORS للإضافات فقط (المصادقة بمفتاح، بلا كوكيز)
-const EXT = (process.env.EXT_ORIGINS || 'https://www.facebook.com').split(',').map(s => s.trim());
-app.use('/api/ext', (q, s, n) => {
-  const o = q.get('origin') || '';
-  if (/^(chrome|moz)-extension:\/\//.test(o) || EXT.includes(o))
-    s.set({ 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Headers': 'content-type,x-api-key', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', Vary: 'Origin' });
-  if (q.method === 'OPTIONS') return s.sendStatus(204);
-  n();
-});
 
 const wrap = h => (q, s, n) => { try { h(q, s, n); } catch (e) { n(e); } };
 // حدود المحاولات: لكل عنوان IP، ولكل حساب (ضد التخمين من أجهزة كثيرة)، وللتسجيل (ضد الحسابات الوهمية)
@@ -95,9 +86,8 @@ const login = (s, id) => s.cookie('t', jwt.sign({ id, v: (db.prepare('select tv 
   { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 30 * DAY });
 
 function auth(q, s, n) {
-  const k = q.get('x-api-key'); let u;
-  if (k) u = db.prepare('select * from users where api_hash=?').get(sha(k));
-  else try { const t = jwt.verify(q.cookies.t, SECRET); u = db.prepare('select * from users where id=?').get(t.id); if (u && (t.v || 0) !== (u.tv || 0)) u = null; } catch (e) {}
+  let u;   // الدخول بالكوكي فقط (لا مفاتيح خارجية: الإضافة تتصل عبر صفحة المنصة نفسها)
+  try { const t = jwt.verify(q.cookies.t, SECRET); u = db.prepare('select * from users where id=?').get(t.id); if (u && (t.v || 0) !== (u.tv || 0)) u = null; } catch (e) {}
   if (!u) return s.status(401).json({ error: 'auth' });
   q.u = u; n();
 }
@@ -131,7 +121,7 @@ app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
 // تسجيل الخروج من كل الأجهزة
 app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
 app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
-app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), contact: process.env.CONTACT_URL || '' }));
+app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: process.env.CONTACT_URL || '' }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
@@ -142,11 +132,6 @@ app.put('/api/profile', auth, wrap((q, s) => {
   }
   if (un && db.prepare('select 1 from users where username=? and id!=?').get(un, q.u.id)) return s.status(409).json({ error: 'اسم المستخدم مستعمل' });
   db.prepare('update users set name=?, username=?, email=? where id=?').run(name, un || null, em, q.u.id); s.json({ ok: 1 });
-}));
-app.get('/api/key', auth, (q, s) => s.json({ key: q.u.api_enc ? dec(q.u.api_enc) : null }));   // يبقى محفوظاً ويُعرض متى شئت
-app.post('/api/key', auth, active, wrap((q, s) => {
-  const key = 'wpr_' + crypto.randomBytes(24).toString('hex');
-  db.prepare('update users set api_hash=?, api_enc=? where id=?').run(sha(key), enc(key), q.u.id); s.json({ key });
 }));
 
 // ---------- التحليلات والأرشيف ----------
@@ -198,7 +183,6 @@ app.delete('/api/saved', auth, active, wrap((q, s) => { db.prepare('delete from 
 
 // ---------- واجهة الإضافات ----------
 // إضافة خارجية قديمة (إرسال دفعات جاهزة): POST {label, rows:[ads...]}
-app.post('/api/ext/adlib', auth, active, wrap((q, s) => s.json({ id: addRun(q.u, 'adlib', q.body.label, arr(q.body.rows, 'rows')) })));
 
 // ---------- الإدارة والاشتراكات ----------
 app.get('/api/admin/users', auth, admin, wrap((q, s) => s.json(db.prepare('select id,email,name,username,role,plan,expires_at,created_at from users order by created_at desc').all())));
@@ -306,6 +290,9 @@ app.post('/api/img/keep', auth, active, async (q, s) => {   // يحفظ نسخة
 });
 
 // ---------- جمع الإعلانات (الإضافة ← الواردة + قاموس كلمات البحث) ----------
+// مميزات الباقة: ما لم يُفعَّل في باقة المشترك يُرفض برسالة واضحة (المدير بلا قيود)
+{ const LIM = require('./adlib/limits.js'), F = { '/api/gap': 'gap', '/api/sup': 'supplier', '/api/ai': 'ai', '/api/watch': 'watch', '/api/tt': 'tiktok', '/api/profit': 'profit', '/api/sheets': 'sheets' };
+  for (const [pre, k] of Object.entries(F)) app.use(pre, (q, s, n) => auth(q, s, () => LIM.has(q.u, k) ? n() : s.status(403).json({ error: 'غير متاح في باقتك: ' + LIM.FLABEL[k] + '. رقِّ باقتك من «الإعدادات ← الاشتراك».', feature: k }))); }
 require('./adlib')(app, { db, auth, active, admin, wrap, now, DAY, addRun, fpOf });
 require('./adlib/gap.js')(app, { db, auth, active, wrap, now });   // ثغرات السوق الجزائري
 // صورة كـ data URL للذكاء الاصطناعي (النسخة المحفوظة أولاً، وإلا تُجلب عبر الوكيل الآمن)

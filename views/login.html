@@ -28,6 +28,15 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .ft li{display:flex;gap:12px;align-items:flex-start;color:rgba(255,255,255,.92)}
 .ft li span{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:15px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.pv{position:relative;margin:26px 0 6px;max-width:440px;display:grid;gap:10px}
+.pr{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:16px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(10px);box-shadow:0 12px 30px -18px rgba(0,0,0,.5)}
+.pr:nth-child(2){margin-inline-start:22px}.pr:nth-child(3){margin-inline-start:44px}
+.pr i{width:42px;height:42px;border-radius:11px;flex:none}.pr div{flex:1;min-width:0}.pr b{display:block;font-size:14px}.pr small{color:rgba(255,255,255,.75);font-size:12px}
+.pr u{display:block;height:5px;border-radius:9px;background:rgba(255,255,255,.18);margin-top:5px;overflow:hidden;text-decoration:none}.pr u s{display:block;height:100%;background:#fff;opacity:.85}
+.pr em{font-style:normal;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pt{position:absolute;inset-inline-end:-6px;bottom:-14px;background:#fff;color:#1e1b4b;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:12px;box-shadow:0 14px 30px -14px rgba(0,0,0,.6)}
+.ft{margin-top:30px!important}
+.trust{display:flex;flex-wrap:wrap;gap:8px}.trust span{font-size:13px;font-weight:600;padding:6px 13px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24)}
 .chips b{font-weight:600;font-size:13px;padding:5px 13px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(6px)}
 /* ---- النموذج ---- */
 .pane{display:flex;align-items:center;justify-content:center;padding:32px clamp(16px,4vw,48px)}
@@ -85,7 +94,7 @@ input[dir=ltr]{text-align:left}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 </style>
 </head>
-<style>.lsw{display:flex;justify-content:flex-end;gap:4px;margin-bottom:10px}.lsw button{border:1px solid var(--line,#e2e8f0);background:none;border-radius:99px;padding:3px 10px;cursor:pointer;font:inherit;font-size:12.5px;color:inherit;opacity:.75}.lsw button.on{opacity:1;background:#4f46e5;color:#fff;border-color:#4f46e5}</style>
+<style>.lsw{display:flex;justify-content:flex-end;margin-bottom:10px}.lsw label{display:inline-flex;align-items:center;gap:6px;font-size:13px;opacity:.85}.lsw select{border:1px solid rgba(127,127,127,.35);border-radius:10px;padding:5px 10px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}</style>
 <body>
 <div class="auth">
  <aside class="bp" aria-hidden="false">
@@ -93,17 +102,23 @@ input[dir=ltr]{text-align:left}
   <div>
    <h2>اعرف المنتج الرابح قبل أن يزدحم السوق</h2>
    <p>ما يبيع فعلاً الآن، في سوقك وفي أكثر من 40 دولة، مرتّب لتقرّر بثقة.</p>
+   <div class="pv" aria-hidden="true">
+    <div class="pr"><i style="background:linear-gradient(135deg,#c7d2fe,#a78bfa)"></i><div><b>جهاز منزلي ذكي</b><small>يتصدّر هذا الأسبوع</small><u><s style="width:86%"></s></u></div><em style="background:#8b5cf6">💎 جوهرة</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"></i><div><b>إكسسوار سيارة</b><small>صاعد</small><u><s style="width:64%"></s></u></div><em style="background:#16a34a">🌱 واعد</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#fed7aa,#f97316)"></i><div><b>منتج عناية</b><small>طلب ثابت</small><u><s style="width:72%"></s></u></div><em style="background:#f97316">🔥 رابح</em></div>
+    <div class="pt">🏭 مورّد بسعر أقل وُجد</div>
+   </div>
    <ul class="ft">
     <li><span>📡</span><div>منتجات رابحة مرتّبة من الأكثر وعداً.</div></li>
     <li><span>🎯</span><div>فرص لم تصل بعد إلى سوقك.</div></li>
     <li><span>🏭</span><div>المورّد الأرخص والربح المتوقع قبل أن تطلق.</div></li>
    </ul>
   </div>
-  <div class="chips"><b>🌍 40+</b><b>🏭</b><b>🧠</b><b>🎵 TikTok</b></div>
+  <div class="trust"><span>✨ تجربة مجانية</span><span>🔒 دفع آمن</span><span>↩️ إلغاء في أي وقت</span></div>
  </aside>
 
  <main class="pane"><div class="box">
-  <div class="lsw" role="group" aria-label="Language"><button data-lang="ar">ع</button><button data-lang="en">EN</button><button data-lang="fr">FR</button></div>
+  <div class="lsw"><label>🌐 <select id="lang" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></label></div>
   <div class="mlogo"><i>📡</i><span>رادار المنتجات الرابحة</span></div>
   <div class="card">
    <div class="seg" id="seg" role="tablist" aria-label="نوع العملية">
@@ -202,6 +217,9 @@ A('إن كان الحساب مسجّلاً لدينا فقد وصلك بريد �
 A('بيانات الدخول غير صحيحة','Incorrect login details','Identifiants incorrects');A('البريد مسجّل مسبقاً','This email is already registered','Cet e-mail est déjà inscrit');A('اسم المستخدم مستعمل','Username already taken','Nom d’utilisateur déjà pris');
 A('بريد غير صالح أو كلمة مرور أقل من 8 أحرف','Invalid email or password under 8 characters','E-mail invalide ou mot de passe trop court');A('بريد غير صالح','Invalid email','E-mail invalide');
 A('محاولات كثيرة، أعد المحاولة بعد 15 دقيقة','Too many attempts, try again in 15 minutes','Trop de tentatives, réessayez dans 15 minutes');A('حسابات كثيرة من نفس الجهاز، أعد المحاولة بعد ساعة','Too many accounts from this device, try again in an hour','Trop de comptes depuis cet appareil, réessayez dans une heure');
+A('جهاز منزلي ذكي','Smart home gadget','Gadget maison connecté');A('يتصدّر هذا الأسبوع','Leading this week','En tête cette semaine');A('إكسسوار سيارة','Car accessory','Accessoire auto');A('صاعد','Rising','En hausse');
+A('منتج عناية','Self-care product','Produit de soin');A('طلب ثابت','Steady demand','Demande stable');A('💎 جوهرة','💎 Gem','💎 Pépite');A('🌱 واعد','🌱 Promising','🌱 Prometteur');A('🔥 رابح','🔥 Winner','🔥 Gagnant');
+A('🏭 مورّد بسعر أقل وُجد','🏭 Cheaper supplier found','🏭 Fournisseur moins cher trouvé');A('✨ تجربة مجانية','✨ Free trial','✨ Essai gratuit');A('🔒 دفع آمن','🔒 Secure payment','🔒 Paiement sécurisé');A('↩️ إلغاء في أي وقت','↩️ Cancel anytime','↩️ Résiliable à tout moment');
 A('يتطلب تسجيل الدخول تفعيل JavaScript.','JavaScript is required to log in.','JavaScript est requis pour se connecter.');
 var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
 var L=new URLSearchParams(location.search).get('lang')||g('wpr_lang')||(navigator.language||'ar').slice(0,2);if(L!=='en'&&L!=='fr')L='ar';
@@ -268,7 +286,7 @@ run($('f-reset'),async()=>{const pw=$('n-pw').value;if(pw.length<8)throw new Err
  await post('reset',{token:RT,password:pw});location.href='/'});
 /* البداية */
 window.__trDom(document.body);
-document.querySelectorAll('[data-lang]').forEach(b=>{b.classList.toggle('on',b.dataset.lang===window.__L);b.onclick=()=>{try{localStorage.setItem('wpr_lang',b.dataset.lang)}catch(e){}const u=new URL(location.href);u.searchParams.set('lang',b.dataset.lang);location.href=u.toString()}});
+{const sl=$('lang');sl.value=window.__L;sl.onchange=()=>{try{localStorage.setItem('wpr_lang',sl.value)}catch(e){}const u=new URL(location.href);u.searchParams.set('lang',sl.value);location.href=u.toString()}}
 {const m=location.pathname.replace(/\/+$/,'').slice(1);if(RT&&m==='reset')go('reset');else go(TXT[m]&&m!=='reset'?m:'login')}
 })();
 </script>

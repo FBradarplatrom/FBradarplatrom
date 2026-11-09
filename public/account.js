@@ -109,9 +109,9 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     if (ATAB === 'plans') {
       const r = await X.api('GET', '/admin/plans');
       const row = p => `<tr data-pl="${p.id || ''}"><td><input data-f="name" value="${e(p.name || '')}" style="width:110px"></td><td><input data-f="days" type="number" value="${e(p.days || 30)}" style="width:70px"></td><td><input data-f="price" type="number" value="${e(p.price || 0)}" style="width:90px"></td><td><input data-f="price_usd" type="number" step="0.01" value="${e(p.price_usd || 0)}" style="width:80px"></td><td><input data-f="free" type="checkbox"${p.free ? ' checked' : ''} title="تُمنح تلقائياً عند التسجيل"></td>
-${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? p.limits[k] : '')}" style="width:70px"></td>`).join('')}<td><input data-f="active" type="checkbox"${p.active !== false ? ' checked' : ''}></td><td><input data-f="note" value="${e(p.note || '')}" placeholder="مثلاً: الأكثر طلباً" style="width:130px"></td></tr>`;
+${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? p.limits[k] : '')}" style="width:70px"></td>`).join('')}<td style="min-width:220px">${r.feats.map(k => `<label style="display:inline-flex;gap:4px;align-items:center;margin:2px 8px 2px 0;font-size:12.5px;white-space:nowrap"><input type="checkbox" data-ft="${k}"${!p.features || p.features.includes(k) ? ' checked' : ''}>${e(r.featLabels[k])}</label>`).join('')}</td><td><input data-f="active" type="checkbox"${p.active !== false ? ' checked' : ''}></td><td><input data-f="note" value="${e(p.note || '')}" placeholder="مثلاً: الأكثر طلباً" style="width:130px"></td></tr>`;
       el.innerHTML = `<div class="card"><h2>الباقات وحدودها</h2><p class="sub">السعر بالدينار (CIB/الذهبية وBaridiMob) وبالدولار (Stripe وPayPal للعالم). الباقة «المجانية للتجربة» تُمنح تلقائياً لكل مسجّل جديد بمدتها وحدودها ولا تُشترى. الباقة بلا سعر أو غير المفعّلة لا تظهر للشراء. الحدود تطبَّق فوراً على كل مشترك اسم باقته يطابق اسمها (يُكتب الاسم عند الدفع أو عند إضافة الأيام يدوياً).</p>
-<div class="tbw"><table class="tb" id="pl-t"><tr><th>الاسم</th><th>الأيام</th><th>السعر (دج)</th><th>السعر ($)</th><th>مجانية للتجربة</th>${r.keys.map(k => `<th>${e(r.labels[k])}</th>`).join('')}<th>مفعّلة</th><th>ملاحظة</th></tr>${r.plans.map(row).join('')}${row({})}</table></div>
+<div class="tbw"><table class="tb" id="pl-t"><tr><th>الاسم</th><th>الأيام</th><th>السعر (دج)</th><th>السعر ($)</th><th>مجانية للتجربة</th>${r.keys.map(k => `<th>${e(r.labels[k])}</th>`).join('')}<th>المميزات (تظهر للزبائن)</th><th>مفعّلة</th><th>ملاحظة</th></tr>${r.plans.map(row).join('')}${row({})}</table></div>
 <p style="margin:10px 0 0"><button class="btn" data-adm="saveplans">حفظ الباقات</button></p></div>`;
     }
     if (ATAB === 'err') {
@@ -129,7 +129,7 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
     if (a === 'clearerr') { await X.api('DELETE', '/admin/errors'); return drawAdmin(); }
     if (a === 'saveplans') {
       const plans = [...X.root.querySelectorAll('#pl-t [data-pl]')].map((tr, i) => { const f = n => tr.querySelector(`[data-f="${n}"]`); const L = {}; tr.querySelectorAll('[data-l]').forEach(x => { if (x.value) L[x.dataset.l] = +x.value; });
-        return { id: +tr.dataset.pl || 0, name: f('name').value.trim(), days: +f('days').value, price: +f('price').value, price_usd: +f('price_usd').value, free: f('free').checked, active: f('active').checked, note: f('note').value.trim(), limits: L, sort: i }; }).filter(p => p.name);
+        return { id: +tr.dataset.pl || 0, name: f('name').value.trim(), days: +f('days').value, price: +f('price').value, price_usd: +f('price_usd').value, free: f('free').checked, features: [...tr.querySelectorAll('[data-ft]:checked')].map(x => x.dataset.ft), active: f('active').checked, note: f('note').value.trim(), limits: L, sort: i }; }).filter(p => p.name);
       await X.api('PUT', '/admin/plans', { plans }); X.toast('حُفظت الباقات'); return drawAdmin();
     }
   }
@@ -147,7 +147,11 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
     el.innerHTML = `<div class="int-g">
 <div class="card"><h2>🧩 إضافة Chrome</h2>${S(br && br.ok(), br && br.ok() ? 'متصلة · الإصدار ' + e(br.version()) : 'غير متصلة')}<p class="sub">تجمع إعلانات مكتبة ميتا، وتبحث عن المورّد في الأسواق الصينية، وتبحث في TikTok.</p><button class="btn ghost sm" data-v="collect" data-int="ext">التثبيت والتحديث</button></div>
 <div class="card"><h2>🎵 TikTok</h2>${S(tt === true, tt === true ? 'مربوط (مسجّل الدخول في Chrome)' : tt === false ? 'غير مربوط' : 'غير معروف (الإضافة غير متصلة)')}<p class="sub">سجّل الدخول في TikTok على نفس المتصفح مرة واحدة: تبحث الإضافة بجلستك دون نافذة التسجيل.</p><a class="btn ghost sm" href="https://www.tiktok.com/login" target="_blank" rel="noopener">🔑 سجّل الدخول في TikTok</a></div>
-<div class="card"><h2>📤 Google Sheets</h2>${S(!!sheets.url, sheets.url ? 'مربوط' : 'غير مربوط')}<p class="sub">أرسل النتائج والمحفوظات إلى جدولك مباشرة.</p><button class="btn ghost sm" data-v="settings">الربط من «الإعدادات»</button></div>
+<div class="card" style="grid-column:1/-1"><h2>📤 Google Sheets</h2>${S(!!sheets.url, sheets.url ? 'مربوط' : 'غير مربوط')}<p class="sub">أرسل نتائج التحليل والمنتجات المحفوظة إلى جدولك مباشرة بزر «📤 إلى Google Sheets». الربط مرة واحدة:</p>
+<ol class="sub" style="line-height:2"><li>افتح جدولاً جديداً في Google Sheets، ثم <b>Extensions ← Apps Script</b>.</li><li>امسح ما فيه والصق الكود أدناه، وغيّر <code>TOKEN</code> إلى رمز سري من اختيارك.</li><li><b>Deploy ← New deployment ← Web app</b>: Execute as <b>Me</b> و Who has access <b>Anyone</b>، ثم <b>Deploy</b> ووافق على الأذونات.</li><li>انسخ رابط <b>Web app</b> (ينتهي بـ /exec) والصقه هنا مع نفس الرمز السري.</li></ol>
+<div style="display:flex;gap:8px;margin:6px 0"><button class="btn ghost sm" data-a="gcopy">نسخ كود Apps Script</button></div>
+<div class="grid2" style="margin:8px 0 0"><label class="fl">رابط Web app<input id="g-url" dir="ltr" value="${e(sheets.url||'')}" placeholder="https://script.google.com/macros/s/…/exec"></label><label class="fl">الرمز السري (TOKEN)<input id="g-tok" dir="ltr" value="${e(sheets.token||'')}"></label></div>
+<p style="margin:8px 0 0;display:flex;gap:8px"><button class="btn" data-a="gsave">حفظ الربط</button><button class="btn ghost" data-a="gtest">إرسال صف تجريبي</button></p></div>
 ${notif ? `<div class="card" id="x-notif"></div>` : ''}
 </div>
 ${adm ? `<h2 style="margin:22px 0 10px">🔐 مفاتيح المنصة (للمدير فقط)</h2><p class="sub">تُحفظ مشفّرة في قاعدة البيانات، ولا تظهر كاملة بعد الحفظ. ما يُضبط هنا يتقدّم على متغيرات الخادم.</p><div class="int-g">

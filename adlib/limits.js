@@ -5,6 +5,15 @@ let db = null;
 const NUM = (k, d) => { const n = Number(process.env[k]); return Number.isFinite(n) && n > 0 ? n : d; };
 const DEF = () => ({ searchesPerDay: NUM('LIB_MAX_SEARCHES_PER_DAY', 60), gapProducts: 50, aiPerMonth: 100, watchPages: 20 });
 const KEYS = ['searchesPerDay', 'gapProducts', 'aiPerMonth', 'watchPages'];
+// مميزات تُفعَّل أو تُعطَّل لكل باقة من «إدارة المشتركين ← الباقات» (البحث والتحليل متاحان لكل الباقات)
+const FEATS = ['gap', 'supplier', 'ai', 'watch', 'tiktok', 'profit', 'alerts', 'sheets'];
+const FLABEL = { gap: 'ثغرات السوق', supplier: 'إيجاد المورّد', ai: 'تحليل الإعلان بالذكاء الاصطناعي', watch: 'مراقبة المنافسين', tiktok: 'اتجاهات TikTok', profit: 'حاسبة الربح', alerts: 'التنبيهات (بريد/تيليغرام)', sheets: 'التصدير إلى Google Sheets' };
+function featuresOf(u) {
+  if (!u || u.role === 'admin') return FEATS.slice();
+  try { const p = db && db.prepare('select features from plans where name=?').get(u.plan); if (p && p.features) { const f = JSON.parse(p.features); if (Array.isArray(f)) return FEATS.filter(k => f.includes(k)); } } catch (e) {}
+  return FEATS.slice();   // باقة يدوية/قديمة بلا قائمة: كل المميزات
+}
+const has = (u, k) => featuresOf(u).includes(k);
 const LABEL = { searchesPerDay: 'عمليات البحث في اليوم', gapProducts: 'منتجات «ثغرات السوق»', aiPerMonth: 'طلبات الذكاء الاصطناعي في الشهر', watchPages: 'صفحات المنافسين المراقبة' };
 function init(d) {
   if (db) return; db = d;
@@ -39,4 +48,4 @@ function check(u, key, current) {
   const L = limitsOf(u);
   if (current >= L[key]) throw err(`بلغت حد باقتك: ${LABEL[key]} (${L[key]}). رقِّ باقتك من «الإعدادات ← الاشتراك».`);
 }
-module.exports = { init, limitsOf, usage, useAI, check, KEYS, LABEL, DEF };
+module.exports = { init, limitsOf, usage, useAI, check, KEYS, LABEL, DEF, FEATS, FLABEL, featuresOf, has };

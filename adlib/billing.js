@@ -20,7 +20,7 @@ create table if not exists plans(id integer primary key, name text unique, days 
 create table if not exists payments(id integer primary key, user_id integer, plan_id integer, plan_name text, days integer, amount integer, method text, status text, ref text, proof text, checkout_id text, created_at integer, paid_at integer, note text, admin_id integer);
 create index if not exists payments_u on payments(user_id, created_at);
 create table if not exists error_logs(id integer primary key, at integer, method text, path text, status integer, msg text, stack text, user_id integer);`);
-  ['alter table plans add column price_usd real default 0', 'alter table plans add column free integer default 0', "alter table payments add column currency text default 'DZD'", 'alter table payments add column ext text']
+  ['alter table plans add column features text', 'alter table plans add column price_usd real default 0', 'alter table plans add column free integer default 0', "alter table payments add column currency text default 'DZD'", 'alter table payments add column ext text']
     .forEach(x => { try { db.exec(x); } catch (e) {} });
   // الباقات الأولى: المدد المعتادة، والسعر يحدده المدير (باقة سعرها 0 لا تُعرض للشراء)
   if (!db.prepare('select count(*) n from plans').get().n) {
@@ -30,7 +30,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
   // الباقة المجانية لتجربة المنصة: تُمنح تلقائياً عند التسجيل (المدة والحدود يعدّلها المدير)
   if (!db.prepare('select count(*) n from plans where free=1').get().n)
     db.prepare('insert into plans(name,days,price,limits,active,sort,free,note) values(?,?,0,?,1,0,1,?)').run('تجربة مجانية', 7, JSON.stringify({ searchesPerDay: 10, gapProducts: 5, aiPerMonth: 10, watchPages: 3 }), 'لتجربة المنصة');
-  const planView = p => ({ id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });
+  const planView = p => ({ id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, features: (() => { const f = J(p.features, null); return Array.isArray(f) ? LIM.FEATS.filter(k => f.includes(k)) : LIM.FEATS.slice(); })(), limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });
   const plans = (all) => db.prepare('select * from plans' + (all ? '' : ' where active=1 and coalesce(free,0)=0 and (price>0 or price_usd>0)') + ' order by sort, days').all().map(planView);
 
   /* ---------- التفعيل ---------- */
@@ -49,13 +49,13 @@ create table if not exists error_logs(id integer primary key, at integer, method
   // للصفحة العامة (الأسعار): الباقات المفعّلة فقط، بلا بيانات داخلية
   app.get('/api/plans/public', (q, s) => {
     const L = db.prepare('select * from plans where active=1 and (coalesce(free,0)=1 or price>0 or price_usd>0) order by sort, days').all().map(planView)
-      .map(p => ({ name: p.name, days: p.days, price: p.price, price_usd: p.price_usd, free: p.free, note: p.note, limits: p.limits }));
-    s.set('Cache-Control', 'public, max-age=300').json({ plans: L, methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!CFG.get('baridi_info') } });
+      .map(p => ({ name: p.name, days: p.days, price: p.price, price_usd: p.price_usd, free: p.free, note: p.note, limits: p.limits, features: p.features }));
+    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, features: LIM.FEATS, methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!CFG.get('baridi_info') } });
   });
   app.get('/api/billing', auth, wrap((q, s) => {
     const u = q.u;
     s.json({
-      plan: u.plan, expires_at: u.expires_at, role: u.role, limits: LIM.limitsOf(u), usage: LIM.usage(u), labels: LIM.LABEL,
+      plan: u.plan, expires_at: u.expires_at, role: u.role, features: LIM.featuresOf(u), featureLabels: LIM.FLABEL, limits: LIM.limitsOf(u), usage: LIM.usage(u), labels: LIM.LABEL,
       plans: plans(false), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: CFG.get('baridi_info') || '' },
       payments: db.prepare('select id,plan_name,days,amount,method,status,ref,created_at,paid_at,note from payments where user_id=? order by created_at desc limit 12').all(u.id)
     });
@@ -188,16 +188,16 @@ create table if not exists error_logs(id integer primary key, at integer, method
     else throw bad('إجراء غير معروف');
     s.json({ ok: 1 });
   }));
-  app.get('/api/admin/plans', auth, admin, wrap((q, s) => s.json({ plans: plans(true), keys: LIM.KEYS, labels: LIM.LABEL })));
+  app.get('/api/admin/plans', auth, admin, wrap((q, s) => s.json({ plans: plans(true), keys: LIM.KEYS, labels: LIM.LABEL, feats: LIM.FEATS, featLabels: LIM.FLABEL })));
   app.put('/api/admin/plans', auth, admin, wrap((q, s) => {
     const list = Array.isArray(q.body && q.body.plans) ? q.body.plans.slice(0, 20) : [];
-    const up = db.prepare('update plans set name=?, days=?, price=?, limits=?, active=?, sort=?, note=?, price_usd=?, free=? where id=?'), ins = db.prepare('insert into plans(name,days,price,limits,active,sort,note,price_usd,free) values(?,?,?,?,?,?,?,?,?)');
+    const up = db.prepare('update plans set name=?, days=?, price=?, limits=?, active=?, sort=?, note=?, price_usd=?, free=?, features=? where id=?'), ins = db.prepare('insert into plans(name,days,price,limits,active,sort,note,price_usd,free,features) values(?,?,?,?,?,?,?,?,?,?)');
     for (const p of list) {
       const name = str(p.name, 30), days = Math.max(1, Math.min(3650, Math.floor(+p.days || 30))), price = Math.max(0, Math.min(1e7, Math.floor(+p.price || 0)));
       if (!name) continue;
       const L = {}; for (const k of LIM.KEYS) { const v = Math.floor(+((p.limits || {})[k])); if (v > 0) L[k] = Math.min(1e6, v); }
-      const pu = Math.max(0, Math.min(1e5, Math.round((+p.price_usd || 0) * 100) / 100)), fr = p.free ? 1 : 0;
-      if (p.id) up.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, +p.id); else ins.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr);
+      const pu = Math.max(0, Math.min(1e5, Math.round((+p.price_usd || 0) * 100) / 100)), fr = p.free ? 1 : 0, fe = JSON.stringify(Array.isArray(p.features) ? LIM.FEATS.filter(k => p.features.includes(k)) : LIM.FEATS);
+      if (p.id) up.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe, +p.id); else ins.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe);
     }
     act && act(q.u.id, 'admin_plans', q, list.length + ' باقة');
     s.json({ plans: plans(true) });
