@@ -36,7 +36,12 @@
   const H = {
     async ads(ev, ctx) { const r = await X.api('POST', '/tt/' + ctx.run + '/ingest', { q: (ev.ctx && ev.ctx.query) || '', items: ev.ads }); LIVE.n = r.count; drawLive(); },
     event() { drawLive(); },
-    async done(ev, ctx) { RUNS = null; CUR = null; X.toast('انتهى البحث في TikTok: ' + num(LIVE.n) + ' فيديو'); X.url('/tiktok/' + ctx.run); redraw(); }
+    async done(ev, ctx, items) {
+      RUNS = null; CUR = null;
+      if ((items || []).some(i => i.reason === 'login')) X.toast('أوقف TikTok البحث وطلب تسجيل الدخول. سجّل الدخول في TikTok على Chrome (زر «سجّل الدخول في TikTok») ثم أعد البحث.', 'err');
+      else X.toast('انتهى البحث في TikTok: ' + num(LIVE.n) + ' فيديو');
+      X.url('/tiktok/' + ctx.run); redraw();
+    }
   };
 
   /* ---------- الرسم ---------- */
@@ -46,13 +51,22 @@
     if (!PH || !RUNS) { root.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>'; const [a, b] = await Promise.all([X.api('GET', '/tt/phrases'), X.api('GET', '/tt')]); PH = a.phrases; RUNS = b.runs; }
     const sel = new Set(P.sel);
     root.innerHTML = `<div id="t-live"></div>
+<div class="card" id="t-login" style="margin-bottom:14px"><p class="sub" style="margin:0">⏳ جارٍ التحقق من تسجيل الدخول في TikTok…</p></div>
 <div class="card"><h2>🎵 ابحث في TikTok بأشهر عبارات المنتجات</h2><p class="sub">اختر العبارات، فتفتح الإضافة بحث TikTok لكل عبارة على تبويب «الأفضل» وتمرّر وتجمع الفيديوهات مع مشاهداتها وإعجاباتها وتاريخها، ثم تُرتَّب هنا وتُستبعد غير المنتجات. يجب أن تكون مسجّلاً في TikTok على Chrome.</p>
 <div class="l-chips" style="max-height:none">${PH.map(q => `<button type="button" class="lc${sel.has(q) ? ' on' : ''}" data-tq="${e(q)}" dir="auto">${e(q)}</button>`).join('')}</div>
 <div class="l-add" style="max-width:520px"><input id="t-new" dir="auto" placeholder="أضف عبارة، مثل: amazon gadgets 2026"><button class="btn ghost sm" data-t="add">إضافة</button></div>
 <div class="l-g3" style="margin-top:12px"><label class="fl">فيديوهات لكل عبارة<input type="number" min="20" max="500" data-tp="per" value="${e(P.per)}"></label></div>
 <p style="margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-t="go"${sel.size ? '' : ' disabled'}>🎵 ابدأ البحث (${num(P.sel.filter(q => PH.includes(q)).length)} عبارة)</button><button class="btn ghost sm" data-t="selnone">إلغاء الاختيار</button>${P.sel.length ? '<button class="btn danger sm" data-t="delsel">حذف المختارة من القائمة</button>' : ''}</p></div>
 <div class="card pad0" style="margin-top:14px;padding:4px 18px"><h2 style="margin:12px 0 4px">عمليات البحث السابقة</h2>${RUNS.map(r => `<div class="row"><div class="grow"><b>${e(r.label)}</b><div class="muted">${X.fd(r.created_at)} · ${num(r.count)} فيديو</div></div><div class="ac"><button class="btn sm" data-t="open" data-id="${r.id}">عرض النتائج</button><button class="btn danger sm" data-t="del" data-id="${r.id}">حذف</button></div></div>`).join('') || '<p class="sub" style="padding:8px 0 14px">لا شيء بعد.</p>'}</div>`;
-    drawLive();
+    drawLive(); drawLogin();
+  }
+  // «ربط TikTok» = تسجيل الدخول في TikTok على نفس المتصفح: الإضافة تبحث بجلستك فلا تظهر نافذة التسجيل
+  async function drawLogin() {
+    const el = $('#t-login'); if (!el) return;
+    const st = W.WPRJOB && W.WPRLIB && W.WPRLIB.bridge.ok() ? await W.WPRJOB.ttStatus() : null;
+    el.innerHTML = st === true ? '<p style="margin:0">✅ <b>TikTok مربوط:</b> أنت مسجّل الدخول في TikTok على هذا المتصفح، فيعمل البحث والتمرير دون نافذة تسجيل.</p>'
+      : `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><p style="margin:0;flex:1">${st === false ? '⚠️ <b>TikTok غير مربوط:</b> لست مسجّلاً في TikTok على هذا المتصفح، فيُظهر TikTok نافذة التسجيل بعد تمرير قليل ويقلّ عدد النتائج. سجّل الدخول مرة واحدة.' : 'ℹ️ تعذّر معرفة حالة تسجيل الدخول (الإضافة غير متصلة أو قديمة: نزّل 1.4.0). لأفضل نتائج سجّل الدخول في TikTok على Chrome.'}</p>
+<a class="btn sm" href="https://www.tiktok.com/login" target="_blank" rel="noopener">🔑 سجّل الدخول في TikTok</a><button class="btn ghost sm" data-t="recheck">تحقّق من جديد</button></div>`;
   }
   function vCard(v) {
     const a = ageDays(v), t = titleOf(v);
@@ -99,6 +113,7 @@
     const b = ev.target.closest('[data-t]'); if (!b) return;
     const a = b.dataset.t, id = b.dataset.id, vid = id && CUR ? CUR.items.find(v => v.id === id) : null;
     if (a === 'go') return start();
+    if (a === 'recheck') return drawLogin();
     if (a === 'stop') return W.WPRJOB.stop();
     if (a === 'skip') return W.WPRJOB.skip();
     if (a === 'add') { const v = $('#t-new').value.trim(); if (!v) return; PH = (await X.api('PUT', '/tt/phrases', { phrases: PH.concat([v]) })).phrases; P.sel.push(v); saveP(); return drawHome(); }

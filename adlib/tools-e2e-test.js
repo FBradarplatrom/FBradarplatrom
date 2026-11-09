@@ -12,9 +12,9 @@ const U = n => 'https://cdn.example.test/' + n + '.png';
 const NOW = Math.floor(Date.now() / 1000);
 (async () => {
   // خوادم محاكاة: OpenAI و Google Apps Script
-  const sheetRows = [];
+  const sheetRows = [], mockSeen = [];
   const mock = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d); q.on('end', () => {
-    const j = JSON.parse(b || '{}'); if (process.env.DBG) console.log('MOCK', q.method, q.url, b.slice(0, 120)); s.writeHead(200, { 'content-type': 'application/json' });
+    const j = JSON.parse(b || '{}'); mockSeen.push(j); if (process.env.DBG) console.log('MOCK', q.method, q.url, b.slice(0, 120)); s.writeHead(200, { 'content-type': 'application/json' });
     if (q.url.startsWith('/v1/chat/completions')) {
       const isQuery = /AliExpress/.test(j.messages[0].content);
       return s.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(isQuery ? { q: 'star projector night light' } : { summary: 'إعلان قوي يبيع النوم الهادئ للأطفال', product: 'مصباح ليلي بنجوم', angle: 'راحة الأم', audience: 'أمهات 25-40', pains: ['صعوبة نوم الطفل'], strengths: ['فيديو واضح'], weaknesses: ['غير مذكور السعر'], hooks: ['طفلك ما يرقدش؟'], offer: 'قطعتان بسعر خاص', algeria_fit: 'مناسب', ad_copy: { ar: 'نص عربي', dz: 'نص بالدارجة', fr: 'texte' } }) } }] }));
@@ -62,14 +62,18 @@ const NOW = Math.floor(Date.now() / 1000);
     ok((await pg.inputValue('#sup-q')) === 'star projector night light', 'AI turns the product into an English AliExpress query');
     await pg.click('[data-tm="sup-go"]'); await pg.waitForFunction(() => window.__state && window.__state.active);
     const st = await pg.evaluate(() => window.__sent.find(x => x.cmd === 'start'));
-    ok(/aliexpress\.com\/wholesale\?SearchText=star%20projector/.test(st.items[0].url) && /SortType=total_tranpro_desc/.test(st.items[0].url), 'extension searches AliExpress sorted by orders');
+    const urls = st.items.map(i => i.url).join(' ');
+    ok(/aliexpress\.com\/wholesale\?SearchText=star%20projector.*SortType=total_tranpro_desc/.test(urls) && /s\.1688\.com\/selloffer\/offer_search\.htm\?keywords=/.test(urls) && /alibaba\.com\/trade\/search\?SearchText=/.test(urls), 'extension searches AliExpress (by orders), 1688 and Alibaba');
+    const aiReq = mockSeen.find(x => /sourcing agent/.test(JSON.stringify(x)));
+    ok(aiReq && JSON.stringify(aiReq).includes('data:image/png;base64'), 'the AI sees the product photo (vision) to identify the exact product');
     await pg.evaluate(([a, b2]) => window.__finish([
       { id: '1005006123456789', title: 'Star Projector Night Light Kids', img: a, price: 'US $3.45', sold: '5,000+ sold', rating: '4.8', url: 'https://www.aliexpress.com/item/1005006123456789.html' },
-      { id: '1005006999999999', title: 'Desk lamp LED', img: b2, price: 'US $1.99', sold: '200 sold', rating: '4.5', url: 'https://www.aliexpress.com/item/1005006999999999.html' }]), [U('ali-same'), U('ali-other')]);
+      { id: '1005006999999999', title: 'Desk lamp LED', img: b2, price: 'US $1.99', sold: '200 sold', rating: '4.5', url: 'https://www.aliexpress.com/item/1005006999999999.html' },
+      { id: '712345678901', market: '1688', title: '星空投影小夜灯 儿童', img: a, price: '¥12.50', sold: '3000+件', moq: '2件', currency: 'CNY', url: 'https://detail.1688.com/offer/712345678901.html' }]), [U('ali-same'), U('ali-other')]);
     await pg.waitForSelector('.sp.match', { timeout: 20000 });
     const sup = await pg.textContent('.tm-b');
-    ok(/أرخص مورّد مطابق بالصورة/.test(sup) && /US \$3\.45/.test(sup) && /دج/.test(sup), 'cheapest image-matching supplier is shown with its DZD price');
-    ok((await pg.$$('.sp.match')).length === 1, 'only the supplier with the same photo is marked as matching');
+    ok(/أرخص مورّد مطابق بالصورة: 1688/.test(sup) && /¥12\.50/.test(sup) && /دج/.test(sup), 'cheapest image-matching supplier across markets (1688 in yuan) is shown with its DZD price');
+    ok((await pg.$$('.sp.match')).length === 2, 'only suppliers with the same photo are marked as matching');
     await pg.click('[data-tm="x"]');
     // ---- 🧠 تحليل الإعلان
     await pg.click('[data-tool="ai"][data-k="p1"]'); await pg.waitForSelector('[data-tm="ai-go"]'); await pg.click('[data-tm="ai-go"]');

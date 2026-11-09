@@ -10,8 +10,16 @@ const LIB_RE = /^https:\/\/(www|web)\.facebook\.com\/ads\/library\//;
 // أنواع المهام: fb = مكتبة إعلانات ميتا · ali = بحث AliExpress (إيجاد المورّد) · tt = بحث TikTok
 const ALI_RE = /^https:\/\/([a-z]{2,3}\.|www\.)?aliexpress\.(com|us)\/(w\/wholesale|wholesale)/;
 const TT_RE = /^https:\/\/www\.tiktok\.com\/search(\/video)?\?/;
+// الأسواق الصينية (إيجاد المورّد): [نمط صفحة البحث، اسم معامل الكلمة]
+const SHOPS = {
+  alibaba: [/^https:\/\/(www\.)?alibaba\.com\/trade\/search\?/, 'SearchText'],
+  '1688': [/^https:\/\/s\.1688\.com\/selloffer\/offer_search\.htm\?/, 'keywords'],
+  taobao: [/^https:\/\/s\.taobao\.com\/search\?/, 'q'],
+  pdd: [/^https:\/\/mobile\.yangkeduo\.com\/search_result\.html\?/, 'search_key']
+};
+const shopOf = (u) => Object.keys(SHOPS).find((k) => SHOPS[k][0].test(u)) || '';
 const aliKey = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();   // «kid's light» = «kid-s-light» مهما حوّل AliExpress الرابط
-const kindOf = (u) => (LIB_RE.test(u) ? 'fb' : ALI_RE.test(u) ? 'ali' : TT_RE.test(u) ? 'tt' : '');
+const kindOf = (u) => (LIB_RE.test(u) ? 'fb' : ALI_RE.test(u) ? 'ali' : TT_RE.test(u) ? 'tt' : shopOf(u) ? 'shop' : '');
 // حدود صلبة داخل الإضافة نفسها مهما أرسلت الصفحة: حماية لحساب المستخدم من التقييد
 // ads: سقف الإعلانات للبحث الواحد (كان 500، ويقصّه حد المنصة). itemMs: مهلة البحث الواحد تكبر مع العدد المطلوب (انظر itemLimit)
 const HARD = { items: 120, ads: 5000, waitMin: 8, waitMax: 60, itemMs: 7 * 60 * 1000, itemMsMax: 75 * 60 * 1000, outbox: 400 };
@@ -29,6 +37,7 @@ const locked = (fn) => { const p = chain.then(() => fn()); chain = p.catch(() =>
 const urlQ = (href) => {
   try {
     const u = new URL(href), p = u.searchParams;
+    const sh = shopOf(href); if (sh) return aliKey(p.get(SHOPS[sh][1]));
     if (ALI_RE.test(href)) { const m = /wholesale-([^/?#]+)\.html/.exec(u.pathname); return aliKey(p.get('SearchText') || (m ? decodeURIComponent(m[1]) : '')); }
     return p.get('q') || (p.get('view_all_page_id') ? 'page:' + p.get('view_all_page_id') : '');
   } catch (_) { return ''; }
@@ -76,7 +85,7 @@ async function startQueue(m) {
   const items = (Array.isArray(m.items) ? m.items : []).slice(0, HARD.items)
     .map((x) => ({ q: String((x && x.q) || '').slice(0, 120), niche: String((x && x.niche) || '').slice(0, 60), url: String((x && x.url) || ''), status: 'pending' }))
     .map((x) => Object.assign(x, { kind: kindOf(x.url), key: urlQ(x.url) }))
-    .filter((x) => x.kind && x.key && (x.kind === 'ali' ? aliKey(x.q) === x.key : x.q === x.key));   // مكتبة الإعلانات أو AliExpress أو TikTok فقط، والكلمة = كلمة الرابط
+    .filter((x) => x.kind && x.key && (x.kind === 'ali' || x.kind === 'shop' ? aliKey(x.q) === x.key : x.q === x.key));   // مكتبة الإعلانات أو AliExpress أو TikTok فقط، والكلمة = كلمة الرابط
   if (!items.length) return { ok: false, error: 'no_items' };
   const old = await get(QK);
   if (old && old.active) return { ok: false, error: 'busy' };
@@ -109,7 +118,7 @@ async function startCurrent(m) {
 async function advance(q, reason, seen) {
   const it = q.items[q.idx];
   if (it) {
-    it.status = reason === 'timeout' ? 'timeout' : reason === 'skipped' ? 'skipped' : 'done';
+    it.status = reason === 'timeout' ? 'timeout' : reason === 'skipped' ? 'skipped' : reason === 'login' ? 'stopped' : 'done';
     it.reason = reason; it.finishedAt = Date.now();
     if (seen != null) it.seen = seen;
   }
@@ -221,6 +230,8 @@ async function onPage(port, m) {
   // معرّف الرسالة يُكتب أخيراً: ردّ «start» يحمل معرّف الدفعة في batch ولا يطمس معرّف الرسالة
   const reply = (o) => { try { port.postMessage(Object.assign({ evt: 'reply' }, o, o && o.id ? { batch: o.id } : {}, { id: m.id })); } catch (_) { /* gone */ } };
   switch (m.cmd) {
+    // حالة تسجيل الدخول في TikTok (وجود جلسة TikTok في هذا المتصفح، دون قراءة قيمتها)
+    case 'tt_status': { let logged = false; try { logged = !!(await chrome.cookies.get({ url: 'https://www.tiktok.com', name: 'sessionid' })); } catch (_) { /* ignore */ } reply({ ok: true, logged }); break; }
     case 'ping': reply({ ok: true, version: VERSION, state: await full(await get(QK)) }); break;
     case 'start': reply(await locked(() => startQueue(m))); break;
     case 'start_current': reply(await locked(() => startCurrent(m))); break;

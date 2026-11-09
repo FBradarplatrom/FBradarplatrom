@@ -3,7 +3,7 @@
 // 1) عبارات بحث جزائرية (ذكاء اصطناعي إن وُجد OPENAI_API_KEY، وإلا كتابة يدوية)
 // 2) الإضافة تبحث في مكتبة إعلانات ميتا (الجزائر، النشطة والمتوقفة) والصفحة تقارن لحظياً (بصمة الصورة، رابط المورّد، الكلمات المميزة)
 // 3) الحكم: ثغرة مؤكدة · منافسة ضعيفة · جُرّب وتوقف · مشبع · يحتاج تحققك · غير حاسم. والثغرات تُراقَب أسبوعياً.
-const C = require('./core.js'), AI = require('./ai.js');
+const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js');
 
 const ENV = (k, d) => (process.env[k] !== undefined && process.env[k] !== '' ? process.env[k] : d);
 const WEEK = 7 * 864e5;
@@ -76,6 +76,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     if (!sv) throw bad('المنتج غير موجود في المحفوظات', 404);
     const old = db.prepare('select id from gap_products where user_id=? and k=?').get(q.u.id, k);
     if (old) return s.json({ id: old.id, existed: true });
+    LIM.check(q.u, 'gapProducts', db.prepare('select count(*) n from gap_products where user_id=?').get(q.u.id).n);
     const p = J(sv.snap, {}), recs = (p.recs || []).slice(0, 12);
     const ads = recs.map(r => r.a || {}).concat(p.top ? [p.top] : []);
     const uniq = a => [...new Set(a.filter(Boolean))];
@@ -120,7 +121,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     return { terms: cleanTerms(o.queries), keywords: cleanWords([].concat(o.keywords || [], o.name_ar ? [o.name_ar] : [], o.name_fr ? [o.name_fr] : [])), model: r.model };
   }
   app.post('/api/gap/:id/suggest', auth, active, (q, s, n) => {
-    let p; try { p = own(q.u.id, q.params.id); } catch (e) { return n(e); }
+    let p; try { p = own(q.u.id, q.params.id); if (AI.enabled()) LIM.useAI(q.u); } catch (e) { return n(e); }
     aiTerms(J(p.snap, {})).then(r => {
       if (!r) return s.json({ ai: false });
       db.prepare('update gap_products set terms=?, keywords=? where id=?').run(JSON.stringify(r.terms), JSON.stringify(r.keywords), p.id);
@@ -172,6 +173,9 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     qs.forEach(x => { const it = st.find(i => i && i.q === x.q); if (it) { x.status = ['done', 'timeout', 'skipped', 'stopped'].includes(it.status) ? it.status : 'stopped'; x.seen = +it.seen || 0; } });
     db.prepare('update gap_scans set finished_at=?, queries=? where id=?').run(now(), JSON.stringify(qs), sc.id);
     db.prepare('update gap_products set last_scan_at=?, next_check_at=? where id=?').run(now(), now() + WEEK, p.id);
+    // تنبيه: منافسون جدد ظهروا في هذا الفحص (أول ظهور لإعلانهم)
+    const fresh = db.prepare("select count(*) n, sum(level='strong') st from gap_matches where gp_id=? and created_at>=? and (decision is null or decision!='no')").get(p.id, sc.started_at || 0);
+    if (fresh.n) NT.fire(q.u.id, 'gap', '🎯 «' + (p.name || 'منتج') + '»: ' + fresh.n + ' إعلان جديد في الجزائر' + (fresh.st ? ' (' + fresh.st + ' مطابق بقوة)' : ' (محتمل)') + '. افتحه لتتحقق: هل دخل منافس؟', '/gaps/' + p.id);
     s.json(Object.assign(view(refresh(p)), { matches: matchesOf(p.id) }));
   }));
   // تحققك اليدوي: هذا هو المنتج نفسه / ليس هو

@@ -5,11 +5,11 @@
 //  • Google Sheets: إرسال مباشر إلى جدولك عبر Google Apps Script (بلا حساب Google في المنصة).
 //  • مراقبة صفحات المنافسين: إعادة جمع إعلانات صفحة ومعرفة الجديد والمتوقف.
 //  • TikTok: نتائج البحث بالعبارات الشائعة (tiktok made me buy it ...) مرتبة بالتفاعل.
-const C = require('./core.js'), AI = require('./ai.js');
+const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js');
 const WEEK = 7 * 864e5;
 
 module.exports = function mountTools(app, X) {
-  const { db, auth, active, wrap, now } = X;
+  const { db, auth, active, wrap, now, imgData } = X;
   const bad = (m, code) => Object.assign(new Error(m), { status: code || 400 });
   const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
   const str = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
@@ -30,7 +30,9 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
   /* ================= إيجاد المورّد ================= */
   const cleanSup = it => ({
     id: str(it && it.id, 24).replace(/\D/g, ''), title: str(it.title, 300), img: /^https?:\/\//.test(it.img || '') ? str(it.img, 600) : '', price: str(it.price, 40), currency: str(it.currency, 4),
-    sold: str(it.sold, 40), rating: str(it.rating, 6), url: /^https:\/\/([a-z]+\.)?aliexpress\.(com|us)\//.test(it.url || '') ? str(it.url, 300) : ''
+    sold: str(it.sold, 40), rating: str(it.rating, 6), moq: str(it.moq, 40), shop: str(it.shop, 80),
+    market: ['ali', 'alibaba', '1688', 'taobao', 'pdd'].includes(it.market) ? it.market : 'ali',
+    url: /^https:\/\/([a-z0-9-]+\.)*(aliexpress\.(com|us)|alibaba\.com|1688\.com|taobao\.com|tmall\.com|yangkeduo\.com|pinduoduo\.com)\//.test(it.url || '') ? str(it.url, 400) : ''
   });
   app.get('/api/sup', auth, active, wrap((q, s) => {
     const r = db.prepare('select q,items,updated_at from sup_results where user_id=? and k=?').get(q.u.id, str(q.query.k, 300));
@@ -39,25 +41,36 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
   app.post('/api/sup/ingest', auth, active, wrap((q, s) => {
     const b = q.body || {}, k = str(b.k, 300); if (!k) throw bad('k');
     const old = db.prepare('select items from sup_results where user_id=? and k=?').get(q.u.id, k), map = new Map((old && b.reset !== true ? J(old.items, []) : []).map(x => [x.id, x]));
-    for (const it of (Array.isArray(b.items) ? b.items : []).slice(0, 200)) { const c = cleanSup(it || {}); if (c.id && (c.title || c.img)) map.set(c.id, Object.assign(map.get(c.id) || {}, c)); }
-    const items = [...map.values()].slice(0, 240);
+    for (const it of (Array.isArray(b.items) ? b.items : []).slice(0, 200)) { const c = cleanSup(it || {}); if (c.id && (c.title || c.img)) map.set(c.market + ':' + c.id, Object.assign(map.get(c.market + ':' + c.id) || {}, c)); }
+    const items = [...map.values()].slice(0, 500);
     db.prepare('insert into sup_results(user_id,k,q,items,updated_at) values(?,?,?,?,?) on conflict(user_id,k) do update set q=excluded.q, items=excluded.items, updated_at=excluded.updated_at').run(q.u.id, k, str(b.q, 120), JSON.stringify(items), now());
     s.json({ count: items.length });
   }));
   // تشابه الصورة المحسوب في المتصفح يُحفظ مع النتائج
   app.post('/api/sup/rank', auth, active, wrap((q, s) => {
     const b = q.body || {}, k = str(b.k, 300), r = db.prepare('select items from sup_results where user_id=? and k=?').get(q.u.id, k); if (!r) throw bad('غير موجود', 404);
-    const sim = new Map((Array.isArray(b.ranked) ? b.ranked : []).map(x => [String(x.id), num(x.sim)]));
-    const items = J(r.items, []).map(x => (sim.has(x.id) ? Object.assign(x, { sim: sim.get(x.id) }) : x));
+    const sim = new Map((Array.isArray(b.ranked) ? b.ranked : []).map(x => [String(x.market || 'ali') + ':' + x.id, num(x.sim)]));
+    const items = J(r.items, []).map(x => { const k2 = (x.market || 'ali') + ':' + x.id; return sim.has(k2) ? Object.assign(x, { sim: sim.get(k2) }) : x; });
     db.prepare('update sup_results set items=? where user_id=? and k=?').run(JSON.stringify(items), q.u.id, k); s.json({ ok: 1 });
   }));
-  // عبارة البحث في AliExpress: بالإنجليزية (أدق نتائج). بالذكاء الاصطناعي إن وُجد، وإلا اقتراح بسيط يعدّله المستخدم
+  // تحديد المنتج بدقة: الذكاء الاصطناعي يرى صورة المنتج نفسها + نصوص الإعلان، ويكتب عبارة إنجليزية (AliExpress/Alibaba) وصينية مبسطة (1688/Taobao/Pinduoduo)
   app.post('/api/sup/query', auth, active, (q, s, n) => {
     const b = q.body || {}, name = str(b.name, 200), kw = str(b.kw, 120), texts = (Array.isArray(b.texts) ? b.texts : []).map(t => str(t, 500)).slice(0, 3);
-    const latin = [kw, name].find(x => x && /[a-z]{3}/i.test(x) && !/[؀-ۿ]/.test(x)) || '';
-    if (!AI.enabled()) return s.json({ q: latin.toLowerCase().replace(/[^\w\s-]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').slice(0, 6).join(' '), ai: false });
-    AI.chatJSON('You turn a product seen in an ad into the best short English search query for AliExpress (3-6 words, generic product type + key feature, no brand, no marketing words). Return ONLY JSON {"q":""}.',
-      'Product name: ' + name + '\nKeyword: ' + kw + '\nAd text:\n' + texts.join('\n---\n')).then(r => s.json({ q: str(r.data && r.data.q, 80).toLowerCase(), ai: true })).catch(n);
+    const latin = [kw, name].find(x => x && /[a-z]{3}/i.test(x) && !/[\u0600-\u06FF]/.test(x)) || '';
+    const simple = latin.toLowerCase().replace(/[^\w\s-]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').slice(0, 6).join(' ');
+    if (!AI.enabled()) return s.json({ q: simple, zh: '', ai: false });
+    try { LIM.useAI(q.u); } catch (e) { return s.json({ q: simple, zh: '', ai: false, limit: e.message }); }
+    const img = (Array.isArray(b.images) ? b.images : [])[0] || '';
+    (async () => {
+      const data = img && imgData ? await imgData(img).catch(() => '') : '';
+      const prompt = 'Identify this exact product (look at the photo first, then the ad text) so a buyer can find the SAME item from Chinese suppliers. Return ONLY JSON ' +
+        '{"product":"short English name","q":"English search query for AliExpress/Alibaba, 3-7 words: product type + the 2-3 features that make it this exact item (shape, material, mechanism), no brand, no marketing words","zh":"the same query in Simplified Chinese as a 1688/Taobao seller would title it, 4-12 characters","features":["visual details to recognise it"]}' +
+        '\nAd name: ' + name + '\nKeyword: ' + kw + '\nAd text:\n' + texts.join('\n---\n');
+      const user = data ? [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: data, detail: 'low' } }] : prompt;
+      const r = await AI.chatJSON('You are an expert product sourcing agent for Chinese marketplaces (AliExpress, Alibaba, 1688, Taobao, Pinduoduo).', user, { timeout: 40000 });
+      const d = r.data || {};
+      s.json({ q: str(d.q, 90).toLowerCase() || simple, zh: str(d.zh, 40), product: str(d.product, 80), features: (d.features || []).map(x => str(x, 60)).slice(0, 6), vision: !!data, ai: true });
+    })().catch(n);
   });
 
   /* ================= تحليل الإعلان بالذكاء الاصطناعي ================= */
@@ -65,7 +78,8 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
   app.post('/api/ai/ad', auth, active, (q, s, n) => {
     const b = q.body || {}, k = str(b.k, 300), p = b.p || {};
     if (!k) return n(bad('k'));
-    if (!AI.enabled()) return n(bad('الذكاء الاصطناعي غير مفعّل: أضف OPENAI_API_KEY في إعدادات الخادم', 400));
+    if (!AI.enabled()) return n(bad('الذكاء الاصطناعي غير مفعّل: أضف المفتاح من «الربط والتكامل»', 400));
+    try { LIM.useAI(q.u); } catch (e) { return n(e); }
     const texts = (Array.isArray(p.texts) ? p.texts : []).map(t => str(t, 900)).slice(0, 5);
     const facts = { name: str(p.name, 200), market: str(p.market, 3), price: str(p.price, 40), category: str(p.cat, 10), score: num(p.score), days_running: num(p.days), sellers: num(p.n), copies: num(p.copies), benefit_tags: (p.tags || []).map(t => str(t, 80)).slice(0, 3) };
     const sys = 'You are a senior e-commerce ad strategist for the Algerian cash-on-delivery market. You analyse a winning ad seen on Facebook (possibly from another country) and explain WHY it sells and HOW to sell the same product in Algeria. ' +
@@ -111,6 +125,7 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
     const m = /view_all_page_id=(\d{5,})/.exec(pid) || /[?&]id=(\d{5,})/.exec(pid) || /^(\d{5,})$/.exec(pid); if (!m) throw bad('أدخل معرّف الصفحة (أرقام) أو رابط مكتبة الإعلانات الذي فيه view_all_page_id');
     pid = m[1];
     const ex = db.prepare('select id from watch_pages where user_id=? and page_id=?').get(q.u.id, pid); if (ex) return s.json({ id: ex.id, existed: true });
+    LIM.check(q.u, 'watchPages', db.prepare('select count(*) n from watch_pages where user_id=?').get(q.u.id).n);
     const id = db.prepare('insert into watch_pages(user_id,page_id,name,note,created_at,stats) values(?,?,?,?,?,?)').run(q.u.id, pid, str(b.name, 120) || 'صفحة ' + pid, str(b.note, 300), now(), '{}').lastInsertRowid;
     s.json({ id: Number(id) });
   }));
@@ -149,6 +164,7 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
     const stats = { scanned: seen.size, total: tot.n, active: tot.a || 0, new: first ? 0 : sc.new_count, stopped, first };
     db.prepare('update watch_scans set finished_at=? where id=?').run(t, sc.id);
     db.prepare('update watch_pages set last_scan_at=?, next_check_at=?, stats=?, seen_new=seen_new+? where id=?').run(t, t + WEEK, JSON.stringify(stats), first ? 0 : sc.new_count, w.id);
+    if (!first && sc.new_count > 0) NT.fire(q.u.id, 'watch', '👁 ' + sc.new_count + ' إعلان جديد لصفحة «' + (w.name || w.page_id) + '»: منتجات يختبرونها الآن.', '/watch/' + w.id);
     s.json(Object.assign(wView(wOwn(q.u.id, w.id)), { stats }));
   }));
 
@@ -160,6 +176,17 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
     url: /^https:\/\/www\.tiktok\.com\//.test(o.url || '') ? str(o.url, 300) : ''
   });
   const DEF_PHRASES = ['tiktok made me buy it', '#tiktokmademebuyit', 'amazon finds', 'amazon must haves', 'viral products', 'gadgets you need', 'things you didn\'t know you needed', 'kitchen gadgets', 'cleaning hacks', 'home finds', 'temu finds', 'aliexpress finds', 'car accessories must have', 'beauty gadgets', 'baby products must have', 'pet products', 'منتجات مفيدة', 'منتجات تيك توك', 'trouvaille amazon', 'produits tiktok'];
+  /* ================= 💰 حاسبة الربح: مدخلات كل منتج + آخر القيم كافتراضي ================= */
+  const PF = ['price', 'cost', 'costCur', 'ship', 'deliv', 'pack', 'cpl', 'conf', 'rate', 'ret', 'leads'];
+  app.get('/api/profit', auth, active, wrap((q, s) => s.json(kvGet(q.u.id, 'profit', { last: {}, items: {} }))));
+  app.put('/api/profit', auth, active, wrap((q, s) => {
+    const k = str(q.body && q.body.k, 300), v = {}, b = (q.body && q.body.v) || {};
+    for (const f of PF) if (b[f] !== undefined && b[f] !== '') v[f] = f === 'costCur' ? str(b[f], 4).toUpperCase().replace(/[^A-Z]/g, '') : Math.max(0, Math.min(1e8, +b[f] || 0));
+    const d = kvGet(q.u.id, 'profit', { last: {}, items: {} });
+    d.last = Object.assign({}, v); delete d.last.price; delete d.last.cost;      // الافتراضي للمنتج التالي: نسب التأكيد والتوصيل والإعلان…
+    if (k) { delete d.items[k]; d.items[k] = Object.assign(v, { at: now() }); const ks = Object.keys(d.items); ks.slice(0, Math.max(0, ks.length - 500)).forEach(x => delete d.items[x]); }
+    kvSet(q.u.id, 'profit', d); s.json({ ok: 1 });
+  }));
   app.get('/api/tt/phrases', auth, active, wrap((q, s) => s.json({ phrases: kvGet(q.u.id, 'tt_phrases', DEF_PHRASES), defaults: DEF_PHRASES })));
   app.put('/api/tt/phrases', auth, active, wrap((q, s) => { const p = [...new Set((Array.isArray(q.body && q.body.phrases) ? q.body.phrases : []).map(x => str(x, 80)).filter(Boolean))].slice(0, 80); kvSet(q.u.id, 'tt_phrases', p.length ? p : DEF_PHRASES); s.json({ phrases: kvGet(q.u.id, 'tt_phrases', DEF_PHRASES) }); }));
   app.get('/api/tt', auth, active, wrap((q, s) => s.json({ runs: db.prepare('select id,label,phrases,created_at,count from tt_runs where user_id=? order by created_at desc limit 100').all(q.u.id).map(r => Object.assign(r, { phrases: J(r.phrases, []) })) })));

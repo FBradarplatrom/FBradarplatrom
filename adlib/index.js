@@ -2,7 +2,7 @@
 // قسم «جمع الإعلانات»: تستقبل المنصة ما تجمعه الإضافة وتضعه مباشرة في «الإعلانات الواردة» (دفعة لكل عملية جمع)،
 // والتصفية والتقييم كلها في قسم التحليل. هنا أيضاً: قاموس كلمات البحث لكل مستخدم، حدود الجمع، وتنزيل الإضافة.
 const fs = require('fs'), path = require('path');
-const C = require('./core.js'), { zip } = require('./zip.js'), AI = require('./ai.js'), MK = require('./lib/markets.js');
+const LIM = require('./limits.js'), C = require('./core.js'), { zip } = require('./zip.js'), AI = require('./ai.js'), MK = require('./lib/markets.js');
 const FILE_DICT = require('./default_dict.json');
 
 const ENV = (k, d) => (process.env[k] !== undefined && process.env[k] !== '' ? process.env[k] : d);
@@ -29,11 +29,15 @@ module.exports = function mount(app, X) {
 
   /* ---------- الجداول ---------- */
   db.exec(`
+create table if not exists user_kv(user_id integer, k text, v text, primary key(user_id, k));
 create table if not exists lib_user(user_id integer primary key, diff text, updated_at integer);
 create table if not exists lib_kv(k text primary key, v text);
 create table if not exists lib_usage(user_id integer, day text, searches integer default 0, primary key(user_id, day));
 create table if not exists lib_batch(user_id integer, batch_id text, run_id integer, created_at integer, primary key(user_id, batch_id));
-create table if not exists lib_rows(run_id integer, ad_id text, row text, primary key(run_id, ad_id));`);
+create table if not exists lib_rows(run_id integer, ad_id text, row text, primary key(run_id, ad_id));
+create table if not exists lib_excluded(user_id integer, ad_id text, kind text, why text, label text, row text, created_at integer, primary key(user_id, ad_id));
+create index if not exists lib_excl_t on lib_excluded(user_id, created_at);
+create table if not exists ad_track(user_id integer, ad_id text, first_seen integer, last_seen integer, days integer default 1, active integer, ended integer, start_date text, primary key(user_id, ad_id));`);
   const tx = f => { db.exec('BEGIN'); try { const r = f(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (x) {} throw e; } };
   const kvGet = k => { const r = db.prepare('select v from lib_kv where k=?').get(k); return r ? r.v : null; };
   const kvSet = (k, v) => db.prepare('insert into lib_kv(k,v) values(?,?) on conflict(k) do update set v=excluded.v').run(k, v);
@@ -82,21 +86,35 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
     const c = b.ctx || {}, meta = { query: str(c.query, 120), niche: str(c.niche, 60), country: str(c.country, 10), src: 'net' }, t = now();
     const strict = c.filter !== false && c.filter !== 0 && c.filter !== '0';     // فحص الصلاحية مفعّل افتراضياً
     const batch = str(b.batch || c.batch || 'manual', 40), label = str(c.label, 160);
-    const rows = [], byKind = {}, samples = [];
+    const rows = [], byKind = {}, samples = [], excl = [];
     let skipped = 0, filtered = 0;
+    const allowPages = new Set((J((db.prepare("select v from user_kv where user_id=? and k='allow_pages'").get(u.id) || {}).v, []) || []).map(String));
     for (const raw of b.ads) {
       let r = null;
       try { meta.src = raw && raw._src === 'dom' ? 'dom' : 'net'; r = C.rowFromRaw(raw, meta, t); } catch (e) { r = null; }
       if (!r) { skipped++; continue; }
       if (strict) {
-        const v = C.eligibility(r);
-        if (!v.ok) {                                                   // ليس منتجاً مادياً صالحاً: لا يدخل «الواردة»
-          filtered++; byKind[v.kind] = (byKind[v.kind] || 0) + 1;
+        const v = allowPages.has(String(r.page_id)) ? { ok: true } : C.eligibility(r);   // صفحة سمح بها المستخدم: لا تُستبعد
+        if (!v.ok) {                                                   // ليس منتجاً مادياً صالحاً: لا يدخل «الواردة» بل «المستبعد» (قابل للاسترجاع)
+          filtered++; byKind[v.kind] = (byKind[v.kind] || 0) + 1; excl.push([r, v]);
           if (samples.length < 5) samples.push({ title: (r.title || r.body || '').slice(0, 80), page: r.page_name, why: v.reasons[0] || v.label });
           continue;
         }
       }
       rows.push(r);
+    }
+    if (excl.length) {
+      const ins = db.prepare('insert into lib_excluded(user_id,ad_id,kind,why,label,row,created_at) values(?,?,?,?,?,?,?) on conflict(user_id,ad_id) do update set kind=excluded.kind, why=excluded.why, row=excluded.row, created_at=excluded.created_at');
+      tx(() => { for (const [r, v] of excl) ins.run(u.id, r.ad_id, v.kind, String(v.reasons[0] || v.label).slice(0, 200), label, JSON.stringify(r), t); });
+    }
+    // تتبع عمر الإعلان عبر الزمن: متى رأيناه أول مرة وآخر مرة، في كم يوم جمع، وهل ما زال نشطاً
+    if (rows.length) {
+      const day = Math.floor(t / 864e5), get = db.prepare('select last_seen from ad_track where user_id=? and ad_id=?');
+      const put = db.prepare(`insert into ad_track(user_id,ad_id,first_seen,last_seen,days,active,ended,start_date) values(?,?,?,?,1,?,?,?)
+        on conflict(user_id,ad_id) do update set last_seen=excluded.last_seen, days=ad_track.days+?, active=excluded.active,
+        ended=case when excluded.active=0 then coalesce(ad_track.ended, excluded.ended) else null end, start_date=coalesce(excluded.start_date, ad_track.start_date)`);
+      tx(() => { for (const r of rows) { const old = get.get(u.id, r.ad_id), act = r.status === 'inactive' ? 0 : 1, end = r.end_date ? Date.parse(r.end_date) || t : (act ? null : t);
+        put.run(u.id, r.ad_id, t, t, act, end, r.start_date || null, old && Math.floor(old.last_seen / 864e5) === day ? 0 : 1); } });
     }
     let added = 0, updated = 0, rejected = 0, runId = 0, total = 0;
     // الأداء: كل إعلان صف مستقل في lib_rows. لا تُقرأ الدفعة كلها ولا تُعاد كتابتها مع كل إرسال.
@@ -130,7 +148,46 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
     s.json({ added, updated, rejected, skipped, filtered, byKind, samples, run: runId, total, cap: CFG.maxAdsPerRun });
   }));
 
+  /* ---------- تتبع العمر: بيانات الإعلانات التي في التحليل ---------- */
+  app.post('/api/track', auth, active, wrap((q, s) => {
+    const ids = (Array.isArray(q.body && q.body.ids) ? q.body.ids : []).map(x => str(x, 40)).filter(Boolean).slice(0, 20000), out = {};
+    const get = db.prepare('select first_seen f,last_seen l,days n,active a,ended e,start_date s from ad_track where user_id=? and ad_id=?');
+    for (const id of ids) { const r = get.get(q.u.id, id); if (r) out[id] = r; }
+    s.json(out);
+  }));
+
+  /* ---------- «المستبعد»: ما رفضه فحص صلاحية المنتج، للمراجعة والاسترجاع ---------- */
+  app.get('/api/lib/excluded', auth, active, wrap((q, s) => {
+    const kind = str(q.query.kind, 20), lim = Math.min(500, +q.query.limit || 200);
+    const by = db.prepare('select kind, count(*) n from lib_excluded where user_id=? group by kind').all(q.u.id);
+    const list = db.prepare('select ad_id,kind,why,label,row,created_at from lib_excluded where user_id=?' + (kind ? ' and kind=?' : '') + ' order by created_at desc limit ?')
+      .all(...[q.u.id].concat(kind ? [kind] : [], [lim])).map(x => { const r = J(x.row, {}); return { ad_id: x.ad_id, kind: x.kind, why: x.why, label: x.label, at: x.created_at, title: r.title, body: String(r.body || '').slice(0, 400), page_name: r.page_name, page_id: r.page_id, image_url: r.image_url, library_url: r.library_url, country: r.country }; });
+    s.json({ by, total: by.reduce((a, x) => a + x.n, 0), list, allow: J((db.prepare("select v from user_kv where user_id=? and k='allow_pages'").get(q.u.id) || {}).v, []) });
+  }));
+  // استرجاع: تذهب الإعلانات إلى دفعة جديدة في «الواردة». allowPages: لا تُستبعد إعلانات هذه الصفحات مستقبلاً
+  app.post('/api/lib/excluded/restore', auth, active, wrap((q, s) => {
+    const ids = (Array.isArray(q.body && q.body.ids) ? q.body.ids : []).map(x => str(x, 40)).slice(0, 2000);
+    const rows = ids.map(id => db.prepare('select row from lib_excluded where user_id=? and ad_id=?').get(q.u.id, id)).filter(Boolean).map(x => J(x.row, null)).filter(Boolean);
+    if (!rows.length) throw bad('لا إعلانات محددة');
+    let runId = 0;
+    tx(() => {
+      runId = Number(db.prepare("insert into runs(user_id,source,label,ads,rows,created_at,fp) values(?,?,?,?,'@lib',?,null)").run(q.u.id, 'adlib', 'مسترجعة من «المستبعد» · ' + stamp(now()), rows.length, now()).lastInsertRowid);
+      const put = db.prepare('insert or ignore into lib_rows(run_id,ad_id,row) values(?,?,?)');
+      for (const r of rows) { put.run(runId, String(r.ad_id), JSON.stringify(r)); db.prepare('delete from lib_excluded where user_id=? and ad_id=?').run(q.u.id, String(r.ad_id)); }
+      const pages = (Array.isArray(q.body.allowPages) ? q.body.allowPages : []).map(x => str(x, 40)).filter(x => /^\d+$/.test(x));
+      if (pages.length) {
+        const cur = new Set(J((db.prepare("select v from user_kv where user_id=? and k='allow_pages'").get(q.u.id) || {}).v, []));
+        pages.forEach(x => cur.add(x));
+        db.prepare("insert into user_kv(user_id,k,v) values(?,'allow_pages',?) on conflict(user_id,k) do update set v=excluded.v").run(q.u.id, JSON.stringify([...cur].slice(-2000)));
+      }
+    });
+    s.json({ run: runId, restored: rows.length });
+  }));
+  app.delete('/api/lib/excluded', auth, active, wrap((q, s) => { db.prepare('delete from lib_excluded where user_id=?').run(q.u.id); s.json({ ok: 1 }); }));
+  app.delete('/api/lib/allow-pages', auth, active, wrap((q, s) => { db.prepare("delete from user_kv where user_id=? and k='allow_pages'").run(q.u.id); s.json({ ok: 1 }); }));
+
   /* ---------- الحالة والحدود ---------- */
+  const dayMax = u => { const v = LIM.limitsOf(u).searchesPerDay; return Number.isFinite(v) ? v : 100000; };   // حد الباقة (المدير بلا حد)
   const today = () => new Date().toISOString().slice(0, 10);
   const usedToday = uid => { const r = db.prepare('select searches from lib_usage where user_id=? and day=?').get(uid, today()); return r ? r.searches : 0; };
   // الدومينات المرتبطة بالإضافة: ما ضُبط في .env + العنوان الذي يستعمله المشترك الآن (+ www/بدونها). بلا منفذ ولا بروتوكول.
@@ -148,23 +205,23 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
   app.get('/api/lib/stats', auth, active, wrap((q, s) => {
     const lastRun = db.prepare("select id,ads,created_at from runs where user_id=? and source='adlib' order by created_at desc limit 1").get(q.u.id);
     s.json({
-      limits: { maxBatch: CFG.maxBatch, maxDay: CFG.maxDay, usedToday: usedToday(q.u.id), maxAdsPerSearch: CFG.maxAdsPerSearch, allowFast: CFG.allowFast, maxAdsPerRun: CFG.maxAdsPerRun },
+      limits: { maxBatch: CFG.maxBatch, maxDay: dayMax(q.u), usedToday: usedToday(q.u.id), maxAdsPerSearch: CFG.maxAdsPerSearch, allowFast: CFG.allowFast, maxAdsPerRun: CFG.maxAdsPerRun },
       retention: { days: CFG.retentionDays }, lastRun: lastRun || null,
       ext: { latest: EXT_VERSION, min: EXT_MIN, hosts: q.u.role === 'admin' ? extHosts(q) : undefined }     // الدومينات للمدير فقط
     });
   }));
   // فحص قبل بدء دفعة (لا يستهلك شيئاً) ثم نقرة لكل بحث يبدأ فعلاً
   app.post('/api/lib/batch', auth, active, wrap((q, s) => {
-    const n = Math.max(1, Math.floor(+q.body.count || 1)), used = usedToday(q.u.id), left = CFG.maxDay - used;
+    const n = Math.max(1, Math.floor(+q.body.count || 1)), used = usedToday(q.u.id), max = dayMax(q.u), left = max - used;
     if (n > CFG.maxBatch) throw bad(`الحد الأقصى ${CFG.maxBatch} عملية بحث في الدفعة الواحدة. هذا لحماية حسابك على فيسبوك.`, 429);
-    if (n > left) throw bad(`المتبقي لك اليوم ${Math.max(0, left)} عملية بحث من أصل ${CFG.maxDay}.`, 429);
+    if (n > left) throw bad(`المتبقي لك اليوم ${Math.max(0, left)} عملية بحث من أصل ${max} (حد باقتك).`, 429);
     s.json({ ok: 1, remaining: left });
   }));
   app.post('/api/lib/tick', auth, active, wrap((q, s) => {
     const used = usedToday(q.u.id);
-    if (used >= CFG.maxDay) throw bad(`بلغت حد اليوم (${CFG.maxDay} عملية بحث).`, 429);
+    if (used >= dayMax(q.u)) throw bad(`بلغت حد اليوم (${dayMax(q.u)} عملية بحث، حد باقتك).`, 429);
     db.prepare('insert into lib_usage(user_id,day,searches) values(?,?,1) on conflict(user_id,day) do update set searches=searches+1').run(q.u.id, today());
-    s.json({ ok: 1, remaining: CFG.maxDay - used - 1 });
+    s.json({ ok: 1, remaining: dayMax(q.u) - used - 1 });
   }));
 
   /* ---------- معنى الكلمات الأجنبية بالعربية (يظهر عند التمرير) ---------- */
@@ -175,6 +232,7 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
     const map = {}, need = [];
     for (const w of words) { const g = MK.gloss(lang, w) || kvGet('gloss:' + lang + ':' + w.toLowerCase()); if (g) map[w] = g; else need.push(w); }
     if (!need.length || !AI.enabled()) return s.json({ map, ai: AI.enabled() });
+    try { LIM.useAI(q.u); } catch (e) { return s.json({ map, ai: true, limit: e.message }); }
     AI.chatJSON('Translate advertising search keywords into short natural Modern Standard Arabic meanings (2-5 words each). Return ONLY JSON {"map":{"<word>":"<arabic>"}}.',
       'Language: ' + MK.LANGS[lang].native + '\nWords:\n' + need.join('\n')).then(r => {
       const m = (r && r.data && r.data.map) || {};
@@ -249,6 +307,7 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
     try {
       const a = db.prepare("delete from runs where source='adlib' and summary is null and created_at<?").run(now() - CFG.retentionDays * DAY);
       db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
+      db.prepare('delete from lib_excluded where created_at<?').run(now() - CFG.retentionDays * DAY);
       db.prepare('delete from lib_usage where day<?').run(new Date(now() - 8 * DAY).toISOString().slice(0, 10));
       db.prepare('delete from lib_batch where created_at<?').run(now() - 30 * DAY);
       return { stale: Number(a.changes) };

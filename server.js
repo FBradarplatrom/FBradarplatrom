@@ -48,6 +48,9 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
 create table if not exists activity(id integer primary key, user_id integer, kind text, ip text, ua text, detail text, at integer);
 create index if not exists activity_u on activity(user_id, at);`);
 try { db.exec('alter table users add column tv integer default 0'); } catch (e) {}
+// إعدادات المنصة المشفّرة (المفاتيح) وحدود الباقات
+require('./adlib/config.js').init(db, t => enc(t), t => dec(t));
+require('./adlib/limits.js').init(db);
 // الأداء: إعلانات «جمع الإعلانات» تُخزَّن صفاً لكل إعلان (lib_rows) بدل إعادة كتابة الدفعة كلها مع كل 60 إعلاناً.
 // runs.rows = '@lib' يعني أن صفوف الدفعة في lib_rows. الملفات المرفوعة والأرشيف القديم يبقيان JSON كما هما.
 const LIB = '@lib';
@@ -65,7 +68,7 @@ app.disable('x-powered-by'); app.set('trust proxy', 1);
 app.use(gzip);
 // الأمان: ترويسات تمنع تضمين المنصة في مواقع أخرى (clickjacking) وتخمين أنواع الملفات وتسريب الروابط
 app.use((q, s, n) => { s.set({ 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' }); if (q.secure) s.set('Strict-Transport-Security', 'max-age=15552000'); n(); });
-app.use(express.json({ limit: '50mb' }), cookie());
+app.use(express.json({ limit: '50mb', verify: (q, s, buf) => { if (q.url.startsWith('/api/billing/webhook')) q.rawBody = buf; } }), cookie());   // الجسم الخام لتحقق توقيع بوابة الدفع
 app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });   // البيانات حيّة: لا تُخزَّن في المتصفح (تظهر فور وصولها)
 
 // CORS للإضافات فقط (المصادقة بمفتاح، بلا كوكيز)
@@ -235,7 +238,7 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
 }));
 app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
-  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
+  ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
   ['delete from watch_ads where watch_id not in (select id from watch_pages)', 'delete from watch_scans where watch_id not in (select id from watch_pages)', 'delete from tt_items where run_id not in (select id from tt_runs)'].forEach(x => db.prepare(x).run());
   db.prepare('delete from users where id=?').run(id); act(q.u.id, 'admin_delete', q, '#' + id); s.json({ ok: 1 });
@@ -296,7 +299,15 @@ app.post('/api/img/keep', auth, active, async (q, s) => {   // يحفظ نسخة
 // ---------- جمع الإعلانات (الإضافة ← الواردة + قاموس كلمات البحث) ----------
 require('./adlib')(app, { db, auth, active, admin, wrap, now, DAY, addRun, fpOf });
 require('./adlib/gap.js')(app, { db, auth, active, wrap, now });   // ثغرات السوق الجزائري
-require('./adlib/tools.js')(app, { db, auth, active, wrap, now });  // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
+// صورة كـ data URL للذكاء الاصطناعي (النسخة المحفوظة أولاً، وإلا تُجلب عبر الوكيل الآمن)
+const imgData = async u => { if (!/^https?:\/\//.test(u || '')) return ''; const f = path.join(IMG_DIR, ik(u)); let buf, type;
+  if (fs.existsSync(f + '.bin')) { buf = fs.readFileSync(f + '.bin'); type = fs.readFileSync(f + '.type', 'utf8'); } else { const r = await fetchImg(u); buf = r.buf; type = r.type; }
+  return buf.length > 3.5e6 ? '' : 'data:' + type + ';base64,' + buf.toString('base64'); };
+require('./adlib/tools.js')(app, { db, auth, active, wrap, now, imgData });
+const BX = { db, auth, active, admin, wrap, now, act, DATA_DIR: path.dirname(path.resolve(DBF)) };
+Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport() }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
+require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
+// المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
 // ---------- الصفحات ----------
 const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
@@ -305,7 +316,7 @@ const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), '
 const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.join(__dirname, 'views', 'login.html');
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.type('html').send(LANDING));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/settings', '/subscribers'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscribers'],
   (q, s) => signedIn(q) ? s.sendFile(APP_PAGE) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));
@@ -313,5 +324,5 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 // منطق الأسواق وفحص المنتج مشترك بين الخادم والمتصفح (ملف واحد لكل منطق)
 app.get('/radar-lib/core.js', (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'engine', 'core.js')));   // محرك التحليل للخيط الخلفي
 app.get(['/radar-lib/kwdata.js', '/radar-lib/markets.js', '/radar-lib/productcheck.js', '/radar-lib/gapmatch.js'], (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'adlib', 'lib', path.basename(q.path))));
-app.use((e, q, s, n) => { if (!e.status) console.error(e); s.status(e.status || 500).json({ error: e.status ? e.message : 'server' }); });
+app.use((e, q, s, n) => { if (!e.status || e.status >= 500) { console.error(e); BX.logError && BX.logError(e, q); } s.status(e.status || 500).json({ error: e.status ? e.message : 'server' }); });
 app.listen(+process.env.PORT || 3000, () => console.log('Radar platform on :' + (process.env.PORT || 3000)));

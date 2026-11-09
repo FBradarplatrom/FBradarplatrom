@@ -2,14 +2,15 @@
   "manifest_version": 3,
   "name": "إضافة جمع الإعلانات – رادار المنتجات الرابحة",
   "short_name": "جمع الإعلانات",
-  "version": "1.3.0",
-  "description": "تجمع إعلانات مكتبة ميتا، ونتائج بحث AliExpress (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
+  "version": "1.4.0",
+  "description": "تجمع إعلانات مكتبة ميتا، ونتائج البحث في AliExpress وAlibaba و1688 وTaobao وPinduoduo (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
     "unlimitedStorage",
     "alarms",
-    "scripting"
+    "scripting",
+    "cookies"
   ],
   "host_permissions": [
     "https://www.facebook.com/*",
@@ -17,6 +18,11 @@
     "https://*.aliexpress.com/*",
     "https://*.aliexpress.us/*",
     "https://www.tiktok.com/*",
+    "https://*.alibaba.com/*",
+    "https://*.1688.com/*",
+    "https://*.taobao.com/*",
+    "https://*.tmall.com/*",
+    "https://mobile.yangkeduo.com/*",
     "https://YOUR-PLATFORM-DOMAIN/*"
   ],
   "background": {
@@ -87,6 +93,18 @@
         "tt-collector.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.alibaba.com/trade/search*",
+        "https://s.1688.com/selloffer/*",
+        "https://s.taobao.com/search*",
+        "https://mobile.yangkeduo.com/search_result*"
+      ],
+      "js": [
+        "shop-collector.js"
+      ],
+      "run_at": "document_idle"
     },
     {
       "matches": [

@@ -77,7 +77,8 @@
       if (!r.ok) throw new Error({ busy: 'هناك عملية جمع تعمل الآن', tab: 'تعذّر فتح التبويب', no_items: 'لا توجد عناصر صالحة' }[r.error] || 'تعذّر البدء');
       saveJob({ mod, batch: r.batch, ctx: ctx || {}, at: Date.now() }); return r.batch;
     },
-    stop: () => bsend('stop').catch(() => {}), skip: () => bsend('skip').catch(() => {})
+    stop: () => bsend('stop').catch(() => {}), skip: () => bsend('skip').catch(() => {}),
+    ttStatus: async () => { if (!B.ok) return null; try { const r = await bsend('tt_status', {}, 3000); return r && r.ok ? !!r.logged : null; } catch (x) { return null; } }
   };
   function onBridge(ev) {
     if (JOB && MODS[JOB.mod]) {

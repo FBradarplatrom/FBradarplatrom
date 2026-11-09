@@ -1,8 +1,11 @@
 'use strict';
 // ذكاء اصطناعي اختياري (OPENAI_API_KEY): طلب JSON قصير مع تجاوز النموذج المعطّل إلى التالي. يستعمله «ثغرات السوق» وترجمة الكلمات.
-const ENV = (k, d) => (process.env[k] !== undefined && process.env[k] !== '' ? process.env[k] : d);
+// المفاتيح من «الربط والتكامل» (قاعدة البيانات، مشفّرة) أو من متغيرات البيئة
+const CFG = require('./config.js');
+const ENV = (k, d) => { const m = { OPENAI_API_KEY: 'openai_key', OPENAI_MODEL: 'openai_model', OPENAI_BASE_URL: 'openai_base' }[k]; return (m && CFG.get(m)) || d; };
 const enabled = () => !!ENV('OPENAI_API_KEY', '');
 async function chatJSON(system, user, opts) {
+  // user: نص، أو مصفوفة أجزاء [{type:'text'},{type:'image_url'}] للرؤية (صورة المنتج)
   const key = ENV('OPENAI_API_KEY', ''); if (!key) return null;
   const base = ENV('OPENAI_BASE_URL', 'https://api.openai.com/v1').replace(/\/+$/, '');
   const models = [...new Set([ENV('OPENAI_MODEL', ''), 'gpt-4.1-mini', 'gpt-4o-mini'].filter(Boolean))];

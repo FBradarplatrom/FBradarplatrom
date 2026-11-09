@@ -53,6 +53,7 @@ const url = q => 'https://www.facebook.com/ads/library/?active_status=active&ad_
   // 10.0: AliExpress (المورّد) و TikTok مقبولان بشرط مطابقة الكلمة، وأي موقع آخر مرفوض
   eq((await send({ cmd: 'start', items: [{ q: 'lamp', url: 'https://aliexpress.evil.example/wholesale?SearchText=lamp' }, { q: 'x', url: 'https://www.tiktok.com.evil.example/search?q=x' }, { q: 'x', url: 'https://www.tiktok.com/@a/video/1?q=x' }] })).ok, false, 'look-alike AliExpress / TikTok hosts and non-search pages are refused');
   eq((await send({ cmd: 'start', items: [{ q: 'lamp', url: 'https://www.aliexpress.com/wholesale?SearchText=other' }, { q: 'a', url: 'https://www.tiktok.com/search?q=b' }] })).ok, false, 'AliExpress / TikTok query must equal the item');
+  eq((await send({ cmd: 'start', items: [{ q: '小夜灯', url: 'https://s.1688.com.evil.example/selloffer/offer_search.htm?keywords=小夜灯' }, { q: 'x', url: 'https://s.taobao.com/item?q=x' }, { q: 'a', url: 'https://mobile.yangkeduo.com/search_result.html?search_key=b' }] })).ok, false, 'Chinese markets: look-alike hosts, non-search pages and mismatched queries are refused');
 
   r = await send({ cmd: 'start', label: 'جمع: يزيل البقع +1', items: [{ q: 'يزيل البقع', niche: 'المنزل', url: url('يزيل البقع') }, { q: 'يحمي', niche: '', url: url('يحمي') }],
     settings: { speed: 'fast', maxAds: 99999, waitSeconds: 1, activeOnly: true }, limits: { maxAdsPerSearch: 300, allowFast: false } });

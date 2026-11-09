@@ -5,6 +5,7 @@ data.db
 data.db-*
 *.db
 images/
+proofs/
 .env
 # سجلات وملفات مؤقتة
 stderr.log
