@@ -68,9 +68,9 @@ const MARKETS = {
     for (const [cc, set] of Object.entries(MARKETS)) {
       const r = await A('POST', '/api/lib/ingest', { batch: 'b-' + cc, ads: set.keep.concat(set.drop, set.warn || []), ctx: { query: 'q', country: cc, label: 'جمع ' + cc } });
       ok(r.status === 200, cc + ' ingest ' + JSON.stringify(r.body));
-      const kept = set.keep.length + (set.warn || []).length;   // الأكل/الكبير/الهش: تُحفظ مع تنبيه
+      const kept = set.keep.length + (set.warn || []).length + set.drop.length;   // لا استبعاد عند الوصول: كل إعلان يُحفظ (الاستبعاد للعلامات فقط في التحليل)
       ok(r.body.added === kept, `${cc}: ${kept} products kept (got ${r.body.added})`);
-      ok(r.body.filtered === set.drop.length, `${cc}: ${set.drop.length} non-products filtered (got ${r.body.filtered} ${JSON.stringify(r.body.byKind)})`);
+      ok(!r.body.filtered, `${cc}: nothing filtered on arrival (got ${r.body.filtered})`);
       summary.push(`${cc} +${r.body.added}/-${r.body.filtered}`);
     }
     // filter switched off → everything is stored (user choice)
@@ -85,7 +85,7 @@ const MARKETS = {
     const offRows = (await A('GET', '/api/runs/' + offRun.id)).body.rows;
     const L = CORE.buildLists({ strong: 'Helps, Say goodbye to', normal: '', brands: '', bulky: '', fragile: '' });
     const res = CORE.analyze(offRows.map(CORE.normRow), Date.now(), L);
-    ok(res.length === MARKETS.US.drop.length && res.every(p => p.excl && p.why.some(w => /ليس منتجاً صالحاً/.test(w))), 'analysis excludes non-products that were stored with the filter off');
+    ok(res.length === MARKETS.US.drop.length && res.every(p => !p.excl && /قد لا يكون منتجاً/.test(p.warn2 || '')), 'non-products are not excluded: warning tag only');
     const resUs = CORE.analyze(rows.map(CORE.normRow), Date.now(), L);
     ok(resUs.every(p => !p.excl) && resUs.some(p => p.benOk), 'US products stay and English golden words count as benefit');
     ok(resUs.some(p => /قد يكون/.test(p.warn || '') && /cookies/i.test(p.name)), 'food is kept with a warning tag');

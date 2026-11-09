@@ -1,9 +1,10 @@
 'use strict';
 // إعدادات المنصة التي يضبطها المدير من «الربط والتكامل» (مفاتيح الذكاء الاصطناعي، بوابة الدفع، بوت تيليغرام…).
 // تُخزَّن في قاعدة البيانات، والأسرار مشفّرة (AES-GCM بمفتاح مشتق من JWT_SECRET). إن لم تُضبط يُقرأ متغير البيئة المقابل.
-const ENV = { openai_key: 'OPENAI_API_KEY', openai_model: 'OPENAI_MODEL', openai_base: 'OPENAI_BASE_URL', chargily_secret: 'CHARGILY_SECRET_KEY', chargily_mode: 'CHARGILY_MODE',
+const ENV = { openai_key: 'OPENAI_API_KEY', openai_model: 'OPENAI_MODEL', openai_base: 'OPENAI_BASE_URL', satim_user: 'SATIM_USER', satim_pass: 'SATIM_PASSWORD', satim_terminal: 'SATIM_TERMINAL_ID', satim_mode: 'SATIM_MODE',
+  stripe_secret: 'STRIPE_SECRET_KEY', stripe_webhook: 'STRIPE_WEBHOOK_SECRET', paypal_client: 'PAYPAL_CLIENT_ID', paypal_secret: 'PAYPAL_SECRET', paypal_mode: 'PAYPAL_MODE',
   telegram_token: 'TELEGRAM_BOT_TOKEN', telegram_bot: 'TELEGRAM_BOT_USERNAME', baridi_info: 'BARIDI_INFO', app_url: 'APP_URL' };
-const SECRET = new Set(['openai_key', 'chargily_secret', 'telegram_token']);
+const SECRET = new Set(['openai_key', 'satim_pass', 'stripe_secret', 'stripe_webhook', 'paypal_secret', 'telegram_token']);
 let db = null, enc = null, dec = null, cache = null;
 function init(d, e, x) {
   if (db) return; db = d; enc = e; dec = x;

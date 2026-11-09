@@ -116,6 +116,8 @@ app.post('/api/register', wrap((q, s) => {
   if (un && db.prepare('select 1 from users where username=?').get(un)) return s.status(409).json({ error: 'اسم المستخدم مستعمل' });
   const id = db.prepare('insert into users(email,hash,role,expires_at,created_at,name,username) values(?,?,?,?,?,?,?)')
     .run(em, bcrypt.hashSync(String(password), 10), em === ADMIN ? 'admin' : 'member', now() + (+process.env.TRIAL_DAYS || 0) * DAY, now(), String(name).trim().slice(0, 60), un || null).lastInsertRowid;
+  // الباقة المجانية لتجربة المنصة (من «إدارة المشتركين ← الباقات»): مدتها وحدودها تُطبَّق فوراً
+  try { const tp = em !== ADMIN && db.prepare('select name, days from plans where free=1 and active=1 order by sort limit 1').get(); if (tp) db.prepare('update users set plan=?, expires_at=? where id=?').run(tp.name, now() + tp.days * DAY, id); } catch (e) {}
   fail('r:' + q.ip, 36e5); act(id, 'register', q); login(s, id); s.json({ ok: 1 });
 }));
 app.post('/api/login', wrap((q, s) => {

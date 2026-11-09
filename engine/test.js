@@ -80,7 +80,7 @@ eq('البائعون بلا تكرار عبر المنتجات (صفحة + مت�
 const LG=Object.assign({},L,{group:false});
 P=C.analyze([row({ad_id:'n1',page_id:'a',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n2',page_id:'b',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n3',page_id:'c',title:'قشابية',pre_excl:'دورة أو تكوين'})],NOW,LG);
 eq('بلا تجميع: 3 إعلانات = 3 بطاقات بمفاتيح مختلفة',[P.length,new Set(P.map(p=>p.k)).size],[3,3]);
-eq('المستبعد عند الاستقبال يظهر «مستبعد» بسببه',[P.filter(p=>p.excl).length,/استُبعد عند الاستقبال: دورة/.test(P.find(p=>p.excl).why[0])],[1,true]);
+eq('«المستبعد عند الوصول» القديم يُحلَّل الآن كغيره (الاستبعاد للعلامات فقط)',P.filter(p=>p.excl).length,0);
 P=C.analyze([row({ad_id:'d1',page_id:'d',title:'جهاز يزيل البقع',start_date:''})],NOW,Object.assign({},L,{group:false}));
 eq('إعلان بلا تاريخ بدء: مستبعد بسببه (لا تصنيف «ضعيف»)',[P[0].cat,/بلا تاريخ بدء/.test(P[0].why[0])],['excl',true]);
 // ===== الإقصاء والتنبيهات والمتوقف =====
@@ -132,9 +132,9 @@ eq('قشابية فيها «المرأة» لا تُقصى كمرآة',[P[0].cat
 P=A([B({ad_id:'m2',page_id:'pm2',page_name:'Deco Home',title:'مرآة حائط كبيرة',body:'مرآة جدارية كبيرة بإطار ذهبي للصالون. السعر 9000 دج',image_url:'https://c/i/m2.jpg'})]);
 eq('مرآة حائط حقيقية: تنبيه «قد يكون هشاً» بلا إقصاء',[P[0].cat!=='excl',/قد يكون هش.*مرآة حائط/.test(P[0].warn||'')],[true,true]);
 P=A([row(Object.assign({ad_id:'c1',page_id:'pc1',image_url:'https://c/i/c1.jpg'},{page_name:'Hair Pro',title:'تكوين في الحلاقة سجل الآن',body:'تكوين في الحلاقة سجل الآن. السعر 9000 دج',start_date:old(15)}))]);
-eq('تكوين/دورة: يُقصى مع الجملة والكلمة',[P[0].cat,/في النص: …«تكوين»/.test(P[0].why.join(' ')),P[0].fix&&P[0].fix.terms.includes('تكوين')],['excl',true,true]);
-P=C.analyze([row(Object.assign({ad_id:'c2',page_id:'pc2',image_url:'https://c/i/c2.jpg'},{page_name:'Hair Pro',title:'تكوين في الحلاقة سجل الآن',body:'تكوين في الحلاقة سجل الآن. السعر 9000 دج',start_date:old(15)}))],NOW,Object.assign({},L,{ignore:new Set(P[0].fix.terms)}));
-eq('بعد «سبب خاطئ» لا يُقصى بنفس الكلمات',P[0].cat!=='excl',true);
-P=C.analyze([row(Object.assign({ad_id:'c3',page_id:'777',image_url:'https://c/i/c3.jpg'},{page_name:'Hair Pro',title:'تكوين في الحلاقة سجل الآن',body:'تكوين في الحلاقة سجل الآن. السعر 9000 دج',start_date:old(15)}))],NOW,Object.assign({},L,{allowPages:new Set(['777'])}));
-eq('صفحة مسموح بها لا تُقصى',P[0].cat!=='excl',true);
+eq('تكوين/دورة: لا استبعاد، وسم «قد لا يكون منتجاً» مع الجملة',[P[0].cat!=='excl',/قد لا يكون منتجاً.*تكوين/.test(P[0].warn2||'')],[true,true]);
+P=A([row({ad_id:'sb1',page_id:'888',page_name:'Samsung Algérie',title:'جهاز يزيل البقع',body:'السعر 9000 دج',start_date:old(15)})]);
+eq('العلامة التجارية: مستبعد مع زر «سبب خاطئ» لصفحتها',[P[0].cat,/علامة تجارية/.test(P[0].why[0]),P[0].fix&&P[0].fix.pages[0]],['excl',true,'888']);
+P=C.analyze([row({ad_id:'sb2',page_id:'888',page_name:'Samsung Algérie',title:'جهاز يزيل البقع',body:'السعر 9000 دج',start_date:old(15)})],NOW,Object.assign({},L,{allowPages:new Set(['888'])}));
+eq('صفحة علامة سمح بها المستخدم لا تُستبعد',P[0].cat!=='excl',true);
 console.log(fail?`\n${fail} FAILED`:'\nALL PASSED');process.exit(fail?1:0)

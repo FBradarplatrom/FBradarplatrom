@@ -10,7 +10,7 @@
   const big = n => (n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + ' مليون' : n >= 1e3 ? Math.round(n / 1e3) + ' ألف' : num(n));
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
   const VIEW = 'tiktok', PK = 'wpr_tt_prefs_v1';
-  const P = Object.assign({ sel: [], per: 60, minViews: 50000, maxAge: 90, sort: 'score', onlyProducts: true }, (() => { try { return JSON.parse(localStorage.getItem(PK)) || {}; } catch (x) { return {}; } })());
+  const P = Object.assign({ sel: [], per: 60, speed: 'normal', minViews: 50000, maxAge: 90, sort: 'score', onlyProducts: true }, (() => { try { return JSON.parse(localStorage.getItem(PK)) || {}; } catch (x) { return {}; } })());
   const saveP = () => { try { localStorage.setItem(PK, JSON.stringify(P)); } catch (x) {} };
   const LIVE = { n: 0 };
   const ttUrl = q => 'https://www.tiktok.com/search?q=' + encodeURIComponent(q) + '&t=' + Date.now();   // بلا t لا تعرض TikTok النتائج أحياناً
@@ -29,7 +29,7 @@
     if (!phrases.length) return X.toast('اختر عبارة واحدة على الأقل', 'err');
     const label = '🎵 TikTok: ' + phrases.slice(0, 2).join('، ') + (phrases.length > 2 ? ' +' + (phrases.length - 2) : '');
     const { id } = await X.api('POST', '/tt', { phrases, label });
-    await W.WPRJOB.start('tt', phrases.map(q => ({ q, url: ttUrl(q) })), { run: id }, { maxAds: Math.max(20, Math.min(500, +P.per || 60)) }, label);
+    await W.WPRJOB.start('tt', phrases.map(q => ({ q, url: ttUrl(q) })), { run: id }, { maxAds: Math.max(20, Math.min(2000, +P.per || 60)), speed: P.speed === 'slow' ? 'slow' : 'normal', waitSeconds: 30 }, label);
     LIVE.n = 0; RUNS = null;
     X.toast('فُتح TikTok في تبويب جديد. اتركه ظاهراً: يبحث بكل عبارة ويمرّر النتائج تلقائياً.'); redraw();
   }
@@ -55,7 +55,7 @@
 <div class="card"><h2>🎵 ابحث في TikTok بأشهر عبارات المنتجات</h2><p class="sub">اختر العبارات، فتفتح الإضافة بحث TikTok لكل عبارة على تبويب «الأفضل» وتمرّر وتجمع الفيديوهات مع مشاهداتها وإعجاباتها وتاريخها، ثم تُرتَّب هنا وتُستبعد غير المنتجات. يجب أن تكون مسجّلاً في TikTok على Chrome.</p>
 <div class="l-chips" style="max-height:none">${PH.map(q => `<button type="button" class="lc${sel.has(q) ? ' on' : ''}" data-tq="${e(q)}" dir="auto">${e(q)}</button>`).join('')}</div>
 <div class="l-add" style="max-width:520px"><input id="t-new" dir="auto" placeholder="أضف عبارة، مثل: amazon gadgets 2026"><button class="btn ghost sm" data-t="add">إضافة</button></div>
-<div class="l-g3" style="margin-top:12px"><label class="fl">فيديوهات لكل عبارة<input type="number" min="20" max="500" data-tp="per" value="${e(P.per)}"></label></div>
+<div class="l-g3" style="margin-top:12px"><label class="fl">فيديوهات لكل عبارة<input type="number" min="20" max="2000" data-tp="per" value="${e(P.per)}"></label><label class="fl">سرعة التمرير<select data-tp="speed"><option value="normal"${P.speed !== 'slow' ? ' selected' : ''}>عادية</option><option value="slow"${P.speed === 'slow' ? ' selected' : ''}>بطيئة (أدق: يترك لـ TikTok وقتاً لتحميل الفيديوهات)</option></select></label></div>
 <p style="margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-t="go"${sel.size ? '' : ' disabled'}>🎵 ابدأ البحث (${num(P.sel.filter(q => PH.includes(q)).length)} عبارة)</button><button class="btn ghost sm" data-t="selnone">إلغاء الاختيار</button>${P.sel.length ? '<button class="btn danger sm" data-t="delsel">حذف المختارة من القائمة</button>' : ''}</p></div>
 <div class="card pad0" style="margin-top:14px;padding:4px 18px"><h2 style="margin:12px 0 4px">عمليات البحث السابقة</h2>${RUNS.map(r => `<div class="row"><div class="grow"><b>${e(r.label)}</b><div class="muted">${X.fd(r.created_at)} · ${num(r.count)} فيديو</div></div><div class="ac"><button class="btn sm" data-t="open" data-id="${r.id}">عرض النتائج</button><button class="btn danger sm" data-t="del" data-id="${r.id}">حذف</button></div></div>`).join('') || '<p class="sub" style="padding:8px 0 14px">لا شيء بعد.</p>'}</div>`;
     drawLive(); drawLogin();

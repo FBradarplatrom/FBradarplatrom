@@ -70,6 +70,8 @@ create table lib_ads(user_id integer, ad_id text, page_id text, page_name text, 
     ok(/no-store/.test((await U('GET', '/api/runs', null, true)).headers.get('cache-control') || ''), 'api responses are never cached (live data)');
 
     const users = (await A('GET', '/api/admin/users')).body, uid = users.find(x => x.email === 'u@test.dz').id;
+    eq((await U('GET', '/api/me')).body.plan, 'تجربة مجانية', 'a new account starts on the free trial plan');
+    await A('POST', '/api/admin/users/' + uid, { days: -30, plan: 'تجربة مجانية' });
     eq((await U('GET', '/api/lib/stats')).status, 402, 'inactive user is blocked');
     await A('POST', '/api/admin/users/' + uid, { days: 30, plan: 'شهري' });
     ok((await U('GET', '/api/lib/stats')).status === 200, 'active user ok');

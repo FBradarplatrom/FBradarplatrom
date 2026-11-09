@@ -201,21 +201,20 @@ function mkProduct(ads,NOW,L,proofs){
  const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
  const why=[];
  /* استُبعد عند الاستقبال (ليس منتجاً) ويُعرض في «مستبعد» ليتطابق العدد مع ما جُلب */
- const pre=ads.find(a=>a.pre_excl);if(pre)why.push('استُبعد عند الاستقبال: '+pre.pre_excl);
- else if(!counted.length)why.push(ads.length>1?'لا إعلان نشط: كل إعلاناته متوقفة':'لا إعلان نشط: الإعلان متوقف');
+ const pre=null;   // «المستبعد عند الوصول» القديم يُحلَّل الآن كغيره
+ if(!counted.length)why.push(ads.length>1?'لا إعلان نشط: كل إعلاناته متوقفة':'لا إعلان نشط: الإعلان متوقف');
  if(counted.length&&!pre&&!counted.some(a=>a.start))why.push(counted.length>1?'بلا تاريخ بدء في كل إعلاناته: لا يمكن معرفة عمره':'بلا تاريخ بدء: لا يمكن معرفة عمر الإعلان');
  if(counted.length&&!pre&&!why.length){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
-  const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
-  if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));
+  const bm=new Set(),bp=[];sellers.forEach(sl=>{if(L.allowPages&&L.allowPages.has(String(sl.pid)))return;const b=officialBrand(sl,L);if(b){bm.add(b);if(sl.pid)bp.push(String(sl.pid))}});
+  if(bm.size){why.push('علامة تجارية: صفحة العلامة نفسها أو متجرها الرسمي ('+[...bm].join('، ')+')');P.fix={terms:[],pages:bp}}
   /* هل يبيع منتجاً مادياً؟ يُقصى إن كان نصف إعلاناته أو أكثر خدمة/دورة/فعالية/محلاً/شركة/تطبيقاً */
   if(PCK&&L.check!==false){const ig=L.ignore&&L.ignore.size?L.ignore:null,ap=L.allowPages;
    const rs=counted.map(a=>ap&&ap.has(String(a.page_id))?{ok:true}:(a._pc||(a._pc=PCK.check(a,{country:a.country||L.market,ignore:ig,hard:false})))),bad=rs.filter(r=>!r.ok);
    /* الهش وكبير الحجم والأكل: تنبيه فقط (وسم)، لا إقصاء */
    const wr=rs.filter(r=>r.warn);if(wr.length&&wr.length*2>=counted.length){const w=wr[0].warn;P.warn='⚠️ قد يكون '+w.label+(w.terms&&w.terms.length?' ('+w.terms.slice(0,2).join('، ')+')':'')}
-   if(bad.length&&bad.length*2>=counted.length){const by={};bad.forEach(r=>{by[r.kind]=(by[r.kind]||0)+1});const top=Object.keys(by).sort((x,y)=>by[y]-by[x])[0],r=bad.find(x=>x.kind===top);
-    why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(r.ctx?' · في النص: …'+r.ctx+'…':'')+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''));
-    P.fix={terms:[...new Set(bad.filter(x=>x.kind===top).flatMap(x=>x.terms||[]))].slice(0,6),pages:[...new Set(counted.filter((a,i)=>!rs[i].ok).map(a=>String(a.page_id||'')).filter(Boolean))].slice(0,10)}}}}
+   /* «قد لا يكون منتجاً» (خدمة، دورة…): وسم تنبيه فقط، بلا استبعاد */
+   if(bad.length&&bad.length*2>=counted.length){const r=bad[0];P.warn2='⚠️ قد لا يكون منتجاً: '+r.label+(r.ctx?' («…'+r.ctx.replace(/[«»]/g,'')+'…»)':'')}}}
  P.why=why;P.excl=why.length>0;
  const mk=counted.map(a=>hostOf(a)).find(h=>MARKET.test(h));P.mktTag=mk?MKN(mk):'';
  /* الفائدة: 2 = في العنوان/أول النص، 1 = في باقي النص فقط، 0 = بلا فائدة واضحة. تُرتِّب داخل التصنيف ولا تُقصي */

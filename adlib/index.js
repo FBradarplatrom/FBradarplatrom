@@ -87,7 +87,7 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
     if (b.ads.length > 400) throw bad('الدفعة أكبر من 400 إعلان', 413);
     if (limited(u.id)) throw bad('طلبات كثيرة، أبطئ الجمع قليلاً', 429);
     const c = b.ctx || {}, meta = { query: str(c.query, 120), niche: str(c.niche, 60), country: str(c.country, 10), src: 'net' }, t = now();
-    const strict = c.filter !== false && c.filter !== 0 && c.filter !== '0';     // فحص الصلاحية مفعّل افتراضياً
+    const strict = c.filter === 'strict';   // لا استبعاد عند الوصول: كل إعلان يدخل «الواردة». الاستبعاد في التحليل للعلامات الرسمية فقط
     const batch = str(b.batch || c.batch || 'manual', 40), label = str(c.label, 160);
     const rows = [], byKind = {}, samples = [], excl = [];
     let skipped = 0, filtered = 0;

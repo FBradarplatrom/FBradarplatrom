@@ -43,24 +43,46 @@
     return false;
   }
   function flush() { while (pending.length) { const chunk = pending.splice(0, 40); send({ cmd: 'ads', raw: chunk, href: location.href, ctx: { query: q(), country: '' } }); } }
+  // التمرير التدريجي: TikTok يحمّل الدفعة التالية عندما تقترب آخر البطاقات من الشاشة، والقفز المباشر للأسفل لا يُطلقه دائماً.
+  // ننزل شاشة بشاشة («عادي» أو «بطيء») ونحرّك العجلة ونمرّر الحاوية الداخلية إن كانت هي التي تتمرر.
+  function scroller() {
+    const de = document.scrollingElement || document.documentElement;
+    if (de.scrollHeight > window.innerHeight * 1.3) return null;            // الصفحة نفسها تتمرر
+    let best = null;
+    for (const el of document.querySelectorAll('main, div')) {
+      if (el.scrollHeight <= el.clientHeight + 200 || el.clientHeight < 300) continue;
+      const oy = getComputedStyle(el).overflowY; if (oy !== 'auto' && oy !== 'scroll') continue;
+      if (!best || el.scrollHeight > best.scrollHeight) best = el;
+    }
+    return best;
+  }
+  function step(dy) {
+    const el = scroller();
+    try { (el || document.body).dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true })); } catch (_) { /* ignore */ }
+    if (el) el.scrollBy({ top: dy, behavior: 'smooth' }); else window.scrollBy({ top: dy, behavior: 'smooth' });
+  }
+  function atEnd() { const el = scroller(); return el ? el.scrollTop + el.clientHeight >= el.scrollHeight - 50 : window.innerHeight + window.scrollY >= (document.scrollingElement || document.documentElement).scrollHeight - 50; }
   async function run() {
     if (running) return; running = true;
-    const want = Math.max(10, Math.min(1000, +settings.maxAds || 150)), wait = Math.max(10, +settings.waitSeconds || 20);
-    let nudges = 0, lastSeen = lastNew;
+    const want = Math.max(10, Math.min(2000, +settings.maxAds || 150)), wait = Math.max(15, +settings.waitSeconds || 25);
+    const slow = settings.speed === 'slow', pause = () => (slow ? 2600 : 1500) + Math.random() * (slow ? 1800 : 1100);
+    let idleRounds = 0, lastCount = 0;
+    fromDom(); flush();
     while (items.size < want) {
-      if (loginWall()) { await sleep(900); if (walls > 6 && document.querySelector('[data-e2e="login-modal"], #login-modal, div[class*="LoginModal"]')) { flush(); send({ cmd: 'job_done', href: location.href, reason: 'login', seen: items.size }); return; } }
-      // تمرير حتى آخر الصفحة (يحمّل TikTok الدفعة التالية عند الوصول للأسفل) ثم زر «المزيد» إن وُجد
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
-      await sleep(1500 + Math.random() * 900);
-      loadMore();
+      if (loginWall()) { await sleep(900); if (walls > 6 && document.querySelector('[data-e2e="login-modal"], #login-modal, div[class*="LoginModal"]')) { flush(); send({ cmd: 'job_done', href: location.href, reason: 'login', seen: items.size }); running = false; return; } }
+      step(Math.round(window.innerHeight * (slow ? 0.6 : 0.85)));
+      await sleep(pause());
+      if (atEnd()) { await sleep(slow ? 2500 : 1600); loadMore(); }
       fromDom(); flush(); send({ cmd: 'progress', href: location.href, seen: items.size });
-      if (lastNew > lastSeen) { lastSeen = lastNew; nudges = 0; }
-      const idle = (Date.now() - lastNew) / 1000;
-      if (idle > 5) { nudges++; window.scrollBy({ top: -(900 + nudges * 300), behavior: 'instant' }); await sleep(800 + nudges * 200); loadMore(); window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }); }
-      if (idle >= wait && nudges >= 6) break;
+      if (items.size > lastCount) { lastCount = items.size; idleRounds = 0; continue; }
+      // لا جديد: انتظر التحميل، ثم اصعد قليلاً وانزل لإيقاظ التحميل اللانهائي
+      idleRounds++;
+      if (atEnd() || idleRounds % 3 === 0) { step(-Math.round(window.innerHeight * 1.2)); await sleep(900); step(Math.round(window.innerHeight * 2)); await sleep(pause()); loadMore(); }
+      if ((Date.now() - lastNew) / 1000 >= wait && idleRounds >= 8) break;
     }
     flush();
     send({ cmd: 'job_done', href: location.href, reason: items.size >= want ? 'max' : 'idle', seen: items.size });
+    running = false;
   }
   send({ cmd: 'queue_check', href: location.href }).then((r) => { if (r && r.start) { settings = Object.assign(settings, r.settings || {}); setTimeout(run, 3000); } });
 })();

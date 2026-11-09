@@ -26,6 +26,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       ad('6', { title: 'قشابية جزائرية أصيلة', body: 'لباس المرأة الجزائرية التقليدي، يحمي من البرد. السعر 6500 دج التوصيل لكل الولايات', start_date: day(12), link_url: 'https://e.dz/products/qachabia' }),
       ad('8', { title: 'منظف سحري للسيراميك', body: 'السعر 1200 دج. ' + 'منتج جديد بتركيبة فعالة وسهل الاستعمال في كل البيت والمطبخ والحمام وبدون مجهود كبير منك. '.repeat(2) + 'يزيل البقع الصعبة من الأرضيات', start_date: day(18), link_url: 'https://h.dz/products/cleaner' }),
       ad('9', { status: 'inactive', title: 'جهاز يزيل الشعر', body: 'السعر 4500 دج', start_date: day(50), end_date: day(20), link_url: 'https://i.dz/products/epil' }),
+      ad('11', { page_id: '7777', page_name: 'Samsung Algérie', title: 'سماعات لاسلكية تلغي الضوضاء', body: 'السعر 12000 دج', start_date: day(20), link_url: 'https://samsung.dz/buds' }),
       ad('10', { page_name: 'Hair Pro', title: 'تكوين في الحلاقة سجل الآن', body: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج', start_date: day(15), link_url: 'https://j.dz/formation' })
     ];
     const f = path.join(DIR, 'ads.json'); fs.writeFileSync(f, JSON.stringify(rows));
@@ -45,27 +46,25 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(P.some(p => p.cat === 'excl' && /الشعر/.test(p.name)), 'منتج كل إعلاناته متوقفة: مستبعد');
     if (process.env.SHOT) await pg.locator('#grid').screenshot({ path: process.env.SHOT + '/grid.png' });
     ok(!(await pg.$('.pc .bn')) && !(await pg.$('.pc .ring')), 'لا وسم «فائدة/بلا فائدة» ولا دائرة نقاط: الفائدة للترتيب فقط');
-    // زر «سبب خاطئ» على إعلان تكوين
+    // الاستبعاد للعلامات التجارية فقط
+    ok(P.some(p => p.cat !== 'excl' && /تكوين/.test(p.name)), 'إعلان «تكوين» لا يُستبعد (الاستبعاد للعلامات فقط)');
+    ok(await pg.evaluate(() => window.WPR.PROD().some(p => /تكوين/.test(p.name) && /قد لا يكون منتجاً/.test(p.warn2 || ''))), '…ويظهر عليه وسم «قد لا يكون منتجاً»');
     await pg.click('#tabs [data-t="excl"]'); await pg.waitForSelector('[data-fix]');
     const why = await pg.locator('.pc:has([data-fix]) .tg.bad').first().textContent();
-    ok(/«تكوين»/.test(why), 'سبب الإقصاء يُظهر الكلمة في جملتها: ' + why.slice(0, 120));
+    ok(/علامة تجارية/.test(why) && /Samsung/i.test(why), 'المستبعد: صفحة العلامة التجارية مع سببها: ' + why.slice(0, 120));
     const crs = id => ({ ad_archive_id: id, page_id: '5' + id, page_name: 'Hair Pro', start_date: Math.floor(NOW / 1000) - 864000, is_active: true, collation_count: 1, publisher_platform: ['FACEBOOK'],
-      snapshot: { title: 'تكوين في الحلاقة سجل الآن', body: { text: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج' }, link_url: 'https://hair.dz/formation-' + id, display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/' + id + '.jpg' }] } });
+      snapshot: { title: 'تكوين في الحلاقة سجل الآن', body: { text: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج' }, link_url: 'https://hair.dz/formation-' + id, cta_type: 'SIGN_UP', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/' + id + '.jpg' }] } });
     const pre = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [crs('9001')], ctx: { query: 'x', country: 'DZ' } } })).json();
-    ok(pre.filtered === 1, 'قبل التصحيح: إعلان التكوين يُستبعد عند الاستقبال');
-    const mir = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [Object.assign(crs('9003'), { snapshot: { title: 'مرآة حائط كبيرة', body: { text: 'مرآة جدارية كبيرة بإطار. السعر 9000 دج' }, link_url: 'https://deco.dz/products/mirror-9003', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/9003.jpg' }] } })], ctx: { query: 'x', country: 'DZ' } } })).json();
-    ok(mir.added === 1 && !mir.filtered, 'الهش لا يُستبعد عند الاستقبال');
+    ok(pre.added === 1 && !pre.filtered, 'لا استبعاد عند الوصول: كل إعلان يدخل «الواردة»');
     await pg.click('[data-fix]'); await pg.waitForFunction(() => /تم التصحيح/.test(document.querySelector('#toasts').textContent), null, { timeout: 8000 });
-    await pg.waitForFunction(() => !window.WPR.PROD().some(p => p.cat === 'excl' && /تكوين/.test(p.name)), null, { timeout: 8000 });
-    ok(true, 'بعد «سبب خاطئ» عاد المنتج');
+    await pg.waitForFunction(() => !window.WPR.PROD().some(p => p.cat === 'excl' && /سماعات/.test(p.name)), null, { timeout: 8000 });
+    ok(true, 'بعد «سبب خاطئ» عاد إعلان صفحة العلامة');
     const fx = await (await pg.request.get(BASE + '/api/lib/fix')).json();
-    ok(fx.ignore.includes('تكوين'), 'التصحيح محفوظ في الحساب: ' + fx.ignore.join('،'));
-    const ing = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [crs('9002')], ctx: { query: 'x', country: 'DZ' } } })).json();
-    ok(ing.added === 1 && !ing.filtered, 'الاستقبال يحترم التصحيح: ' + JSON.stringify(ing).slice(0, 120));
-    await pg.reload(); await pg.waitForSelector('[data-unfix="تكوين"]', { state: 'attached', timeout: 8000 });
-    await pg.evaluate(() => document.querySelector('[data-unfix="تكوين"]').click());
+    ok(fx.allowPages.includes('7777'), 'الصفحة محفوظة كمسموح بها في الحساب');
+    await pg.reload(); await pg.waitForSelector('[data-unfix-pages]', { state: 'attached', timeout: 8000 });
+    await pg.evaluate(() => document.querySelector('[data-unfix-pages]').click());
     await pg.waitForFunction(() => /تم التراجع/.test(document.querySelector('#toasts').textContent), null, { timeout: 8000 });
-    ok(!(await (await pg.request.get(BASE + '/api/lib/fix')).json()).ignore.includes('تكوين'), 'التراجع عن التصحيح من إعدادات التحليل');
+    ok(!(await (await pg.request.get(BASE + '/api/lib/fix')).json()).allowPages.length, 'التراجع عن السماح من إعدادات التحليل');
     // «URI malformed»: نص فيه نصف إيموجي (من بيانات قديمة) يُفتح من الأرشيف ويُحلَّل بلا خطأ
     const half = '😀'.slice(0, 1);
     const bad = [ad('u1', { title: 'منتج رائع ' + half, body: 'يزيل البقع ' + half + ' السعر 2000 دج', start_date: day(10), link_url: 'https://u.dz/products/x' + half }),
@@ -94,12 +93,12 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.request.post(BASE + '/api/lib/ingest', { data: { batch: 'QB', ads: c2, ctx: Object.assign({}, ctx, { total: 214 }) } });
     const runs = await (await pg.request.get(BASE + '/api/runs')).json(), qr = runs.find(r => /قشابية/.test(r.label));
     const det = await (await pg.request.get(BASE + '/api/runs/' + qr.id)).json();
-    ok(det.stats && det.stats.observed === 220 && det.stats.filtered === 1 && det.rows.length === 5, 'الخادم يحفظ المرصود (أكبر عدد للبحث) والمستبعد عند الاستقبال: ' + JSON.stringify(det.stats));
+    ok(det.stats && det.stats.observed === 220 && det.stats.filtered === 0 && det.rows.length === 6, 'الخادم يحفظ المرصود (أكبر عدد للبحث)، ولا استبعاد عند الوصول: ' + JSON.stringify(det.stats));
     await pg.goto(BASE + '/inbox'); await pg.waitForSelector('#x-inbox tr [data-sel]');
     const inboxTxt = await pg.locator('#x-inbox').textContent(); if (process.env.DBG) console.log('INBOX', inboxTxt.replace(/\s+/g, ' ').slice(0, 600));
     const cell = await pg.$$eval('#x-inbox tr', rs => (rs.find(r => /قشابية/.test(r.textContent)) || { cells: [] }).cells[3].textContent.replace(/\s+/g, ' ').trim());
     if (process.env.DBG) console.log('CELL', JSON.stringify(cell));
-    ok(/^6\s*منها 1 مستبعدة$/.test(cell), 'الواردة تعرض كل ما وصل (6 = 5 + 1 مستبعد عند الوصول) مثل الإضافة');
+    ok(/^6$/.test(cell), 'الواردة تعرض كل ما وصل (6) مثل الإضافة');
     // 3) صفحة التحليل
     await pg.goto(BASE + '/archive'); await pg.waitForSelector('[data-a="open"][data-id="' + qr.id + '"]');
     await pg.click('[data-a="open"][data-id="' + qr.id + '"]'); await pg.waitForSelector('#sum .kpi', { timeout: 15000 }); await pg.waitForTimeout(500);
@@ -108,14 +107,12 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const K = Object.fromEntries(await pg.$$eval('#sum .kpi', ks => ks.map(k => [k.querySelector('span').textContent, k.querySelector('b').textContent])));
     const num = t => +String(t).replace(/[^\d٠-٩]/g, '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
     ok(Object.keys(K).join('|') === 'الإعلانات المرصودة|الإعلانات التي تم جلبها|دخلت التحليل|الإعلانات المستبعدة|عدد البائعين', 'خمسة أرقام دقيقة فقط (بلا عدد المنتجات): ' + Object.keys(K).join('|'));
-    ok(num(K['الإعلانات المرصودة']) === 220 && num(K['الإعلانات التي تم جلبها']) === 6 && num(K['دخلت التحليل']) === 5 && num(K['الإعلانات المستبعدة']) === 1, 'المرصود 220 · المجلوب 6 (بلا تكرار) · التحليل 5 · المستبعد 1: ' + JSON.stringify(K));
+    ok(num(K['الإعلانات المرصودة']) === 220 && num(K['الإعلانات التي تم جلبها']) === 6 && num(K['دخلت التحليل']) === 6 && num(K['الإعلانات المستبعدة']) === 0, 'المرصود 220 · المجلوب 6 (بلا تكرار) · التحليل 6 · المستبعد 0: ' + JSON.stringify(K));
     ok(num(K['دخلت التحليل']) + num(K['الإعلانات المستبعدة']) === num(K['الإعلانات التي تم جلبها']), 'المجلوب = دخلت التحليل + المستبعدة');
-    ok(num(K['عدد البائعين']) === 4, 'البائعون = أسماء صفحات مختلفة (4)');
+    ok(num(K['عدد البائعين']) === 5, 'البائعون = أسماء صفحات مختلفة (5)');
     const tabN = await pg.$$eval('#tabs button', bs => Object.fromEntries(bs.map(b => [b.dataset.t, +b.querySelector('b').textContent])));
-    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) && ['trial', 'prom', 'gem', 'fire', 'old', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 1, '«الكل» = المجلوب = مجموع التبويبات، و«مستبعد» = 1: ' + JSON.stringify(tabN));
+    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) && ['trial', 'prom', 'gem', 'fire', 'old', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 0, '«الكل» = المجلوب = مجموع التبويبات، و«مستبعد» = 0: ' + JSON.stringify(tabN));
     ok(await pg.$eval('#tabs [data-t="excl"]', b => /مستبعد/.test(b.textContent)), 'تبويب «🚫 مستبعد» موجود');
-    await pg.click('#tabs [data-t="excl"]'); await pg.waitForTimeout(300);
-    ok(/استُبعد عند الاستقبال/.test(await pg.locator('#grid').textContent()), 'المستبعد عند الاستقبال يظهر في «مستبعد» بسببه');
     await pg.click('#tabs [data-t="all"]'); await pg.waitForTimeout(300);
     const st = await pg.$$eval('.pc .pc-st', b => b.map(x => x.textContent));
     ok(st.length && st.every(t => !/نسخ|بائعين|نشطة/.test(t)) && !(await pg.$('.pc .bn')), 'البطاقة بلا «نسخ» ولا «بائعين» ولا وسم فائدة');

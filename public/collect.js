@@ -124,7 +124,7 @@
     if (inflight.has(ev.seq)) return; inflight.add(ev.seq);
     try {
       W.__busy && W.__busy('ing', 'جارٍ إرسال الإعلانات إلى المنصة وفحصها…');
-      const r = await X.api('POST', '/lib/ingest', { ads: ev.ads, batch: ev.batchId, ctx: Object.assign({ label: ev.label }, ev.ctx, { filter: P.filter !== false, country: (ev.ctx && ev.ctx.country) || P.country }) });
+      const r = await X.api('POST', '/lib/ingest', { ads: ev.ads, batch: ev.batchId, ctx: Object.assign({ label: ev.label }, ev.ctx, { country: (ev.ctx && ev.ctx.country) || P.country }) });
       RUN.added += r.added; RUN.updated += r.updated; RUN.rejected += r.rejected; RUN.run = r.run || RUN.run;
       RUN.filtered += r.filtered || 0; for (const k in (r.byKind || {})) RUN.byKind[k] = (RUN.byKind[k] || 0) + r.byKind[k];
       (r.samples || []).forEach(x => { if (RUN.samples.length < 8) RUN.samples.push(x); });
@@ -337,7 +337,6 @@ ${qs.length ? `<div class="l-q">${qs.slice(0, 40).map(x => `<span dir="auto"${x.
 <label class="fl">أقصى إعلانات للبحث الواحد<input type="number" min="10" max="${L.maxAdsPerSearch}" data-p="maxAds" value="${e(P.maxAds)}"></label>
 <label class="fl">التوقف بعد خمول (ثانية)<input type="number" min="8" max="60" data-p="wait" value="${e(P.wait)}"></label>
 <label class="fl">وضع الإرسال<select data-sm>${opt('auto', 'تلقائي: يصل فور الرصد', sm)}${opt('manual', 'يدوي: أرسل أنا بعد المراجعة', sm)}</select></label></div>
-<label class="fl chk" style="margin-top:10px"><input type="checkbox" data-pc="filter"${P.filter !== false ? ' checked' : ''}> 🛡️ فحص صلاحية المنتج قبل الحفظ (موصى به): يستبعد بلغة ${e(cname(P.country))} الخدمات والدورات والفعاليات والمحلات والشركات والتطبيقات والأكل والكبير الحجم والهش</label>
 <p class="sub" style="margin:10px 0 0">تصل الإعلانات المجموعة إلى «الإعلانات الواردة» (دفعة لكل عملية جمع) وتُقيَّم هناك بمعايير المنصة. الدفعات التي لا تُحلَّل تُحذف تلقائياً بعد ${num(STATS.retention.days)} يوماً.</p></div>
 
 <div class="card" style="margin-top:14px"><h2>🔎 بحث سريع</h2><div class="l-add" style="max-width:640px"><input id="l-qs" dir="auto" placeholder="كلمة البحث بلغة ${e(cname(P.country))}، مثل: ${e(quickHint())}" value="${e(P.q)}"><button class="btn" data-l="quick">ابدأ الجمع</button></div>
