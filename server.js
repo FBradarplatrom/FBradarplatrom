@@ -44,7 +44,10 @@ create table if not exists runs(id integer primary key, user_id integer, source 
 create index if not exists runs_u on runs(user_id, created_at);
 create table if not exists resets(h text primary key, user_id integer, exp integer);
 create table if not exists saved(user_id integer, k text, snap text, created_at integer, primary key(user_id, k));
-create table if not exists lib_rows(run_id integer, ad_id text, row text, primary key(run_id, ad_id));`);
+create table if not exists lib_rows(run_id integer, ad_id text, row text, primary key(run_id, ad_id));
+create table if not exists activity(id integer primary key, user_id integer, kind text, ip text, ua text, detail text, at integer);
+create index if not exists activity_u on activity(user_id, at);`);
+try { db.exec('alter table users add column tv integer default 0'); } catch (e) {}
 // الأداء: إعلانات «جمع الإعلانات» تُخزَّن صفاً لكل إعلان (lib_rows) بدل إعادة كتابة الدفعة كلها مع كل 60 إعلاناً.
 // runs.rows = '@lib' يعني أن صفوف الدفعة في lib_rows. الملفات المرفوعة والأرشيف القديم يبقيان JSON كما هما.
 const LIB = '@lib';
@@ -60,6 +63,8 @@ const dec = x => { try { const b = Buffer.from(x, 'base64'), d = crypto.createDe
 const app = express();
 app.disable('x-powered-by'); app.set('trust proxy', 1);
 app.use(gzip);
+// الأمان: ترويسات تمنع تضمين المنصة في مواقع أخرى (clickjacking) وتخمين أنواع الملفات وتسريب الروابط
+app.use((q, s, n) => { s.set({ 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' }); if (q.secure) s.set('Strict-Transport-Security', 'max-age=15552000'); n(); });
 app.use(express.json({ limit: '50mb' }), cookie());
 app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });   // البيانات حيّة: لا تُخزَّن في المتصفح (تظهر فور وصولها)
 
@@ -74,16 +79,21 @@ app.use('/api/ext', (q, s, n) => {
 });
 
 const wrap = h => (q, s, n) => { try { h(q, s, n); } catch (e) { n(e); } };
+// حدود المحاولات: لكل عنوان IP، ولكل حساب (ضد التخمين من أجهزة كثيرة)، وللتسجيل (ضد الحسابات الوهمية)
 const fails = new Map();
-const blocked = ip => { const f = fails.get(ip); return f && f.n >= 10 && now() - f.t < 9e5; };
-const fail = ip => { const f = fails.get(ip); fails.set(ip, { n: (f && now() - f.t < 9e5 ? f.n : 0) + 1, t: now() }); };
-const login = (s, id) => s.cookie('t', jwt.sign({ id }, SECRET, { expiresIn: '30d' }),
+const blocked = (k, max, win) => { const f = fails.get(k); return !!(f && f.n >= (max || 10) && now() - f.t < (win || 9e5)); };
+const fail = (k, win) => { const f = fails.get(k); fails.set(k, { n: (f && now() - f.t < (win || 9e5) ? f.n : 0) + 1, t: now() }); };
+setInterval(() => { const t = now(); fails.forEach((f, k) => { if (t - f.t > 36e5) fails.delete(k); }); }, 36e5).unref();
+// سجل النشاط: الدخول، المحاولات الفاشلة، تغيير كلمة المرور، إجراءات المدير
+const act = (uid, kind, q, detail) => { try { db.prepare('insert into activity(user_id,kind,ip,ua,detail,at) values(?,?,?,?,?,?)').run(uid || null, kind, (q && q.ip) || '', String((q && q.get && q.get('user-agent')) || '').slice(0, 160), String(detail || '').slice(0, 300), now()); } catch (e) {} };
+// tv = إصدار الجلسة: تغيير كلمة المرور يرفعه فتُغلق الجلسات على الأجهزة الأخرى
+const login = (s, id) => s.cookie('t', jwt.sign({ id, v: (db.prepare('select tv from users where id=?').get(id) || {}).tv || 0 }, SECRET, { expiresIn: '30d' }),
   { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 30 * DAY });
 
 function auth(q, s, n) {
   const k = q.get('x-api-key'); let u;
   if (k) u = db.prepare('select * from users where api_hash=?').get(sha(k));
-  else try { u = db.prepare('select * from users where id=?').get(jwt.verify(q.cookies.t, SECRET).id); } catch (e) {}
+  else try { const t = jwt.verify(q.cookies.t, SECRET); u = db.prepare('select * from users where id=?').get(t.id); if (u && (t.v || 0) !== (u.tv || 0)) u = null; } catch (e) {}
   if (!u) return s.status(401).json({ error: 'auth' });
   q.u = u; n();
 }
@@ -94,6 +104,7 @@ const admin = (q, s, n) => q.u.role === 'admin' ? n() : s.sendStatus(403);
 // ---------- الحسابات ----------
 const UN = /^[a-z0-9_.]{3,30}$/;
 app.post('/api/register', wrap((q, s) => {
+  if (blocked('r:' + q.ip, 5, 36e5)) return s.status(429).json({ error: 'حسابات كثيرة من نفس الجهاز، أعد المحاولة بعد ساعة' });
   const { email = '', password = '', name = '', username = '' } = q.body || {}, em = String(email).toLowerCase().trim(), un = String(username).toLowerCase().trim();
   if (!/^\S+@\S+\.\S+$/.test(em) || String(password).length < 8) return s.status(400).json({ error: 'بريد غير صالح أو كلمة مرور أقل من 8 أحرف' });
   if (un && !UN.test(un)) return s.status(400).json({ error: 'اسم المستخدم: 3 إلى 30 حرفاً لاتينياً أو أرقاماً أو _ .' });
@@ -101,16 +112,19 @@ app.post('/api/register', wrap((q, s) => {
   if (un && db.prepare('select 1 from users where username=?').get(un)) return s.status(409).json({ error: 'اسم المستخدم مستعمل' });
   const id = db.prepare('insert into users(email,hash,role,expires_at,created_at,name,username) values(?,?,?,?,?,?,?)')
     .run(em, bcrypt.hashSync(String(password), 10), em === ADMIN ? 'admin' : 'member', now() + (+process.env.TRIAL_DAYS || 0) * DAY, now(), String(name).trim().slice(0, 60), un || null).lastInsertRowid;
-  login(s, id); s.json({ ok: 1 });
+  fail('r:' + q.ip, 36e5); act(id, 'register', q); login(s, id); s.json({ ok: 1 });
 }));
 app.post('/api/login', wrap((q, s) => {
-  if (blocked(q.ip)) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
   const { email = '', password = '' } = q.body || {}, l = String(email).toLowerCase().trim();
+  if (blocked(q.ip) || blocked('a:' + l, 8)) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
   const u = db.prepare('select * from users where email=? or username=?').get(l, l);
-  if (!u || !bcrypt.compareSync(String(password), u.hash)) { fail(q.ip); return s.status(401).json({ error: 'بيانات الدخول غير صحيحة' }); }
-  fails.delete(q.ip); login(s, u.id); s.json({ ok: 1 });
+  if (!u || !bcrypt.compareSync(String(password), u.hash)) { fail(q.ip); fail('a:' + l); if (u) act(u.id, 'login_fail', q); return s.status(401).json({ error: 'بيانات الدخول غير صحيحة' }); }
+  fails.delete(q.ip); fails.delete('a:' + l); act(u.id, 'login', q); login(s, u.id); s.json({ ok: 1 });
 }));
 app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
+// تسجيل الخروج من كل الأجهزة
+app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
+app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
 app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), contact: process.env.CONTACT_URL || '' }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
@@ -176,10 +190,11 @@ app.post('/api/ext/adlib', auth, active, wrap((q, s) => s.json({ id: addRun(q.u,
 
 // ---------- الإدارة والاشتراكات ----------
 app.get('/api/admin/users', auth, admin, wrap((q, s) => s.json(db.prepare('select id,email,name,username,role,plan,expires_at,created_at from users order by created_at desc').all())));
+app.get('/api/admin/activity', auth, admin, wrap((q, s) => s.json(db.prepare('select a.kind,a.ip,a.ua,a.detail,a.at,u.email from activity a left join users u on u.id=a.user_id order by a.at desc limit 300').all())));
 app.post('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const u = db.prepare('select expires_at from users where id=?').get(q.params.id); if (!u) return s.sendStatus(404);
   const d = Math.max(-3650, Math.min(3650, +q.body.days || 0));
-  db.prepare('update users set expires_at=?, plan=? where id=?').run(Math.max(now(), u.expires_at) + d * DAY, String(q.body.plan || 'paid').slice(0, 30), q.params.id); s.json({ ok: 1 });
+  db.prepare('update users set expires_at=?, plan=? where id=?').run(Math.max(now(), u.expires_at) + d * DAY, String(q.body.plan || 'paid').slice(0, 30), q.params.id); act(q.u.id, 'admin_grant', q, '#' + q.params.id + ' ' + d + ' يوم'); s.json({ ok: 1 });
 }));
 
 
@@ -188,7 +203,8 @@ const okPw = p => String(p || '').length >= 8, hashPw = p => bcrypt.hashSync(Str
 app.post('/api/password', auth, wrap((q, s) => {            // تغيير كلمة المرور (يعمل حتى لو انتهى الاشتراك)
   if (!bcrypt.compareSync(String(q.body.old || ''), q.u.hash)) return s.status(400).json({ error: 'كلمة المرور الحالية خاطئة' });
   if (!okPw(q.body.password)) return s.status(400).json({ error: 'كلمة المرور الجديدة أقل من 8 أحرف' });
-  db.prepare('update users set hash=? where id=?').run(hashPw(q.body.password), q.u.id); s.json({ ok: 1 });
+  db.prepare('update users set hash=?, tv=coalesce(tv,0)+1 where id=?').run(hashPw(q.body.password), q.u.id);
+  act(q.u.id, 'password', q); login(s, q.u.id); s.json({ ok: 1 });   // هذا الجهاز يبقى مسجلاً، والأجهزة الأخرى تُسجَّل خروجها
 }));
 app.post('/api/reset', wrap((q, s) => {                      // يستعمل رابط الاستعادة الذي يولّده المدير
   if (blocked(q.ip)) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة لاحقاً' });
@@ -196,8 +212,8 @@ app.post('/api/reset', wrap((q, s) => {                      // يستعمل ر�
   const r = db.prepare('select * from resets where h=?').get(sha(String(token)));
   if (!r || r.exp < now()) { fail(q.ip); return s.status(400).json({ error: 'الرابط غير صالح أو منتهي، اطلب رابطاً جديداً من الإدارة' }); }
   if (!okPw(password)) return s.status(400).json({ error: 'كلمة المرور أقل من 8 أحرف' });
-  db.prepare('update users set hash=? where id=?').run(hashPw(password), r.user_id);
-  db.prepare('delete from resets where user_id=?').run(r.user_id); login(s, r.user_id); s.json({ ok: 1 });
+  db.prepare('update users set hash=?, tv=coalesce(tv,0)+1 where id=?').run(hashPw(password), r.user_id);
+  db.prepare('delete from resets where user_id=?').run(r.user_id); act(r.user_id, 'reset', q); login(s, r.user_id); s.json({ ok: 1 });
 }));
 
 // ---------- إدارة المستخدمين ----------
@@ -206,6 +222,7 @@ app.post('/api/admin/users/:id/reset-link', auth, admin, wrap((q, s) => {
   const t = crypto.randomBytes(24).toString('hex');
   db.prepare('delete from resets where user_id=? or exp<?').run(u.id, now());
   db.prepare('insert into resets(h,user_id,exp) values(?,?,?)').run(sha(t), u.id, now() + 36e5);   // ساعة واحدة
+  act(q.u.id, 'admin_reset_link', q, 'للمستخدم #' + u.id);
   s.json({ url: (process.env.APP_URL || q.protocol + '://' + q.get('host')).replace(/\/$/, '') + '/reset?t=' + t });
 }));
 app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
@@ -214,14 +231,14 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
   if (em !== u.email && db.prepare('select 1 from users where email=?').get(em)) return s.status(409).json({ error: 'البريد مستعمل لحساب آخر' });
   if (u.role === 'admin' && role !== 'admin' && db.prepare("select count(*) c from users where role='admin'").get().c < 2) return s.status(400).json({ error: 'لا يمكن إزالة آخر مدير' });
-  db.prepare('update users set email=?, role=? where id=?').run(em, role, id); s.json({ ok: 1 });
+  db.prepare('update users set email=?, role=? where id=?').run(em, role, id); act(q.u.id, 'admin_update', q, '#' + id + ' ' + em + ' ' + role); s.json({ ok: 1 });
 }));
 app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const id = +q.params.id; if (id === q.u.id) return s.status(400).json({ error: 'لا يمكنك حذف حسابك' });
   ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs'].forEach(t => db.prepare(`delete from ${t} where user_id=?`).run(id));
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
   ['delete from watch_ads where watch_id not in (select id from watch_pages)', 'delete from watch_scans where watch_id not in (select id from watch_pages)', 'delete from tt_items where run_id not in (select id from tt_runs)'].forEach(x => db.prepare(x).run());
-  db.prepare('delete from users where id=?').run(id); s.json({ ok: 1 });
+  db.prepare('delete from users where id=?').run(id); act(q.u.id, 'admin_delete', q, '#' + id); s.json({ ok: 1 });
 }));
 
 // ---------- نسيت كلمة المرور (بريد SMTP) ----------
@@ -294,6 +311,7 @@ app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجس�
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 // منطق الأسواق وفحص المنتج مشترك بين الخادم والمتصفح (ملف واحد لكل منطق)
+app.get('/radar-lib/core.js', (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'engine', 'core.js')));   // محرك التحليل للخيط الخلفي
 app.get(['/radar-lib/kwdata.js', '/radar-lib/markets.js', '/radar-lib/productcheck.js', '/radar-lib/gapmatch.js'], (q, s) => s.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'adlib', 'lib', path.basename(q.path))));
 app.use((e, q, s, n) => { if (!e.status) console.error(e); s.status(e.status || 500).json({ error: e.status ? e.message : 'server' }); });
 app.listen(+process.env.PORT || 3000, () => console.log('Radar platform on :' + (process.env.PORT || 3000)));

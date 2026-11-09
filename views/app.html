@@ -491,11 +491,11 @@ async function vpass(){const G=window.RadarGapMatch;if(!G||!PROD.length)return;c
  const H=ps.map(p=>imgsOf(p).slice(0,1).flatMap(u=>VH.get(u)||[])),par=ps.map((_,k)=>k),f=k=>{while(par[k]!==k){par[k]=par[par[k]];k=par[k]}return k};
  for(let a=0;a<ps.length;a++)if(H[a].length)for(let b=a+1;b<ps.length;b++)if(H[b].length&&f(a)!==f(b)&&G.bestImage(H[a],H[b])<=6)par[f(b)]=f(a);
  const size=new Map();ps.forEach((_,k)=>size.set(f(k),(size.get(f(k))||0)+1));let merged=0;
- ps.forEach((p,k)=>{const r=f(k);if(size.get(r)>1){merged++;p.ads.forEach(a=>{a._vh='v'+r})}});
+ ps.forEach((p,k)=>{const r=f(k);if(size.get(r)>1){merged++;p.ads.forEach(a=>{if(a._i!=null)VHI[a._i]='v'+r})}});
  if(!merged)return;
- PROD=CORE.analyze(ALL,NOW,LAST_L);fillMarkets();
- $('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
-async function load(files){msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
+ await analyze();
+ if($('#note').textContent.includes('🔗'))return;$('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
+async function load(files){VP++;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
  for(const f of files){lm=Math.max(lm,f.lastModified||0);if(Array.isArray(f.rows)){rows=rows.concat(f.rows);continue}   /* صفوف جاهزة من المنصة: بلا تحويل إلى ملف ثم قراءته */
   try{rows=rows.concat(await readFile(f))}catch(e){msg('تعذّرت قراءة الملف '+f.name+'. تأكد أنه JSON أو Excel أو CSV سليم.',1)}}
  const seen=new Set();ALL=[];
@@ -504,17 +504,24 @@ async function load(files){msg('');let rows=[],lm=0;window.__busy&&window.__busy
  const cd=ALL.map(a=>a.collected).filter(Boolean).map(Number);
  NOW=cd.length?Math.max(...cd):(lm||Date.now());   // تاريخ جمع البيانات
 }finally{window.__busy&&window.__busy('ld')}
- analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);setTimeout(()=>vpass().catch(()=>{}),300)}
+ await analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);setTimeout(()=>vpass().catch(()=>{}),300)}
 
-function analyze(){
+/* التحليل في خيط خلفي للملفات الكبيرة (الصفحة لا تتجمد)، ومباشرة للصغيرة أو إن تعذّر الخيط */
+let WK=null,WKN=0;const WKW=new Map();
+function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js');WK.onmessage=e=>{const f=WKW.get(e.data.id);if(f){WKW.delete(e.data.id);f(e.data)}};WK.onerror=()=>{WK=false;WKW.forEach(f=>f({error:'worker'}));WKW.clear()}}catch(x){WK=false}return WK}
+const VHI={};   /* بصمة الصورة: رقم الإعلان في ALL → مجموعة الدمج */
+async function analyze(){
  const MKT=window.RadarMarkets,mg=t=>MKT?', '+MKT.goldText(t):'';   /* الفائدة تُقرأ أيضاً بلغات الأسواق الدولية */
  const src={strong:$('#d_strong').value+mg('strong'),normal:$('#d_mid').value+mg('normal'),brands:$('#d_brand').value,bulky:$('#d_bulky').value,fragile:$('#d_fragile').value},lk=JSON.stringify(src);
- /* الأداء: القوائم تُبنى مرة واحدة ما لم تتغير الإعدادات */
- if(LK!==lk){LK=lk;LCACHE=CORE.buildLists(src)}const L=Object.assign({},LCACHE);
- L.market=($('#mkt')||{}).value||'';L.rates=Object.assign({},MK()?MK().RATES_DZD:{},myRates());
+ const market=($('#mkt')||{}).value||'',rates=Object.assign({},MK()?MK().RATES_DZD:{},myRates());
+ ALL.forEach((a,i)=>{a._i=i;if(VHI[i])a._vh=VHI[i]});
  window.__busy&&window.__busy('an','جارٍ التحليل…');
- try{PROD=CORE.analyze(ALL,NOW,L)}finally{window.__busy&&window.__busy('an')}
- LAST_L=L;fillMarkets();
+ try{
+  let done=false;const w=ALL.length>=1500&&worker();
+  if(w){const r=await new Promise(ok=>{const id=++WKN;WKW.set(id,ok);w.postMessage({id,rows:ALL,NOW,src,market,rates,vh:VHI})});if(!r.error){PROD=r.P;done=true}}
+  if(!done){/* الأداء: القوائم تُبنى مرة واحدة ما لم تتغير الإعدادات */if(LK!==lk){LK=lk;LCACHE=CORE.buildLists(src)}PROD=CORE.analyze(ALL,NOW,Object.assign({},LCACHE,{market,rates}))}
+ }finally{window.__busy&&window.__busy('an')}
+ LAST_L={market,rates};fillMarkets();
  const kw=new Set(ALL.map(a=>a.search).filter(Boolean)).size,ds=Math.floor((Date.now()-NOW)/864e5);
  $('#note').innerHTML=`<div class="alert info">تاريخ جمع البيانات: ${fd(NOW)}، وتُقاس أعمار الإعلانات منه.${ds>3?` مرّ على الجمع ${ds} أيام، فقد تكون الأعمار والحالات متقادمة، والأفضل إعادة جمع البيانات.`:''}</div>`+
   (ALL.length<400||kw<3?`<div class="alert info">دقة قياس المنافسة مبنية على ${ALL.length} إعلان ${kw?'من '+kw+' كلمة بحث':''}. كلما أضفت ملفات من كلمات بحث أخرى ارتفعت دقة عدد البائعين والاتجاه.</div>`:'');
@@ -743,10 +750,13 @@ async function gapBadge(){try{const n=(await api('GET','/gap/due')).due,b=$('#nb
 
 /* ---------- الإعدادات ---------- */
 let KST='load';
-let GSV={};
+const AK={login:'✅ دخول',login_fail:'⚠️ محاولة دخول فاشلة',password:'🔑 تغيير كلمة المرور',reset:'🔑 استعادة كلمة المرور',logout_all:'🚪 خروج من كل الأجهزة',register:'🆕 تسجيل',admin_grant:'💳 تعديل اشتراك',admin_update:'✏️ تعديل مستخدم',admin_delete:'🗑 حذف مستخدم',admin_reset_link:'🔗 رابط استعادة'};
+const uaShort=u=>{u=String(u||'');return(/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iPhone':/Windows/.test(u)?'Windows':/Mac OS/.test(u)?'Mac':/Linux/.test(u)?'Linux':'')+(/Edg\//.test(u)?' · Edge':/Chrome\//.test(u)?' · Chrome':/Firefox\//.test(u)?' · Firefox':/Safari\//.test(u)?' · Safari':'')};
+let GSV={},ACTV=[];
 async function rSettings(){
  KST='load';KEYV=null;drawSet();
- try{GSV=await api('GET','/sheets')}catch(x){GSV={}}   // تُرسم الصفحة فوراً ولا تتوقف على جلب المفتاح
+ try{GSV=await api('GET','/sheets')}catch(x){GSV={}}
+ try{ACTV=await api('GET','/activity')}catch(x){ACTV=[]}   // تُرسم الصفحة فوراً ولا تتوقف على جلب المفتاح
  try{KEYV=ME.active?(await api('GET','/key')).key:null;KST='ok'}catch(x){if(x.message==='auth')throw x;KST='err:'+(x.message||'')}
  drawSet()}
 function drawSet(){try{
@@ -762,7 +772,10 @@ function drawSet(){try{
 <ol class="sub" style="line-height:2"><li>افتح جدولاً جديداً في Google Sheets، ثم <b>Extensions ← Apps Script</b>.</li><li>امسح ما فيه والصق الكود أدناه، وغيّر <code>TOKEN</code> إلى رمز سري من اختيارك.</li><li><b>Deploy ← New deployment ← Web app</b>: Execute as <b>Me</b> و Who has access <b>Anyone</b>، ثم <b>Deploy</b> ووافق على الأذونات.</li><li>انسخ رابط <b>Web app</b> (ينتهي بـ /exec) والصقه هنا مع نفس الرمز السري.</li></ol>
 <div style="display:flex;gap:8px;margin:6px 0"><button class="btn ghost sm" data-a="gcopy">نسخ كود Apps Script</button></div>
 <div class="grid2" style="margin:8px 0 0"><label class="fl">رابط Web app<input id="g-url" dir="ltr" value="${e(GSV.url||'')}" placeholder="https://script.google.com/macros/s/…/exec"></label><label class="fl">الرمز السري (TOKEN)<input id="g-tok" dir="ltr" value="${e(GSV.token||'')}"></label></div>
-<p style="margin:8px 0 0;display:flex;gap:8px"><button class="btn" data-a="gsave">حفظ الربط</button><button class="btn ghost" data-a="gtest">إرسال صف تجريبي</button></p></div>`}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
+<p style="margin:8px 0 0;display:flex;gap:8px"><button class="btn" data-a="gsave">حفظ الربط</button><button class="btn ghost" data-a="gtest">إرسال صف تجريبي</button></p></div>
+<div class="card" style="margin-top:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">🔒 الأمان: آخر عمليات الدخول</h2><button class="btn danger sm" data-a="logoutall">تسجيل الخروج من كل الأجهزة</button></div>
+<p class="sub">إن رأيت دخولاً لا تعرفه: غيّر كلمة المرور فوراً (يُسجَّل خروج كل الأجهزة الأخرى تلقائياً).</p>
+<div class="tbw"><table class="tb"><tr><th>العملية</th><th>التاريخ</th><th>الجهاز</th><th>العنوان</th></tr>${ACTV.map(a=>`<tr><td>${AK[a.kind]||e(a.kind)}</td><td>${fd(a.at)} ${ft(a.at)}</td><td>${e(uaShort(a.ua))}</td><td dir="ltr">${e(a.ip)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">—</td></tr>'}</table></div></div>`}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
 R.addEventListener('submit',async ev=>{const f=ev.target.closest('[data-form]');if(!f)return;ev.preventDefault();const d=Object.fromEntries(new FormData(f));
  try{if(f.dataset.form==='profile'){await api('PUT','/profile',d);ME={...ME,...(await api('GET','/me'))};updateMe();toast('تم حفظ بياناتك');f.password.value=''}
   else{if(d.password!==d.again)return toast('كلمتا المرور الجديدتان غير متطابقتين','err');await api('POST','/password',{old:d.old,password:d.password});toast('تم تغيير كلمة المرور');f.reset()}}
@@ -770,7 +783,8 @@ R.addEventListener('submit',async ev=>{const f=ev.target.closest('[data-form]');
 
 /* ---------- الإدارة ---------- */
 async function rAdmin(){const us=await api('GET','/admin/users');
- $('#x-users').innerHTML=`<div class="tbw"><table class="tb"><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الاشتراك</th><th>تعديل الاشتراك</th><th>إجراءات</th></tr>${us.map(u=>`<tr><td><b>${e(u.name||'—')}</b><br><small dir="ltr">${e(u.username||'')}</small></td><td><input dir="ltr" data-em="${u.id}" value="${e(u.email)}"></td><td><select data-role="${u.id}"><option value="member"${u.role==='member'?' selected':''}>مشترك</option><option value="admin"${u.role==='admin'?' selected':''}>مدير</option></select></td><td>${e(u.plan)}<br><small>${u.role==='admin'?'—':u.expires_at>Date.now()?fd(u.expires_at):'منتهٍ'}</small></td><td style="white-space:nowrap"><select data-plan="${u.id}" style="width:auto"><option value="30" data-n="شهري">شهري (30)</option><option value="90" data-n="ربع سنوي">ربع سنوي (90)</option><option value="365" data-n="سنوي">سنوي (365)</option><option value="0" data-n="مخصص">مخصص</option></select> <input type="number" value="30" style="width:76px" data-days="${u.id}"> <button class="btn sm" data-a="grant" data-id="${u.id}">تطبيق</button></td><td style="white-space:nowrap"><button class="btn ghost sm" data-a="usave" data-id="${u.id}">حفظ</button> <button class="btn ghost sm" data-a="rlink" data-id="${u.id}">رابط استعادة</button> <button class="btn danger sm" data-a="udel" data-id="${u.id}">حذف</button></td></tr>`).join('')}</table></div>`}
+ $('#x-users').innerHTML=`<div class="tbw"><table class="tb"><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الاشتراك</th><th>تعديل الاشتراك</th><th>إجراءات</th></tr>${us.map(u=>`<tr><td><b>${e(u.name||'—')}</b><br><small dir="ltr">${e(u.username||'')}</small></td><td><input dir="ltr" data-em="${u.id}" value="${e(u.email)}"></td><td><select data-role="${u.id}"><option value="member"${u.role==='member'?' selected':''}>مشترك</option><option value="admin"${u.role==='admin'?' selected':''}>مدير</option></select></td><td>${e(u.plan)}<br><small>${u.role==='admin'?'—':u.expires_at>Date.now()?fd(u.expires_at):'منتهٍ'}</small></td><td style="white-space:nowrap"><select data-plan="${u.id}" style="width:auto"><option value="30" data-n="شهري">شهري (30)</option><option value="90" data-n="ربع سنوي">ربع سنوي (90)</option><option value="365" data-n="سنوي">سنوي (365)</option><option value="0" data-n="مخصص">مخصص</option></select> <input type="number" value="30" style="width:76px" data-days="${u.id}"> <button class="btn sm" data-a="grant" data-id="${u.id}">تطبيق</button></td><td style="white-space:nowrap"><button class="btn ghost sm" data-a="usave" data-id="${u.id}">حفظ</button> <button class="btn ghost sm" data-a="rlink" data-id="${u.id}">رابط استعادة</button> <button class="btn danger sm" data-a="udel" data-id="${u.id}">حذف</button></td></tr>`).join('')}</table></div>`
+ try{const L=await api('GET','/admin/activity');$('#x-users').insertAdjacentHTML('beforeend',`<details class="fx" style="margin-top:16px"><summary>📜 سجل النشاط (آخر ${L.length} عملية)</summary><div class="tbw"><table class="tb"><tr><th>العملية</th><th>المستخدم</th><th>التفاصيل</th><th>التاريخ</th><th>الجهاز</th><th>العنوان</th></tr>${L.map(a=>`<tr${a.kind==='login_fail'?' style="color:var(--bad)"':''}><td>${AK[a.kind]||e(a.kind)}</td><td>${e(a.email||'—')}</td><td>${e(a.detail||'')}</td><td>${fd(a.at)} ${ft(a.at)}</td><td>${e(uaShort(a.ua))}</td><td dir="ltr">${e(a.ip)}</td></tr>`).join('')}</table></div></details>`)}catch(x){}}
 
 /* ---------- حفظ التحليل في الأرشيف + المنتجات ---------- */
 const summary=()=>[...W.WPR.PROD()].sort((a,b)=>b.score-a.score).slice(0,20).map(p=>({name:p.name,score:p.score,tier:p.cat,n:p.n,price:p.pr,kw:p.kw}));
@@ -794,6 +808,7 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='selall'){const bx=R.querySelectorAll('[data-sel]'),all=[...bx].every(x=>x.checked);bx.forEach(x=>x.checked=!all);return}
  if(a==='analyzeSel')return analyzeIds([...R.querySelectorAll('[data-sel]:checked')].map(x=>x.dataset.sel));
  if(a==='ianalyze')return analyzeIds([id]);
+ if(a==='logoutall'){if(!two(b))return;await api('POST','/logout-all',{});location.href='/login';return}
  if(a==='gcopy'){await navigator.clipboard.writeText(W.__sheetScript||'');return toast('نُسخ الكود. الصقه في Apps Script')}
  if(a==='gsave'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});GSV={url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()};return toast('حُفظ الربط مع Google Sheets')}
  if(a==='gtest'){await api('PUT','/sheets',{url:$('#g-url').value.trim(),token:$('#g-tok').value.trim()});const r=await api('POST','/sheets/push',{sheet:'اختبار الربط',header:['الحالة','التاريخ'],rows:[['تم الربط بنجاح ✅',new Date().toLocaleString('ar-DZ')]]});toast('وصل الصف التجريبي إلى جدولك');if(r.url)W.open(r.url,'_blank','noopener');return}

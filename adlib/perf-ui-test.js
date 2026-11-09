@@ -31,7 +31,9 @@ const raw = i => ({ ad_archive_id: String(100000 + i), page_id: 'p' + (i % 900),
     await nav('gap', '#x-gap .g-list, #x-gap .empty', 'الانتقال إلى «ثغرات السوق»');
     await nav('collect', '#l-prev', 'العودة إلى «جمع الإعلانات»');
     await nav('inbox', '#x-inbox [data-a="ianalyze"]', 'العودة إلى «الواردة»');
+    await pg.evaluate(() => { window.__lag = 0; let last = performance.now(); window.__lagT = setInterval(() => { const n = performance.now(); window.__lag = Math.max(window.__lag, n - last - 50); last = n; }, 50); });
     t = Date.now(); await pg.click('#x-inbox [data-a="ianalyze"]'); await pg.waitForSelector('#grid .pc', { timeout: 120000 }); out.push([`فتح دفعة ${N} إعلان للتحليل حتى ظهور النتائج`, Date.now() - t]);
+    out.push(['أطول تجمّد للواجهة أثناء التحليل', Math.round(await pg.evaluate(() => { clearInterval(window.__lagT); return window.__lag; }))]);
     // استجابة الصفحة بعد ظهور النتائج: أطول توقف للواجهة
     const lag = await pg.evaluate(() => new Promise(res => { let worst = 0, last = performance.now(); const id = setInterval(() => { const n = performance.now(); worst = Math.max(worst, n - last - 50); last = n; }, 50); setTimeout(() => { clearInterval(id); res(Math.round(worst)); }, 2500); }));
     out.push(['أطول تجمّد للواجهة بعد ظهور النتائج', lag]);

@@ -42,11 +42,11 @@ async function vpass(){const G=window.RadarGapMatch;if(!G||!PROD.length)return;c
  const H=ps.map(p=>imgsOf(p).slice(0,1).flatMap(u=>VH.get(u)||[])),par=ps.map((_,k)=>k),f=k=>{while(par[k]!==k){par[k]=par[par[k]];k=par[k]}return k};
  for(let a=0;a<ps.length;a++)if(H[a].length)for(let b=a+1;b<ps.length;b++)if(H[b].length&&f(a)!==f(b)&&G.bestImage(H[a],H[b])<=6)par[f(b)]=f(a);
  const size=new Map();ps.forEach((_,k)=>size.set(f(k),(size.get(f(k))||0)+1));let merged=0;
- ps.forEach((p,k)=>{const r=f(k);if(size.get(r)>1){merged++;p.ads.forEach(a=>{a._vh='v'+r})}});
+ ps.forEach((p,k)=>{const r=f(k);if(size.get(r)>1){merged++;p.ads.forEach(a=>{if(a._i!=null)VHI[a._i]='v'+r})}});
  if(!merged)return;
- PROD=CORE.analyze(ALL,NOW,LAST_L);fillMarkets();
- $('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
-async function load(files){msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
+ await analyze();
+ if($('#note').textContent.includes('🔗'))return;$('#note').insertAdjacentHTML('beforeend',`<div class="alert info">🔗 بصمة الصورة: دُمج ${nf(merged)} منتجاً ظهرت بنفس الصورة (في أسواق أو لغات أو متاجر مختلفة)، فصار كلٌّ منها منتجاً واحداً بكل بائعيه.</div>`);render()}
+async function load(files){VP++;for(const k in VHI)delete VHI[k];msg('');let rows=[],lm=0;window.__busy&&window.__busy('ld','جارٍ قراءة الملف…');try{
  for(const f of files){lm=Math.max(lm,f.lastModified||0);if(Array.isArray(f.rows)){rows=rows.concat(f.rows);continue}   /* صفوف جاهزة من المنصة: بلا تحويل إلى ملف ثم قراءته */
   try{rows=rows.concat(await readFile(f))}catch(e){msg('تعذّرت قراءة الملف '+f.name+'. تأكد أنه JSON أو Excel أو CSV سليم.',1)}}
  const seen=new Set();ALL=[];
@@ -55,17 +55,24 @@ async function load(files){msg('');let rows=[],lm=0;window.__busy&&window.__busy
  const cd=ALL.map(a=>a.collected).filter(Boolean).map(Number);
  NOW=cd.length?Math.max(...cd):(lm||Date.now());   // تاريخ جمع البيانات
 }finally{window.__busy&&window.__busy('ld')}
- analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);setTimeout(()=>vpass().catch(()=>{}),300)}
+ await analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);setTimeout(()=>vpass().catch(()=>{}),300)}
 
-function analyze(){
+/* التحليل في خيط خلفي للملفات الكبيرة (الصفحة لا تتجمد)، ومباشرة للصغيرة أو إن تعذّر الخيط */
+let WK=null,WKN=0;const WKW=new Map();
+function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js');WK.onmessage=e=>{const f=WKW.get(e.data.id);if(f){WKW.delete(e.data.id);f(e.data)}};WK.onerror=()=>{WK=false;WKW.forEach(f=>f({error:'worker'}));WKW.clear()}}catch(x){WK=false}return WK}
+const VHI={};   /* بصمة الصورة: رقم الإعلان في ALL → مجموعة الدمج */
+async function analyze(){
  const MKT=window.RadarMarkets,mg=t=>MKT?', '+MKT.goldText(t):'';   /* الفائدة تُقرأ أيضاً بلغات الأسواق الدولية */
  const src={strong:$('#d_strong').value+mg('strong'),normal:$('#d_mid').value+mg('normal'),brands:$('#d_brand').value,bulky:$('#d_bulky').value,fragile:$('#d_fragile').value},lk=JSON.stringify(src);
- /* الأداء: القوائم تُبنى مرة واحدة ما لم تتغير الإعدادات */
- if(LK!==lk){LK=lk;LCACHE=CORE.buildLists(src)}const L=Object.assign({},LCACHE);
- L.market=($('#mkt')||{}).value||'';L.rates=Object.assign({},MK()?MK().RATES_DZD:{},myRates());
+ const market=($('#mkt')||{}).value||'',rates=Object.assign({},MK()?MK().RATES_DZD:{},myRates());
+ ALL.forEach((a,i)=>{a._i=i;if(VHI[i])a._vh=VHI[i]});
  window.__busy&&window.__busy('an','جارٍ التحليل…');
- try{PROD=CORE.analyze(ALL,NOW,L)}finally{window.__busy&&window.__busy('an')}
- LAST_L=L;fillMarkets();
+ try{
+  let done=false;const w=ALL.length>=1500&&worker();
+  if(w){const r=await new Promise(ok=>{const id=++WKN;WKW.set(id,ok);w.postMessage({id,rows:ALL,NOW,src,market,rates,vh:VHI})});if(!r.error){PROD=r.P;done=true}}
+  if(!done){/* الأداء: القوائم تُبنى مرة واحدة ما لم تتغير الإعدادات */if(LK!==lk){LK=lk;LCACHE=CORE.buildLists(src)}PROD=CORE.analyze(ALL,NOW,Object.assign({},LCACHE,{market,rates}))}
+ }finally{window.__busy&&window.__busy('an')}
+ LAST_L={market,rates};fillMarkets();
  const kw=new Set(ALL.map(a=>a.search).filter(Boolean)).size,ds=Math.floor((Date.now()-NOW)/864e5);
  $('#note').innerHTML=`<div class="alert info">تاريخ جمع البيانات: ${fd(NOW)}، وتُقاس أعمار الإعلانات منه.${ds>3?` مرّ على الجمع ${ds} أيام، فقد تكون الأعمار والحالات متقادمة، والأفضل إعادة جمع البيانات.`:''}</div>`+
   (ALL.length<400||kw<3?`<div class="alert info">دقة قياس المنافسة مبنية على ${ALL.length} إعلان ${kw?'من '+kw+' كلمة بحث':''}. كلما أضفت ملفات من كلمات بحث أخرى ارتفعت دقة عدد البائعين والاتجاه.</div>`:'');
