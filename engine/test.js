@@ -81,6 +81,8 @@ const LG=Object.assign({},L,{group:false});
 P=C.analyze([row({ad_id:'n1',page_id:'a',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n2',page_id:'b',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n3',page_id:'c',title:'قشابية',pre_excl:'دورة أو تكوين'})],NOW,LG);
 eq('بلا تجميع: 3 إعلانات = 3 بطاقات بمفاتيح مختلفة',[P.length,new Set(P.map(p=>p.k)).size],[3,3]);
 eq('المستبعد عند الاستقبال يظهر «مستبعد» بسببه',[P.filter(p=>p.excl).length,/استُبعد عند الاستقبال: دورة/.test(P.find(p=>p.excl).why[0])],[1,true]);
+P=C.analyze([row({ad_id:'d1',page_id:'d',title:'جهاز يزيل البقع',start_date:''})],NOW,Object.assign({},L,{group:false}));
+eq('إعلان بلا تاريخ بدء: مستبعد بسببه (لا تصنيف «ضعيف»)',[P[0].cat,/بلا تاريخ بدء/.test(P[0].why[0])],['excl',true]);
 // ===== الإقصاء والتنبيهات والمتوقف =====
 P=A([row({ad_id:'f1',page_id:'f1',title:'ثلاجة صغيرة للسيارة',body:'ثلاجة تبرد مشروباتك. السعر 15000 دج',image_url:'https://c/i/f1.jpg'})]);
 eq('كبير الحجم/هش/أكل: تنبيه لا إقصاء',[P[0].cat!=='excl',/قد يكون/.test(P[0].warn||'')],[true,true]);

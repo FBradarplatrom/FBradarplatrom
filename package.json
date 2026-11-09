@@ -1,6 +1,6 @@
 {
   "name": "radar-platform",
-  "version": "11.6.0",
+  "version": "11.7.0",
   "private": true,
   "engines": {
     "node": ">=20.6"

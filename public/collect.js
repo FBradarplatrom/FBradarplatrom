@@ -111,7 +111,7 @@
       return redraw(); }
     if (ev.evt === 'offline') { B.ok = false; return redraw(); }
     if (ev.evt === 'state') { const was = running(); B.state = ev.state; return was !== running() ? redraw() : drawProg(); }
-    if (ev.evt === 'progress') { if (B.state && B.state.items && B.state.items[ev.idx]) B.state.items[ev.idx].seen = ev.seen; return drawProg(); }
+    if (ev.evt === 'progress') { if (B.state && B.state.items && B.state.items[ev.idx]) { B.state.items[ev.idx].seen = ev.seen; if (ev.total) B.state.items[ev.idx].total = ev.total; } return drawProg(); }
     if (ev.evt === 'search_start') { X.api('POST', '/lib/tick', {}).catch(x => { X.toast(x.message, 'err'); bsend('stop').catch(() => {}); }); return; }
     if (ev.evt === 'ads') { chain = chain.then(() => ingest(ev)); return; }
     if (ev.evt === 'error') return X.toast(ev.code === 'outbox_full' ? 'توقف الجمع: تراكمت بيانات كثيرة لم تُرسل. افتح المنصة وأرسلها ثم أعد المحاولة.' : 'خطأ في الإضافة', 'err');
@@ -316,7 +316,7 @@ ${qs.length ? `<div class="l-q">${qs.slice(0, 40).map(x => `<span dir="auto"${x.
       ${RUN.filtered ? `<div class="alert info">🛡️ استُبعد ${num(RUN.filtered)} إعلاناً ليست منتجات مادية صالحة للتجارة الإلكترونية: ${Object.entries(RUN.byKind).map(([k, n]) => `${e((window.RadarProductCheck && RadarProductCheck.LABEL[k]) || k)} ${num(n)}`).join(' · ')}${RUN.samples.length ? `<details style="margin-top:6px"><summary>أمثلة</summary>${RUN.samples.map(x => `<div class="muted" dir="auto">• ${e(x.title)} <small>(${e(x.page || '')}) ← ${e(x.why)}</small></div>`).join('')}</details>` : ''}</div>` : ''}
       ${RUN.rejected ? `<div class="alert err">${num(RUN.rejected)} إعلان لم يُحفظ لأن الدفعة بلغت حدّها.</div>` : ''}
       ${fin && got ? `<div class="alert info">حُفظت الإعلانات في «الإعلانات الواردة» (${num(got)} إعلان). افتحها وحلّلها بمعايير المنصة. <button class="btn sm" data-v="inbox">فتح الإعلانات الواردة</button></div>` : ''}
-      <div style="max-height:260px;overflow:auto">${items.map(i => `<div class="l-bi"><span class="q" dir="auto" title="${e(i.niche)}">${e(i.q || '(الصفحة المفتوحة)')}</span><span class="muted">${i.status === 'running' || i.seen ? num(i.seen) + ' / ' + num(want) + ' إعلان · ' : ''}${(i.status === 'done' && WHY[i.reason]) || L[i.status] || i.status}</span></div>`).join('')}</div></div>`;
+      <div style="max-height:260px;overflow:auto">${items.map(i => `<div class="l-bi"><span class="q" dir="auto" title="${e(i.niche)}">${e(i.q || '(الصفحة المفتوحة)')}</span><span class="muted">${i.status === 'running' || i.seen ? num(i.seen) + ' / ' + num(want) + ' إعلان · ' : ''}${(i.kind || 'fb') === 'fb' && (i.status === 'running' || i.seen) ? (i.total ? 'مرصود في ميتا: ' + num(i.total) + ' · ' : 'لم يُقرأ عدد ميتا بعد · ') : ''}${(i.status === 'done' && WHY[i.reason]) || L[i.status] || i.status}</span></div>`).join('')}</div></div>`;
   }
   async function drawCollect(soft) {
     try { const qq = localStorage.getItem('wpr_collect_quick'); if (qq) { P.q = qq; localStorage.removeItem('wpr_collect_quick'); } } catch (x) {}

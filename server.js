@@ -157,7 +157,7 @@ const addRun = (u, source, label, rows) => ins.run(u.id, source, String(label ||
 const arr = (s, m) => { if (!Array.isArray(s)) throw Object.assign(new Error(m), { status: 400 }); return s; };
 
 app.get('/api/runs', auth, active, wrap((q, s) => {
-  s.json(db.prepare('select id,source,label,ads,summary,counts,created_at from runs where user_id=? order by created_at desc limit 300').all(q.u.id)
+  s.json(db.prepare('select r.id,r.source,r.label,r.ads,r.summary,r.counts,r.created_at,(select count(*) from lib_bfilt f where f.user_id=r.user_id and f.batch_id=r.batch) filtered from runs r where r.user_id=? order by r.created_at desc limit 300').all(q.u.id)
     .map(r => ({ ...r, summary: r.summary ? JSON.parse(r.summary) : null, counts: r.counts ? JSON.parse(r.counts) : null })));
 }));
 app.get('/api/runs/:id', auth, active, wrap((q, s) => {

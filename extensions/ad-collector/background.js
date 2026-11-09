@@ -48,7 +48,7 @@ const bc = (msg) => ports.forEach((p) => { try { p.postMessage(msg); } catch (_)
 
 const pub = (q) => (!q ? { active: false, total: 0, items: [] } : {
   active: !!q.active, id: q.id, mode: q.mode, idx: q.idx, total: q.items.length, startedAt: q.createdAt, finishedAt: q.finishedAt || 0, endReason: q.endReason || '',
-  items: q.items.map((i) => ({ q: i.q, kind: i.kind || 'fb', niche: i.niche || '', status: i.status, seen: i.seen || 0, reason: i.reason || '' }))
+  items: q.items.map((i) => ({ q: i.q, kind: i.kind || 'fb', niche: i.niche || '', status: i.status, seen: i.seen || 0, total: i.total || 0, reason: i.reason || '' }))
 });
 // حالة كاملة للمنصة وللنافذة: التقدّم + الإرسال
 async function full(q) {
@@ -296,7 +296,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           res = { ok: mine };
           return;
         case 'progress':
-          if (mine) { it.seen = Number(msg.seen) || 0; await set({ [QK]: q }); bc({ evt: 'progress', id: q.id, idx: q.idx, seen: it.seen }); }
+          if (mine) { it.seen = Number(msg.seen) || 0; if (+msg.total > (it.total || 0)) it.total = Math.floor(+msg.total); await set({ [QK]: q }); bc({ evt: 'progress', id: q.id, idx: q.idx, seen: it.seen, total: it.total || 0 }); }
           res = { ok: mine };
           return;
         case 'job_done':

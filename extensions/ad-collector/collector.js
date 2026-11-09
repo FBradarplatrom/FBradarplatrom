@@ -246,7 +246,7 @@
         clickMore();
         window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
       }
-      if (tick % 2 === 0) send({ cmd: 'progress', href: location.href, seen: seen.size });
+      if (tick % 2 === 0) { if (!total) domTotal(); send({ cmd: 'progress', href: location.href, seen: seen.size, total }); }
     }
   }
 
@@ -259,7 +259,8 @@
     const token = ++run.token;
     scanScripts();
     for (const [raw, src] of early.splice(0)) ingest([raw], src);
-    send({ cmd: 'progress', href: location.href, seen: seen.size });
+    domTotal();
+    send({ cmd: 'progress', href: location.href, seen: seen.size, total });
     loop(token);
   }
 

@@ -13,7 +13,7 @@
   const P = Object.assign({ sel: [], per: 60, minViews: 50000, maxAge: 90, sort: 'score', onlyProducts: true }, (() => { try { return JSON.parse(localStorage.getItem(PK)) || {}; } catch (x) { return {}; } })());
   const saveP = () => { try { localStorage.setItem(PK, JSON.stringify(P)); } catch (x) {} };
   const LIVE = { n: 0 };
-  const ttUrl = q => 'https://www.tiktok.com/search?q=' + encodeURIComponent(q);
+  const ttUrl = q => 'https://www.tiktok.com/search?q=' + encodeURIComponent(q) + '&t=' + Date.now();   // بلا t لا تعرض TikTok النتائج أحياناً
 
   /* ---------- المنتج من وصف الفيديو ---------- */
   const titleOf = v => String(v.desc || '').replace(/#[\p{L}\p{N}_]+/gu, ' ').replace(/@[\w.]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 110) || (v.tags || []).slice(0, 3).join(' ') || 'فيديو TikTok';

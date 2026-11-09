@@ -203,7 +203,8 @@ function mkProduct(ads,NOW,L,proofs){
  /* استُبعد عند الاستقبال (ليس منتجاً) ويُعرض في «مستبعد» ليتطابق العدد مع ما جُلب */
  const pre=ads.find(a=>a.pre_excl);if(pre)why.push('استُبعد عند الاستقبال: '+pre.pre_excl);
  else if(!counted.length)why.push(ads.length>1?'لا إعلان نشط: كل إعلاناته متوقفة':'لا إعلان نشط: الإعلان متوقف');
- if(counted.length&&!pre){
+ if(counted.length&&!pre&&!counted.some(a=>a.start))why.push(counted.length>1?'بلا تاريخ بدء في كل إعلاناته: لا يمكن معرفة عمره':'بلا تاريخ بدء: لا يمكن معرفة عمر الإعلان');
+ if(counted.length&&!pre&&!why.length){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
   const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
   if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));

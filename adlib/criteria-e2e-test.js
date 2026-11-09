@@ -32,7 +32,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' });
     await pg.setInputFiles('#file', f); await pg.waitForSelector('.pc', { timeout: 15000 }); await pg.waitForTimeout(800);
     const tabs = await pg.$$eval('#tabs button', bs => bs.map(x => x.dataset.t));
-    ok(tabs.slice(1, 7).join(',') === 'trial,prom,gem,fire,old,low' && !tabs.includes('ended'), 'التبويبات: تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← ضعيف (بلا «توقف بعد نجاح»): ' + tabs.join(','));
+    ok(tabs.slice(1, 7).join(',') === 'trial,prom,gem,fire,old,excl', 'التبويبات: تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← مستبعد: ' + tabs.join(','));
     const P = await pg.evaluate(() => window.WPR.PROD().map(p => ({ cat: p.cat, name: p.name, ben: p.ben, warn: p.warn || '' })));
     const names = P.map(p => p.cat + ':' + p.name);
     ok(P[0].cat === 'trial' && P[1].cat === 'prom', 'الترتيب يبدأ بتحت التجربة ثم واعد: ' + JSON.stringify(names));
@@ -95,6 +95,11 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const runs = await (await pg.request.get(BASE + '/api/runs')).json(), qr = runs.find(r => /قشابية/.test(r.label));
     const det = await (await pg.request.get(BASE + '/api/runs/' + qr.id)).json();
     ok(det.stats && det.stats.observed === 220 && det.stats.filtered === 1 && det.rows.length === 5, 'الخادم يحفظ المرصود (أكبر عدد للبحث) والمستبعد عند الاستقبال: ' + JSON.stringify(det.stats));
+    await pg.goto(BASE + '/inbox'); await pg.waitForSelector('#x-inbox tr [data-sel]');
+    const inboxTxt = await pg.locator('#x-inbox').textContent(); if (process.env.DBG) console.log('INBOX', inboxTxt.replace(/\s+/g, ' ').slice(0, 600));
+    const cell = await pg.$$eval('#x-inbox tr', rs => (rs.find(r => /قشابية/.test(r.textContent)) || { cells: [] }).cells[3].textContent.replace(/\s+/g, ' ').trim());
+    if (process.env.DBG) console.log('CELL', JSON.stringify(cell));
+    ok(/^6\s*منها 1 مستبعدة$/.test(cell), 'الواردة تعرض كل ما وصل (6 = 5 + 1 مستبعد عند الوصول) مثل الإضافة');
     // 3) صفحة التحليل
     await pg.goto(BASE + '/archive'); await pg.waitForSelector('[data-a="open"][data-id="' + qr.id + '"]');
     await pg.click('[data-a="open"][data-id="' + qr.id + '"]'); await pg.waitForSelector('#sum .kpi', { timeout: 15000 }); await pg.waitForTimeout(500);
@@ -107,7 +112,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(num(K['دخلت التحليل']) + num(K['الإعلانات المستبعدة']) === num(K['الإعلانات التي تم جلبها']), 'المجلوب = دخلت التحليل + المستبعدة');
     ok(num(K['عدد البائعين']) === 4, 'البائعون = أسماء صفحات مختلفة (4)');
     const tabN = await pg.$$eval('#tabs button', bs => Object.fromEntries(bs.map(b => [b.dataset.t, +b.querySelector('b').textContent])));
-    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) && ['trial', 'prom', 'gem', 'fire', 'old', 'low', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 1, '«الكل» = المجلوب = مجموع التبويبات، و«مستبعد» = 1: ' + JSON.stringify(tabN));
+    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) && ['trial', 'prom', 'gem', 'fire', 'old', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 1, '«الكل» = المجلوب = مجموع التبويبات، و«مستبعد» = 1: ' + JSON.stringify(tabN));
     ok(await pg.$eval('#tabs [data-t="excl"]', b => /مستبعد/.test(b.textContent)), 'تبويب «🚫 مستبعد» موجود');
     await pg.click('#tabs [data-t="excl"]'); await pg.waitForTimeout(300);
     ok(/استُبعد عند الاستقبال/.test(await pg.locator('#grid').textContent()), 'المستبعد عند الاستقبال يظهر في «مستبعد» بسببه');
@@ -119,6 +124,9 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const TOT_RE = eval(/const TOT_RE = (\/.*\/i);/.exec(src)[1]), BIDI = eval(/const BIDI = (\/.*\/g);/.exec(src)[1]);
     const rd = t => { const m = TOT_RE.exec(' ' + t.replace(BIDI, '').trim().replace(/[٠-٩]/g, x => String('٠١٢٣٤٥٦٧٨٩'.indexOf(x)))); return m ? parseInt(m[1].replace(/[^\d]/g, ''), 10) : 0; };
     ok(rd('\u200f~220 نتيجة') === 220 && rd('~٢٢٠ نتيجة') === 220 && rd('~1,250 results') === 1250 && rd('environ 3 400 résultats') === 3400 && rd('‏~1٬250 نتيجة') === 1250 && rd('4 نتائج') === 4 && rd('السعر 2900 دج') === 0, 'قراءة عدد النتائج من نص الصفحة بكل الصيغ');
+    ok(!(await pg.$('#tabs [data-t="low"]')), 'لا تبويب «ضعيف»');
+    const ttSrc = fs.readFileSync(path.join(__dirname, '..', 'public', 'tiktok.js'), 'utf8');
+    ok(/search\?q=' \+ encodeURIComponent\(q\) \+ '&t=' \+ Date\.now\(\)/.test(ttSrc), 'رابط بحث TikTok بنفس صيغة الرابط اليدوي (…&t=)');
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log('\n✅ اختبار المعايير:', pass, 'فحصاً ناجحاً');
   } catch (e) { console.error('✖', e.message, '\n', log.slice(-1500)); process.exitCode = 1; }
