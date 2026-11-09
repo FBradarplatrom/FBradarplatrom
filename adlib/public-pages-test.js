@@ -14,9 +14,26 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
   try {
     // prices for the pricing section
     const A = await b.newPage(); await A.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
+    // قبل تحديد الأسعار: كل الباقات المفعّلة تظهر («السعر يُعلن قريباً»)
+    const pub0 = await (await fetch(BASE + '/api/plans/public')).json();
+    ok(pub0.plans.length === 4, 'كل الباقات المفعّلة تظهر للزبائن حتى قبل تحديد السعر (' + pub0.plans.length + ')');
+    { const pg0 = await b.newPage(); await pg0.goto(BASE + '/?lang=ar'); await pg0.waitForSelector('#plans .plan');
+      ok((await pg0.$$('#plans .plan')).length === 4 && /السعر يُعلن قريباً/.test(await pg0.locator('#plans').innerText()), 'باقة بلا سعر: «السعر يُعلن قريباً» بدل أن تختفي'); await pg0.close(); }
+    // المدير يضيف ميزة ويحذف أخرى ويخفي ميزة مدمجة
+    const cat0 = (await (await A.request.get(BASE + '/api/admin/plans')).json()).cat;
+    ok(cat0.length === 8 && cat0.every(f => f.builtin && f.ar && f.en && f.fr), 'كتالوج المميزات: 8 مدمجة بثلاث لغات');
+    let r = await (await A.request.put(BASE + '/api/admin/features', { data: { list: cat0.map(f => f.k === 'sheets' ? Object.assign({}, f, { shown: false }) : f).concat([{ ar: 'دعم عبر واتساب', en: 'WhatsApp support', fr: 'Support WhatsApp' }, { ar: 'ميزة للحذف', en: 'To delete' }]) } })).json();
+    ok(r.cat.length === 10 && r.cat.filter(f => !f.builtin).length === 2, 'إضافة ميزتين جديدتين');
+    const del = r.cat.find(f => f.ar === 'ميزة للحذف');
+    r = await (await A.request.put(BASE + '/api/admin/features', { data: { list: r.cat.filter(f => f.k !== del.k).concat([{ k: 'gap', ar: 'x' }].slice(0, 0)) } })).json();
+    ok(r.cat.length === 9 && !r.cat.some(f => f.k === del.k), 'حذف الميزة المضافة');
+    r = await (await A.request.put(BASE + '/api/admin/features', { data: { list: r.cat.filter(f => f.k !== 'gap') } })).json();
+    ok(r.cat.some(f => f.k === 'gap'), 'الميزات المدمجة لا تُحذف');
+    const wa = r.cat.find(f => f.en === 'WhatsApp support');
     const pls = (await (await A.request.get(BASE + '/api/admin/plans')).json()).plans.map((p, i) => Object.assign(p, p.free ? { features: p.features.filter(k => k !== 'tiktok' && k !== 'sheets') } : { price: [2900, 7900, 24900][i - 1] || 0, price_usd: [19, 49, 149][i - 1] || 0 }));
     await A.request.put(BASE + '/api/admin/plans', { data: { plans: pls } });
     const pub = await (await fetch(BASE + '/api/plans/public')).json();
+    ok(pub.features.some(f => f.k === wa.k) && !pub.features.some(f => f.k === 'sheets') && pub.plans.filter(p => !p.free).every(p => p.features.includes(wa.k)), 'الميزة الجديدة في الأسعار ومضافة للباقات المدفوعة، والمخفية لا تظهر');
     ok(pub.plans.length === 4 && pub.plans.filter(p => p.free).length === 1 && pub.methods.stripe === true && !JSON.stringify(pub).includes('"id"'), 'الأسعار العامة: 4 باقات (واحدة مجانية) بلا بيانات داخلية');
     const errs = [];
     for (const [lg, h1, dir] of [['ar', /قبل أن يزدحم السوق/, 'rtl'], ['en', /before the market gets crowded/, 'ltr'], ['fr', /avant que le marché ne sature/, 'ltr']]) {
@@ -30,7 +47,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       ok(!/(للجزائر فقط|لكل الأسواق|Every market|Tous les marchés|only for one country|réservé à un seul pays)/i.test(txt) && (await pg.$$('#faqs details')).length >= 8, lg + ': أسئلة مفيدة، وبلا «للجزائر فقط» ولا «لكل الأسواق»');
       ok(await pg.$eval('#lang', s => s.tagName) === 'SELECT', lg + ': اختيار اللغة قائمة منسدلة');
       const free = pg.locator('#plans .plan').first(), offs = await free.locator('li.off').allTextContents(), ons = await pg.locator('#plans .plan').nth(1).locator('li.off').count();
-      ok(offs.length === 2 && offs.some(x => /TikTok/.test(x)) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (✕ لغير المشمول): ' + offs.join(' | '));
+      ok(offs.length === 2 && offs.some(x => /TikTok/.test(x)) && offs.some(x => /واتساب|WhatsApp/.test(x)) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (✕ لغير المشمول): ' + offs.join(' | '));
       if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/landing-' + lg + '.png', fullPage: true });
       await pg.close();
     }
@@ -47,7 +64,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.fill('#r-em', 'n@t.dz'); await pg.fill('#r-pw', 'password123'); await pg.fill('#r-pw2', 'password123'); await pg.click('#f-register .btn'); await pg.waitForURL(BASE + '/');
     const me = await (await pg.request.get(BASE + '/api/me')).json();
     ok(me.plan === 'تجربة مجانية' && me.active, 'الحساب الجديد يبدأ بالتجربة المجانية');
-    ok(!me.features.includes('tiktok') && me.features.includes('gap'), 'مميزات الحساب = مميزات باقته');
+    ok(!me.features.includes('tiktok') && me.features.includes('gap') && me.features.includes('sheets'), 'مميزات الحساب = مميزات باقته (والمخفية من الأسعار متاحة للجميع)');
     const tt = await pg.request.get(BASE + '/api/tt'), gp = await pg.request.get(BASE + '/api/gap');
     ok(tt.status() === 403 && /غير متاح في باقتك/.test((await tt.json()).error) && gp.status() === 200, 'ميزة خارج الباقة تُرفض (TikTok) والمشمولة تعمل');
     await pg.waitForSelector('.nv[data-v="gap"]', { state: 'attached' });

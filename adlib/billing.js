@@ -30,7 +30,15 @@ create table if not exists error_logs(id integer primary key, at integer, method
   // الباقة المجانية لتجربة المنصة: تُمنح تلقائياً عند التسجيل (المدة والحدود يعدّلها المدير)
   if (!db.prepare('select count(*) n from plans where free=1').get().n)
     db.prepare('insert into plans(name,days,price,limits,active,sort,free,note) values(?,?,0,?,1,0,1,?)').run('تجربة مجانية', 7, JSON.stringify({ searchesPerDay: 10, gapProducts: 5, aiPerMonth: 10, watchPages: 3 }), 'لتجربة المنصة');
-  const planView = p => ({ id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, features: (() => { const f = J(p.features, null); return Array.isArray(f) ? LIM.FEATS.filter(k => f.includes(k)) : LIM.FEATS.slice(); })(), limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });
+  // كتالوج مميزات الباقات: 8 مدمجة (تُطبَّق فعلاً) + مميزات يضيفها المدير (للعرض في الأسعار). الاسم بثلاث لغات
+  db.exec('create table if not exists plan_features(k text primary key, ar text, en text, fr text, builtin integer default 0, shown integer default 1, sort integer default 0)');
+  { const EN = { gap: 'Market gaps', supplier: 'Supplier finder', ai: 'AI ad analysis', watch: 'Competitor tracking', tiktok: 'TikTok trends', profit: 'Profit calculator', alerts: 'Alerts (email/Telegram)', sheets: 'Export to Google Sheets' },
+      FR = { gap: 'Opportunités de marché', supplier: 'Recherche de fournisseur', ai: 'Analyse IA de la publicité', watch: 'Suivi des concurrents', tiktok: 'Tendances TikTok', profit: 'Calculateur de profit', alerts: 'Alertes (e-mail/Telegram)', sheets: 'Export vers Google Sheets' };
+    const ins = db.prepare('insert or ignore into plan_features(k,ar,en,fr,builtin,shown,sort) values(?,?,?,?,1,1,?)');
+    LIM.FEATS.forEach((k, i) => ins.run(k, LIM.FLABEL[k], EN[k], FR[k], i)); }
+  const catalog = () => db.prepare('select k,ar,en,fr,builtin,shown,sort from plan_features order by sort, rowid').all().map(x => ({ k: x.k, ar: x.ar || '', en: x.en || '', fr: x.fr || '', builtin: !!x.builtin, shown: !!x.shown, sort: x.sort }));
+  const catKeys = () => catalog().map(x => x.k);
+  const planView = p => ({ id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, features: (() => { const f = J(p.features, null), all = catKeys(); return Array.isArray(f) ? all.filter(k => f.includes(k)) : all; })(), limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });
   const plans = (all) => db.prepare('select * from plans' + (all ? '' : ' where active=1 and coalesce(free,0)=0 and (price>0 or price_usd>0)') + ' order by sort, days').all().map(planView);
 
   /* ---------- التفعيل ---------- */
@@ -48,9 +56,9 @@ create table if not exists error_logs(id integer primary key, at integer, method
   const baseUrl = q => (CFG.get('app_url') || (q.protocol + '://' + q.get('host'))).replace(/\/$/, '');
   // للصفحة العامة (الأسعار): الباقات المفعّلة فقط، بلا بيانات داخلية
   app.get('/api/plans/public', (q, s) => {
-    const L = db.prepare('select * from plans where active=1 and (coalesce(free,0)=1 or price>0 or price_usd>0) order by sort, days').all().map(planView)
+    const L = db.prepare('select * from plans where active=1 order by sort, days').all().map(planView)
       .map(p => ({ name: p.name, days: p.days, price: p.price, price_usd: p.price_usd, free: p.free, note: p.note, limits: p.limits, features: p.features }));
-    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, features: LIM.FEATS, methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!CFG.get('baridi_info') } });
+    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, features: catalog().filter(x => x.shown), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!CFG.get('baridi_info') } });
   });
   app.get('/api/billing', auth, wrap((q, s) => {
     const u = q.u;
@@ -188,7 +196,24 @@ create table if not exists error_logs(id integer primary key, at integer, method
     else throw bad('إجراء غير معروف');
     s.json({ ok: 1 });
   }));
-  app.get('/api/admin/plans', auth, admin, wrap((q, s) => s.json({ plans: plans(true), keys: LIM.KEYS, labels: LIM.LABEL, feats: LIM.FEATS, featLabels: LIM.FLABEL })));
+  app.get('/api/admin/plans', auth, admin, wrap((q, s) => s.json({ plans: plans(true), keys: LIM.KEYS, labels: LIM.LABEL, cat: catalog() })));
+  // المدير: إضافة ميزة، تعديل اسمها، إخفاء ميزة مدمجة من الأسعار، حذف ميزة مضافة
+  app.put('/api/admin/features', auth, admin, wrap((q, s) => {
+    const list = Array.isArray(q.body && q.body.list) ? q.body.list.slice(0, 60) : [], cur = new Map(catalog().map(x => [x.k, x])), keep = new Set();
+    const up = db.prepare('update plan_features set ar=?, en=?, fr=?, shown=?, sort=? where k=?'), ins = db.prepare('insert into plan_features(k,ar,en,fr,builtin,shown,sort) values(?,?,?,?,0,?,?)');
+    list.forEach((f, i) => {
+      const ar = str(f.ar, 80), en = str(f.en, 80), fr = str(f.fr, 80); if (!ar && !en && !fr) return;
+      if (f.k && cur.has(f.k)) { up.run(ar || cur.get(f.k).ar, en, fr, f.shown === false ? 0 : 1, i, f.k); keep.add(f.k); }
+      else { const k = 'c_' + crypto.randomBytes(4).toString('hex'); ins.run(k, ar || en || fr, en, fr, f.shown === false ? 0 : 1, i); keep.add(k);
+        // ميزة جديدة: تُضاف إلى الباقات المحددة (افتراضياً كل الباقات المدفوعة)
+        const to = Array.isArray(f.plans) ? f.plans.map(Number) : null;
+        for (const p of db.prepare('select id,features,free from plans').all()) { let a = J(p.features, null); if (!Array.isArray(a)) a = [...cur.keys()];   // باقة بلا قائمة محفوظة: تُثبَّت مميزاتها الحالية أولاً
+          if (!(to ? !to.includes(p.id) : p.free)) a = a.concat(k); db.prepare('update plans set features=? where id=?').run(JSON.stringify(a), p.id); } }
+    });
+    for (const [k, x] of cur) if (!x.builtin && !keep.has(k)) db.prepare('delete from plan_features where k=?').run(k);   // المدمجة لا تُحذف
+    act && act(q.u.id, 'admin_plans', q, 'مميزات الباقات');
+    s.json({ cat: catalog() });
+  }));
   app.put('/api/admin/plans', auth, admin, wrap((q, s) => {
     const list = Array.isArray(q.body && q.body.plans) ? q.body.plans.slice(0, 20) : [];
     const up = db.prepare('update plans set name=?, days=?, price=?, limits=?, active=?, sort=?, note=?, price_usd=?, free=?, features=? where id=?'), ins = db.prepare('insert into plans(name,days,price,limits,active,sort,note,price_usd,free,features) values(?,?,?,?,?,?,?,?,?,?)');
@@ -196,7 +221,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
       const name = str(p.name, 30), days = Math.max(1, Math.min(3650, Math.floor(+p.days || 30))), price = Math.max(0, Math.min(1e7, Math.floor(+p.price || 0)));
       if (!name) continue;
       const L = {}; for (const k of LIM.KEYS) { const v = Math.floor(+((p.limits || {})[k])); if (v > 0) L[k] = Math.min(1e6, v); }
-      const pu = Math.max(0, Math.min(1e5, Math.round((+p.price_usd || 0) * 100) / 100)), fr = p.free ? 1 : 0, fe = JSON.stringify(Array.isArray(p.features) ? LIM.FEATS.filter(k => p.features.includes(k)) : LIM.FEATS);
+      const pu = Math.max(0, Math.min(1e5, Math.round((+p.price_usd || 0) * 100) / 100)), fr = p.free ? 1 : 0, fe = JSON.stringify(Array.isArray(p.features) ? catKeys().filter(k => p.features.includes(k)) : catKeys());
       if (p.id) up.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe, +p.id); else ins.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe);
     }
     act && act(q.u.id, 'admin_plans', q, list.length + ' باقة');

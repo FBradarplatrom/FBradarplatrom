@@ -10,7 +10,9 @@ const FEATS = ['gap', 'supplier', 'ai', 'watch', 'tiktok', 'profit', 'alerts', '
 const FLABEL = { gap: 'ثغرات السوق', supplier: 'إيجاد المورّد', ai: 'تحليل الإعلان بالذكاء الاصطناعي', watch: 'مراقبة المنافسين', tiktok: 'اتجاهات TikTok', profit: 'حاسبة الربح', alerts: 'التنبيهات (بريد/تيليغرام)', sheets: 'التصدير إلى Google Sheets' };
 function featuresOf(u) {
   if (!u || u.role === 'admin') return FEATS.slice();
-  try { const p = db && db.prepare('select features from plans where name=?').get(u.plan); if (p && p.features) { const f = JSON.parse(p.features); if (Array.isArray(f)) return FEATS.filter(k => f.includes(k)); } } catch (e) {}
+  let hidden = new Set();   // ميزة مدمجة أخفاها المدير من صفحة الأسعار: ليست جزءاً من العرض، فهي متاحة للجميع
+  try { hidden = new Set(db.prepare('select k from plan_features where builtin=1 and shown=0').all().map(r => r.k)); } catch (e) {}
+  try { const p = db && db.prepare('select features from plans where name=?').get(u.plan); if (p && p.features) { const f = JSON.parse(p.features); if (Array.isArray(f)) return FEATS.filter(k => f.includes(k) || hidden.has(k)); } } catch (e) {}
   return FEATS.slice();   // باقة يدوية/قديمة بلا قائمة: كل المميزات
 }
 const has = (u, k) => featuresOf(u).includes(k);
