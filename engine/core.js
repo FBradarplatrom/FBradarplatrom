@@ -200,9 +200,7 @@ function mkProduct(ads,NOW,L,proofs){
  const versions=[...vg.values()].reduce((x,y)=>x+y,0);
  const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
  const why=[];
- /* كل إعلاناته متوقفة: إن استمر أحدها 8 أيام فأكثر = «توقف بعد نجاح» (فرصة لسوق آخر)، وإلا يُقصى */
- if(!counted.length){const run=Math.max(-1,...ads.filter(a=>a.start&&a.end).map(a=>Math.floor((a.end-a.start)/D)));
-  if(run>=8)P.ended={days:run,last:Math.max(...ads.filter(a=>a.end).map(a=>+a.end))};else why.push('لا إعلان نشط: كل إعلاناته متوقفة'+(run>=0?' بعد '+run+' أيام فقط':''))}
+ if(!counted.length)why.push('لا إعلان نشط: كل إعلاناته متوقفة');
  if(counted.length){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
   const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
@@ -253,25 +251,18 @@ function analyze(rows,NOW,L){
   p.cur=modeOf(p.counted.filter(a=>a._p).map(a=>a._cur))||(MKT&&p.market&&MKT.COUNTRIES[p.market]?MKT.COUNTRIES[p.market].cur:'DZD');
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
- const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,ended:6,low:7,excl:8},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← توقف بعد نجاح ← ضعيف ← مقصاة
+ const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,low:7,excl:8},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← ضعيف ← مقصاة
  P.forEach(p=>{
-  p.recs=(p.ended?p.ads:p.counted).map(a=>scoreAd(a,p,NOW));
-  if(p.ended){const ref=p.recs.slice().sort((x,y)=>((y.a.end&&y.a.start?y.a.end-y.a.start:0)-(x.a.end&&x.a.start?x.a.end-x.a.start:0)))[0];
-   p.hits=p.tags.map(t=>({label:t,w:3}));p.pages=(p.ads[0]&&p.ads[0].page_name)||'—';p.also=[];
-   p.ref=ref;p.top=ref.a;p.cat=p.tier='ended';p.score=ref.score;p.promising=false;p.days=p.ended.days;p.rank=rank.ended;p.oldInfo=null;out.push(p);return}
+  p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
   p.hits=p.tags.map(t=>({label:t,w:3}));
   p.pages=(p.sellers[0]?p.sellers[0].name:'—')+(p.n>1?' و'+(p.n-1)+' آخرين':'');
   p.also=[];
   if(p.excl){const d=p.recs.filter(r=>r.age!=null).sort((x,y)=>x.age-y.age),ref=d[0]||p.recs[0]||null;
    p.ref=ref;p.top=ref?ref.a:p.ads[0];p.cat=p.tier='excl';p.score=0;p.promising=false;p.days=ref&&ref.age!=null?ref.age:0;p.rank=rank.excl;out.push(p);return}
-  /* كل نسخة (إعلان) تُوضع في تصنيفها حسب عمرها: للمنتج مدخل في كل تصنيف تقع فيه نسخه */
-  const by=new Map();p.recs.forEach(r=>{if(!by.has(r.cat))by.set(r.cat,[]);by.get(r.cat).push(r)});
-  const cats=[...by.keys()].sort((x,y)=>rank[x]-rank[y]);
-  cats.forEach((c,i)=>{const q=i?{...p}:p,rs=by.get(c).slice().sort((x,y)=>(y.age==null?-1:y.age)-(x.age==null?-1:x.age));
-   q.ref=rs[0];q.top=q.ref.a;q.cat=q.tier=c;q.score=q.ref.score;q.promising=c==='trial'&&rs.some(r=>r.promising);
-   q.days=q.ref.age!=null?q.ref.age:0;q.rank=rank[c];q.also=cats.filter(x=>x!==c);
-   q.oldInfo=null;
-   if(i)q.k=p.k+'#'+c;out.push(q)})});
+  /* بطاقة واحدة لكل منتج: تصنيفه = عمر أقدم إعلان نشط له (أطول إثبات). أعمار نسخه الأخرى تُذكر في «له نسخ أيضاً في» */
+  const rs=p.recs.slice().sort((x,y)=>(y.age==null?-1:y.age)-(x.age==null?-1:x.age)),ref=rs[0],c=ref.cat;
+  p.ref=ref;p.top=ref.a;p.cat=p.tier=c;p.score=ref.score;p.promising=false;p.days=ref.age!=null?ref.age:0;p.rank=rank[c];p.oldInfo=null;
+  p.also=[...new Set(p.recs.map(r=>r.cat))].filter(x=>x!==c).sort((x,y)=>rank[x]-rank[y]);out.push(p)});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
 return{analyze,sellerCount,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};

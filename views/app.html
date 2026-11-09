@@ -199,7 +199,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <div class="fl" id="d_fix"></div>
 </div>
 <button id="apply" type="button" class="btn">تطبيق وإعادة الحساب</button></details>
-<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="prom">🌱 واعد<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="ended">⏹️ توقف بعد نجاح<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
+<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="prom">🌱 واعد<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
 <div class="acts" style="display:flex;gap:8px"><button id="copy" type="button" class="btn ghost sm">نسخ للجدول</button><button id="csv" type="button" class="btn ghost sm">تحميل CSV</button><button id="gsheet" type="button" class="btn ghost sm" data-tool="sheet" data-src="results">📤 إلى Google Sheets</button></div></div>
 <div id="grid" class="grid"></div><div style="text-align:center;margin-top:20px"><button id="more" type="button" class="btn ghost" hidden>عرض المزيد</button></div>
 </div></section>
@@ -419,9 +419,7 @@ function mkProduct(ads,NOW,L,proofs){
  const versions=[...vg.values()].reduce((x,y)=>x+y,0);
  const P={ads,counted,stopped,sellers,n,copies,versions,market,markets};
  const why=[];
- /* كل إعلاناته متوقفة: إن استمر أحدها 8 أيام فأكثر = «توقف بعد نجاح» (فرصة لسوق آخر)، وإلا يُقصى */
- if(!counted.length){const run=Math.max(-1,...ads.filter(a=>a.start&&a.end).map(a=>Math.floor((a.end-a.start)/D)));
-  if(run>=8)P.ended={days:run,last:Math.max(...ads.filter(a=>a.end).map(a=>+a.end))};else why.push('لا إعلان نشط: كل إعلاناته متوقفة'+(run>=0?' بعد '+run+' أيام فقط':''))}
+ if(!counted.length)why.push('لا إعلان نشط: كل إعلاناته متوقفة');
  if(counted.length){
   /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
   const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
@@ -472,25 +470,18 @@ function analyze(rows,NOW,L){
   p.cur=modeOf(p.counted.filter(a=>a._p).map(a=>a._cur))||(MKT&&p.market&&MKT.COUNTRIES[p.market]?MKT.COUNTRIES[p.market].cur:'DZD');
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
- const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,ended:6,low:7,excl:8},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← توقف بعد نجاح ← ضعيف ← مقصاة
+ const rank={trial:0,prom:1,gem:2,fire:3,maybe:4,old:5,low:7,excl:8},out=[];   // تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← ضعيف ← مقصاة
  P.forEach(p=>{
-  p.recs=(p.ended?p.ads:p.counted).map(a=>scoreAd(a,p,NOW));
-  if(p.ended){const ref=p.recs.slice().sort((x,y)=>((y.a.end&&y.a.start?y.a.end-y.a.start:0)-(x.a.end&&x.a.start?x.a.end-x.a.start:0)))[0];
-   p.hits=p.tags.map(t=>({label:t,w:3}));p.pages=(p.ads[0]&&p.ads[0].page_name)||'—';p.also=[];
-   p.ref=ref;p.top=ref.a;p.cat=p.tier='ended';p.score=ref.score;p.promising=false;p.days=p.ended.days;p.rank=rank.ended;p.oldInfo=null;out.push(p);return}
+  p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
   p.hits=p.tags.map(t=>({label:t,w:3}));
   p.pages=(p.sellers[0]?p.sellers[0].name:'—')+(p.n>1?' و'+(p.n-1)+' آخرين':'');
   p.also=[];
   if(p.excl){const d=p.recs.filter(r=>r.age!=null).sort((x,y)=>x.age-y.age),ref=d[0]||p.recs[0]||null;
    p.ref=ref;p.top=ref?ref.a:p.ads[0];p.cat=p.tier='excl';p.score=0;p.promising=false;p.days=ref&&ref.age!=null?ref.age:0;p.rank=rank.excl;out.push(p);return}
-  /* كل نسخة (إعلان) تُوضع في تصنيفها حسب عمرها: للمنتج مدخل في كل تصنيف تقع فيه نسخه */
-  const by=new Map();p.recs.forEach(r=>{if(!by.has(r.cat))by.set(r.cat,[]);by.get(r.cat).push(r)});
-  const cats=[...by.keys()].sort((x,y)=>rank[x]-rank[y]);
-  cats.forEach((c,i)=>{const q=i?{...p}:p,rs=by.get(c).slice().sort((x,y)=>(y.age==null?-1:y.age)-(x.age==null?-1:x.age));
-   q.ref=rs[0];q.top=q.ref.a;q.cat=q.tier=c;q.score=q.ref.score;q.promising=c==='trial'&&rs.some(r=>r.promising);
-   q.days=q.ref.age!=null?q.ref.age:0;q.rank=rank[c];q.also=cats.filter(x=>x!==c);
-   q.oldInfo=null;
-   if(i)q.k=p.k+'#'+c;out.push(q)})});
+  /* بطاقة واحدة لكل منتج: تصنيفه = عمر أقدم إعلان نشط له (أطول إثبات). أعمار نسخه الأخرى تُذكر في «له نسخ أيضاً في» */
+  const rs=p.recs.slice().sort((x,y)=>(y.age==null?-1:y.age)-(x.age==null?-1:x.age)),ref=rs[0],c=ref.cat;
+  p.ref=ref;p.top=ref.a;p.cat=p.tier=c;p.score=ref.score;p.promising=false;p.days=ref.age!=null?ref.age:0;p.rank=rank[c];p.oldInfo=null;
+  p.also=[...new Set(p.recs.map(r=>r.cat))].filter(x=>x!==c).sort((x,y)=>rank[x]-rank[y]);out.push(p)});
  out.sort((a,b)=>a.rank-b.rank||(b.ben||0)-(a.ben||0)||(b.days||0)-(a.days||0));   // التصنيف ← الفائدة ← الأطول عمراً
  return out}
 return{analyze,sellerCount,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
@@ -589,9 +580,9 @@ async function analyze(){
 
 /* أرقام أعلى صفحة التحليل: كل إعلان وكل منتج يُعد مرة واحدة */
 function sumStats(){const U=new Map();PROD.forEach(p=>{if(!U.has(p.ads))U.set(p.ads,p)});   /* مداخل المنتج الواحد في عدة تصنيفات تتشارك نفس قائمة الإعلانات */const ps=[...U.values()],ok=ps.filter(p=>!p.excl);
- const inAds=ok.flatMap(p=>p.ended?p.ads:p.counted),exclP=ps.filter(p=>p.excl).reduce((s,p)=>s+p.ads.length,0),stoppedIn=ok.reduce((s,p)=>s+(p.ended?0:p.ads.length-p.counted.length),0),flt=RST&&RST.filtered||0;
+ const inAds=ok.flatMap(p=>p.counted),exclP=ps.filter(p=>p.excl).reduce((s,p)=>s+p.ads.length,0),stoppedIn=ok.reduce((s,p)=>s+p.ads.length-p.counted.length,0),flt=RST&&RST.filtered||0;
  return{observed:RST&&RST.observed?RST.observed:null,searches:RST&&RST.searches||0,fetched:ALL.length+flt,analyzed:inAds.length,excluded:exclP+stoppedIn+flt,
-  excl_detail:`عند الاستقبال (ليست منتجات): ${flt} · في التحليل (علامة رسمية/ليس منتجاً/متوقف سريعاً): ${exclP} · متوقفة داخل منتجات نشطة: ${stoppedIn}`,products:ok.length,sellers:CORE.sellerCount(inAds)}}
+  excl_detail:`عند الاستقبال (ليست منتجات): ${flt} · في التحليل (علامة رسمية/ليس منتجاً/كل إعلاناته متوقفة): ${exclP} · متوقفة داخل منتجات نشطة: ${stoppedIn}`,products:ok.length,sellers:CORE.sellerCount(inAds)}}
 function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'+id)||{}).checked;
  const q=CORE.N(v('q')).trim(),md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
@@ -601,8 +592,8 @@ function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'
  const so=v('sort'),tk=p=>{const t=trackOf(p);return t?(t.act?t.n:-1):0};   /* المتابعة: رُصد نشطاً في أيام جمع أكثر = أوثق */
  VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='new'?a.days-b.days:a.rank-b.rank||(b.ben||0)-(a.ben||0)||tk(b)-tk(a)||(b.days||0)-(a.days||0));
  const S=sumStats(),nf=x=>x==null?'—':Number(x).toLocaleString('ar-DZ');
- $('#sum').innerHTML=[[S.observed,'الإعلانات المرصودة',S.observed==null?'العدد الذي تعرضه مكتبة ميتا أعلى نتائج البحث. يظهر للدفعات التي جُمعت بالإضافة 1.5 فأحدث':'مجموع ما عرضته مكتبة ميتا أعلى نتائج '+S.searches+' بحث («~N نتيجة»)'],
-  [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار)'],[S.analyzed,'دخلت التحليل','إعلانات نشطة في منتجات غير مستبعدة (وإعلانات «توقف بعد نجاح»)'],
+ $('#sum').innerHTML=[[S.observed,'الإعلانات المرصودة',S.observed==null?'العدد الذي تعرضه مكتبة ميتا أعلى نتائج البحث («~220 نتيجة»). يظهر للدفعات التي جُمعت بالإضافة 1.6 فأحدث: حدّث الإضافة وأعد الجمع':'مجموع ما عرضته مكتبة ميتا أعلى نتائج '+S.searches+' بحث («~N نتيجة»)'],
+  [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار)'],[S.analyzed,'دخلت التحليل','إعلانات نشطة في منتجات غير مستبعدة. تُجمع في منتجات: انظر «عدد المنتجات»'],
   [S.excluded,'الإعلانات المستبعدة',S.excl_detail],[S.products,'عدد المنتجات','منتجات مختلفة غير مستبعدة (المنتج الواحد يُعد مرة واحدة ولو ظهر في تصنيفين)'],[S.sellers,'عدد البائعين','صفحات/متاجر مختلفة في الإعلانات التي دخلت التحليل']]
   .map(x=>`<div class="kpi" title="${esc(x[2]||'')}"><b>${nf(x[0])}</b><span>${x[1]}</span></div>`).join('');
  draw()}
@@ -652,8 +643,8 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
-<div class="pc-tags">${p.excl?'':`${p.ended?`<span class="tg">استمر ${p.ended.days} يوماً ثم توقف${p.ended.last?' في '+fd(p.ended.last):''}: فرصة لسوق آخر</span>`:r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
-<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div>${p.versions>1?`<div title="مجموع نسخ إعلانات هذا المنتج كما تعرضها مكتبة ميتا («X إعلانات تستخدم هذا التصميم»)، معلومة فقط"><b>${p.versions}</b><span>نسخ</span></div>`:''}${p.n>1?`<div title="صفحات/متاجر مختلفة تعلن عن هذا المنتج، معلومة فقط"><b>${p.n}</b><span>بائعين</span></div>`:''}<div><b>${p.ended?p.ended.days:r&&r.age!=null?r.age:'—'}</b><span>${p.ended?'استمر (يوم)':'عمر (يوم)'}</span></div><div><b>${pr}</b><span>السعر</span></div></div>
+<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
+<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div>${p.versions>1?`<div title="مجموع نسخ إعلانات هذا المنتج كما تعرضها مكتبة ميتا («X إعلانات تستخدم هذا التصميم»)، معلومة فقط"><b>${p.versions}</b><span>نسخ</span></div>`:''}${p.n>1?`<div title="صفحات/متاجر مختلفة تعلن عن هذا المنتج، معلومة فقط"><b>${p.n}</b><span>بائعين</span></div>`:''}<div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join('')+(p.fix&&(p.fix.terms.length||p.fix.pages.length)?`<button class="btn ghost sm" data-fix="${esc(p.k)}" title="أعد هذا المنتج ولا تستبعد بهذا السبب مستقبلاً">↩️ سبب خاطئ</button>`:''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
 ${srcBox(p,kw,imgs)}
@@ -779,7 +770,7 @@ async function rDash(){
  const gf=L?(L.counts?L.counts.gem+L.counts.fire:L.summary.filter(p=>p.tier==='gem'||p.tier==='fire').length):0;
  let h=`<div class="kps">${kpi('inbox',inbox.reduce((s,r)=>s+r.ads,0),'إعلان وارد من الإضافة')}${kpi('clock',pend,'دفعات بانتظار التحليل')}${kpi('chart',anal.length,'تحليل مكتمل')}${kpi('award',gf,'💎🔥 في آخر تحليل')}${kpi('star',sv.length,'منتج محفوظ')}</div>`;
  if(!rs.length){h+=`<div class="card"><h2>ابدأ في ثلاث خطوات</h2><div class="steps"><div><div class="n">1</div><b>ثبّت الإضافة</b><p class="sub">من «جمع الإعلانات ← الإضافة» نزّلها وثبّتها في Chrome مرة واحدة.</p></div><div><div class="n">2</div><b>اجمع الإعلانات</b><p class="sub">ابدأ بحثاً سريعاً أو جماعياً بالكلمات الذهبية من المنصة نفسها، وتصل إلى «الإعلانات الواردة».</p></div><div><div class="n">3</div><b>حلّل واختر</b><p class="sub">تُصنَّف المنتجات، فاحفظ ما يعجبك وابحث عن مورّده.</p></div></div><p style="margin-top:14px"><button class="btn" data-v="collect">افتح جمع الإعلانات</button> <button class="btn ghost" data-v="analyze">أو ارفع ملفاً الآن</button></p></div>`;$('#d-body').innerHTML=h;return}
- const cn=L&&L.counts,keys=['trial','prom','gem','fire','old','ended','low','excl'].concat(cn&&cn.maybe?['maybe']:[]).concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
+ const cn=L&&L.counts,keys=['trial','prom','gem','fire','old','low','excl'].concat(cn&&cn.maybe?['maybe']:[]).concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
  const days=[...Array(14)].map((_,i)=>{const d=new Date(Date.now()-(13-i)*864e5);return{k:d.toLocaleDateString('en-CA'),n:0,l:d.getDate()}});
  rs.forEach(r=>{const k=new Date(r.created_at).toLocaleDateString('en-CA'),x=days.find(d=>d.k===k);if(x)x.n+=r.ads});const mx=Math.max(1,...days.map(d=>d.n));
  h+=`<div class="grid2"><div class="card"><h2>توزيع تصنيفات آخر تحليل</h2>${cn&&tot?`<div class="stack">${keys.map(k=>cn[k]?`<i style="width:${cn[k]/tot*100}%;background:${CC[k]}" title="${CL[k]}"></i>`:'').join('')}</div><div class="legend">${keys.map(k=>`<span><i style="background:${CC[k]}"></i>${CL[k]}<b>${cn[k]||0}</b></span>`).join('')}</div>`:'<p class="sub">افتح أي تحليل من الأرشيف ليظهر التوزيع هنا.</p>'}</div>

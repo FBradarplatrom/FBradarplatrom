@@ -57,9 +57,7 @@ eq('الترتيب: تجربة ثم جوهرة ثم رابح ثم قديم ثم 
 eq('لا فئة للمراقبة',P.some(p=>p.cat==='watch'),false);
 // ===== كل نسخة في تصنيفها =====
 P=A([row({ad_id:'c1',start_date:old(25),image_url:'https://cdn.example.com/i/same.jpg',title:'يساعد طفلك على النوم'}),row({ad_id:'c2',start_date:old(3),image_url:'https://cdn.example.com/i/same.jpg?x=1',title:'يساعد طفلك على النوم'})]);
-eq('إعلان عمره 25 ونسخة عمرها 3: مدخلان جوهرة وتجربة',[P.length,P.map(p=>p.cat)],[2,['trial','gem']]);
-eq('كل مدخل يرى تصنيف النسخ الأخرى',P.map(p=>p.also.join()).sort(),['gem','trial']);
-eq('مفاتيح المدخلين مختلفة',new Set(P.map(p=>p.k)).size,2);
+eq('إعلان عمره 25 ونسخة عمرها 3: بطاقة واحدة في «جوهرة» (أقدم إعلان)، وتُذكر التجربة',[P.length,P.map(p=>p.cat),P[0].also],[1,['gem'],['trial']]);
 // ===== الصور والروابط والقديم =====
 let n=C.normRow({ad_id:'1234567890123',images:'["https://cdn.example.com/a.jpg?x=1","https://cdn.example.com/b.jpg"]',video_hd_url:'https://cdn.example.com/v.mp4'});
 eq('أول صورة من مصفوفة',n.image_url,'https://cdn.example.com/a.jpg?x=1');
@@ -68,7 +66,7 @@ eq('رابط الإعلان من المعرّف',n.library_url,'https://www.face
 P=A([row({ad_id:'o1',page_id:'o1',start_date:old(90),image_url:'https://cdn.example.com/i/old.jpg',title:'يساعد طفلك على النوم',body:'x'}),row({ad_id:'o2',page_id:'o1',start_date:old(80),image_url:'https://cdn.example.com/i/old.jpg?z=1',title:'يساعد طفلك على النوم',body:'x'})]);
 eq('قديم: التصنيف بالمدة',P[0].cat,'old');
 P=A([row({ad_id:'o3',start_date:old(90),image_url:'https://cdn.example.com/i/o3.jpg',title:'يساعد طفلك على النوم'}),row({ad_id:'o4',start_date:old(20),image_url:'https://cdn.example.com/i/o3.jpg?z=1',title:'يساعد طفلك على النوم'})]);
-eq('قديم مع نسخة جوهرة: مدخلان، وكل مدخل يذكر الآخر',[P.map(p=>p.cat),P.find(p=>p.cat==='old').also],[['gem','old'],['gem']]);
+eq('قديم مع نسخة جوهرة: بطاقة واحدة «قديم» وتُذكر الجوهرة',[P.map(p=>p.cat),P[0].also],[['old'],['gem']]);
 n=C.normRow({ad_id:'5',snapshot_videos:'[{"video_preview_image_url":"https://s.fbcdn.net/p.jpg","video_hd_url":"https://video.fbcdn.net/a.mp4?x=1"}]'});
 eq('فيديو من عمود متداخل (يتجاوز صورة المعاينة)',[n.video_url,n.image_url],['https://video.fbcdn.net/a.mp4?x=1','https://s.fbcdn.net/p.jpg']);
 n=C.normRow({ad_id:'6',media:'https://cdn.example.com/x/clip.mp4',other:'https://cdn.example.com/x/pic.jpg'});
@@ -82,9 +80,9 @@ eq('البائعون بلا تكرار عبر المنتجات (صفحة + مت�
 P=A([row({ad_id:'f1',page_id:'f1',title:'ثلاجة صغيرة للسيارة',body:'ثلاجة تبرد مشروباتك. السعر 15000 دج',image_url:'https://c/i/f1.jpg'})]);
 eq('كبير الحجم/هش/أكل: تنبيه لا إقصاء',[P[0].cat!=='excl',/قد يكون/.test(P[0].warn||'')],[true,true]);
 P=A([row({ad_id:'s1',page_id:'s1',status:'Inactive',start_date:old(40),end_date:old(15),title:'جهاز يزيل البقع',image_url:'https://c/i/s1.jpg'})]);
-eq('توقف بعد 25 يوماً: «توقف بعد نجاح»',[P[0].cat,P[0].days],['ended',25]);
+eq('كل إعلاناته متوقفة (ولو بعد 25 يوماً): يُقصى',P[0].cat,'excl');
 P=A([row({ad_id:'s2',page_id:'s2',status:'Inactive',start_date:old(10),end_date:old(7),title:'جهاز يزيل البقع',image_url:'https://c/i/s2.jpg'})]);
-eq('توقف بعد 3 أيام: يُقصى',[P[0].cat,/بعد 3 أيام/.test(P[0].why.join(''))],['excl',true]);
+eq('كل إعلاناته متوقفة: سبب واضح',/كل إعلاناته متوقفة/.test(P[0].why.join('')),true);
 P=A([row({ad_id:'s3',page_id:'s3',status:'Inactive',title:'جهاز يزيل البقع',image_url:'https://c/i/s3.jpg'})]);
 eq('متوقف بلا تاريخ: يُقصى',P[0].cat,'excl');
 P=A([row({ad_id:'g1',page_id:'g1',start_date:old(20),title:'ساعة يد أنيقة',body:'ساعة عادية',image_url:'https://c/i/g1.jpg'}),row({ad_id:'g2',page_id:'g2',start_date:old(12),title:'جهاز يقضي على الناموس',body:'x',image_url:'https://c/i/g2.jpg'})]);

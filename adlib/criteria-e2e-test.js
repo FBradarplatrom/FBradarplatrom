@@ -32,7 +32,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' });
     await pg.setInputFiles('#file', f); await pg.waitForSelector('.pc', { timeout: 15000 }); await pg.waitForTimeout(800);
     const tabs = await pg.$$eval('#tabs button', bs => bs.map(x => x.dataset.t));
-    ok(tabs.slice(1, 8).join(',') === 'trial,prom,gem,fire,old,ended,low', 'التبويبات: تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← توقف بعد نجاح ← ضعيف: ' + tabs.join(','));
+    ok(tabs.slice(1, 7).join(',') === 'trial,prom,gem,fire,old,low' && !tabs.includes('ended'), 'التبويبات: تحت التجربة ← واعد ← جوهرة ← رابح ← قديم ← ضعيف (بلا «توقف بعد نجاح»): ' + tabs.join(','));
     const P = await pg.evaluate(() => window.WPR.PROD().map(p => ({ cat: p.cat, name: p.name, ben: p.ben, warn: p.warn || '' })));
     const names = P.map(p => p.cat + ':' + p.name);
     ok(P[0].cat === 'trial' && P[1].cat === 'prom', 'الترتيب يبدأ بتحت التجربة ثم واعد: ' + JSON.stringify(names));
@@ -42,12 +42,12 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(gems.some(p => /ساعة/.test(p.name)) , 'منتج بلا فائدة يبقى في تصنيف مدته (لا يختفي)');
     ok(gems.some(p => /قشابية/.test(p.name)), 'القشابية لا تُقصى بسبب «المرأة»');
     ok(gems.some(p => /مرآة/.test(p.name) && /قد يكون هش/.test(p.warn)), 'مرآة الحائط: تنبيه «قد يكون هشاً» بدل الإقصاء');
-    ok(P.some(p => p.cat === 'ended' && /الشعر/.test(p.name)), 'إعلان استمر 30 يوماً ثم توقف = ⏹️ توقف بعد نجاح');
+    ok(P.some(p => p.cat === 'excl' && /الشعر/.test(p.name)), 'منتج كل إعلاناته متوقفة: مستبعد');
     if (process.env.SHOT) await pg.locator('#grid').screenshot({ path: process.env.SHOT + '/grid.png' });
     ok(!(await pg.$('.pc .bn')) && !(await pg.$('.pc .ring')), 'لا وسم «فائدة/بلا فائدة» ولا دائرة نقاط: الفائدة للترتيب فقط');
     // زر «سبب خاطئ» على إعلان تكوين
     await pg.click('#tabs [data-t="excl"]'); await pg.waitForSelector('[data-fix]');
-    const why = await pg.locator('.pc .tg.bad').first().textContent();
+    const why = await pg.locator('.pc:has([data-fix]) .tg.bad').first().textContent();
     ok(/«تكوين»/.test(why), 'سبب الإقصاء يُظهر الكلمة في جملتها: ' + why.slice(0, 120));
     const crs = id => ({ ad_archive_id: id, page_id: '5' + id, page_name: 'Hair Pro', start_date: Math.floor(NOW / 1000) - 864000, is_active: true, collation_count: 1, publisher_platform: ['FACEBOOK'],
       snapshot: { title: 'تكوين في الحلاقة سجل الآن', body: { text: 'تكوين في الحلاقة سجل الآن. السعر 9000 دج' }, link_url: 'https://hair.dz/formation-' + id, display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/' + id + '.jpg' }] } });
@@ -56,7 +56,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const mir = await (await pg.request.post(BASE + '/api/lib/ingest', { data: { ads: [Object.assign(crs('9003'), { snapshot: { title: 'مرآة حائط كبيرة', body: { text: 'مرآة جدارية كبيرة بإطار. السعر 9000 دج' }, link_url: 'https://deco.dz/products/mirror-9003', cta_type: 'SHOP_NOW', display_format: 'IMAGE', images: [{ resized_image_url: 'https://scontent.example/9003.jpg' }] } })], ctx: { query: 'x', country: 'DZ' } } })).json();
     ok(mir.added === 1 && !mir.filtered, 'الهش لا يُستبعد عند الاستقبال');
     await pg.click('[data-fix]'); await pg.waitForFunction(() => /تم التصحيح/.test(document.querySelector('#toasts').textContent), null, { timeout: 8000 });
-    await pg.waitForFunction(() => !window.WPR.PROD().some(p => p.cat === 'excl'), null, { timeout: 8000 });
+    await pg.waitForFunction(() => !window.WPR.PROD().some(p => p.cat === 'excl' && /تكوين/.test(p.name)), null, { timeout: 8000 });
     ok(true, 'بعد «سبب خاطئ» عاد المنتج');
     const fx = await (await pg.request.get(BASE + '/api/lib/fix')).json();
     ok(fx.ignore.includes('تكوين'), 'التصحيح محفوظ في الحساب: ' + fx.ignore.join('،'));
@@ -106,12 +106,19 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(num(K['الإعلانات المرصودة']) === 220 && num(K['الإعلانات التي تم جلبها']) === 6 && num(K['دخلت التحليل']) === 5 && num(K['الإعلانات المستبعدة']) === 1, 'المرصود 220 · المجلوب 6 (بلا تكرار) · التحليل 5 · المستبعد 1: ' + JSON.stringify(K));
     ok(num(K['دخلت التحليل']) + num(K['الإعلانات المستبعدة']) === num(K['الإعلانات التي تم جلبها']), 'المجلوب = دخلت التحليل + المستبعدة');
     const PR = await pg.evaluate(() => { const u = new Map(); window.WPR.PROD().forEach(p => { if (!u.has(p.ads)) u.set(p.ads, p); }); return [...u.values()].filter(p => !p.excl).map(p => ({ name: p.name, v: p.versions, n: p.n })); });
+    const tabN = await pg.$$eval('#tabs button', bs => Object.fromEntries(bs.map(b => [b.dataset.t, +b.querySelector('b').textContent])));
+    ok(tabN.all === num(K['عدد المنتجات']) && ['trial', 'prom', 'gem', 'fire', 'old', 'low'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all, '«الكل» = عدد المنتجات = مجموع التبويبات (بطاقة واحدة لكل منتج): ' + JSON.stringify(tabN));
     ok(num(K['عدد المنتجات']) === PR.length && num(K['عدد البائعين']) === 4, 'المنتجات بلا تكرار، والبائعون 4 صفحات مختلفة: ' + JSON.stringify(PR));
     const qm = PR.find(p => /رجالية/.test(p.name)), br = PR.find(p => /برنوس/.test(p.name));
     ok(qm && qm.v === 4 && qm.n === 1, 'النسخ: إعلان عادي + مجموعة من 3 = 4 نسخ، بائع واحد');
     ok(br && br.n === 2, 'البرنوس: بائعان');
     const st = await pg.$$eval('.pc .pc-st', b => b.map(x => x.textContent));
     ok(st.some(t => /4\s*نسخ/.test(t)) && st.some(t => /2\s*بائعين/.test(t)) && !(await pg.$('.pc .bn')), 'البطاقة: «نسخ» و«بائعين» كمعلومة، ولا وسم فائدة');
+    // قراءة «~220 نتيجة» من نص الصفحة: علامات اتجاه مخفية، أرقام عربية، فواصل
+    const src = fs.readFileSync(path.join(__dirname, '..', 'extensions', 'ad-collector', 'collector.js'), 'utf8');
+    const TOT_RE = eval(/const TOT_RE = (\/.*\/i);/.exec(src)[1]), BIDI = eval(/const BIDI = (\/.*\/g);/.exec(src)[1]);
+    const rd = t => { const m = TOT_RE.exec(' ' + t.replace(BIDI, '').trim().replace(/[٠-٩]/g, x => String('٠١٢٣٤٥٦٧٨٩'.indexOf(x)))); return m ? parseInt(m[1].replace(/[^\d]/g, ''), 10) : 0; };
+    ok(rd('\u200f~220 نتيجة') === 220 && rd('~٢٢٠ نتيجة') === 220 && rd('~1,250 results') === 1250 && rd('environ 3 400 résultats') === 3400 && rd('‏~1٬250 نتيجة') === 1250 && rd('4 نتائج') === 4 && rd('السعر 2900 دج') === 0, 'قراءة عدد النتائج من نص الصفحة بكل الصيغ');
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log('\n✅ اختبار المعايير:', pass, 'فحصاً ناجحاً');
   } catch (e) { console.error('✖', e.message, '\n', log.slice(-1500)); process.exitCode = 1; }

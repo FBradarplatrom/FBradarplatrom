@@ -16,7 +16,7 @@
   let settings = { speed: 'normal', maxAds: 200, waitSeconds: 20, activeOnly: true };
 
   const seen = new Set();            // ids surfaced by THIS search
-  let total = 0;                     // عدد النتائج الذي تعرضه مكتبة ميتا لهذا البحث («~220 نتيجة»)
+  let total = 0, sentTotal = 0;      // عدد النتائج الذي تعرضه مكتبة ميتا لهذا البحث («~220 نتيجة»)
   const sent = new Map();            // id -> signature of what was already handed over
   const early = [];                  // captured before the platform said "start" (kept in memory only)
   let pending = [], flushTimer = null, netCount = 0, lastNewAt = Date.now();
@@ -44,6 +44,7 @@
     while (pending.length) {
       const chunk = pending.splice(0, 40);
       if (!total) domTotal();
+      sentTotal = total;
       send({ cmd: 'ads', raw: chunk, href: location.href, ctx: { query: queryLabel(), country: countryParam(), total } });
     }
   }
@@ -98,10 +99,18 @@
     }
   }
   // احتياط: قراءة «~220 نتيجة / ~220 results» من الصفحة نفسها
-  const TOT_RE = /^~?\s*([\d][\d.,\s\u00a0\u202f]*)\s*(?:results?|résultats?|resultados|نتيجة|نتائج|ergebnisse|risultati|hasil|kết quả)\b/i;
+  // «~220 نتيجة» / «~220 results» / «environ 220 résultats»: علامات الاتجاه المخفية والأرقام العربية تُنظَّف أولاً
+  const TOT_RE = /(?:^|[\s~≈])(?:about|environ|حوالي|نحو|около)?\s*~?\s*(\d[\d.,\s\u00a0\u202f\u066c]*)\s*(?:\+\s*)?(?:results?|résultats?|resultados|risultati|ergebnisse|resultaten|wyników|sonuç|hasil|kết quả|ผลลัพธ์|件|条结果|個結果|نتيجة|نتائج|نتيجه)/i;
+  const BIDI = /[\u200e\u200f\u202a-\u202e\u2066-\u2069\u061c]/g;
   function domTotal() {
-    try { for (const el of document.querySelectorAll('div[role="heading"], h2, h3, span, div')) { if (el.childElementCount > 2) continue; const t = (el.textContent || '').trim(); if (t.length > 40) continue;
-      const m = TOT_RE.exec(t.replace(/[٠-٩]/g, (x) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(x)))); if (m) { const n = parseInt(m[1].replace(/[^\d]/g, ''), 10); if (n > total && n < 1e7) total = n; return; } } } catch (_) { /* ignore */ }
+    try {
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let nd, k = 0;
+      while ((nd = w.nextNode()) && k++ < 20000) {
+        const t = (nd.nodeValue || '').replace(BIDI, '').trim(); if (!t || t.length > 60 || !/\d|[٠-٩]/.test(t)) continue;
+        const m = TOT_RE.exec(' ' + t.replace(/[٠-٩]/g, (x) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(x))));
+        if (m) { const n = parseInt(m[1].replace(/[^\d]/g, ''), 10); if (n > 0 && n < 1e7) { if (n > total) total = n; return; } }
+      }
+    } catch (_) { /* ignore */ }
   }
   function scanScripts() {
     const out = [];
@@ -201,7 +210,8 @@
     if (run.status !== 'running') return;
     run.status = 'done';
     flush();
-    if (!total) domTotal();
+    domTotal();
+    if (total && total !== sentTotal) { sentTotal = total; send({ cmd: 'ads', raw: [], href: location.href, ctx: { query: queryLabel(), country: countryParam(), total } }); }   // العدد وحده إن لم يُرسل بعد
     send({ cmd: 'job_done', href: location.href, reason, seen: seen.size, total });
   }
 
