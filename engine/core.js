@@ -22,7 +22,7 @@ function compile(entry){
  const cjk=alts.some(t=>CJK.test(t)),re=cjk?new RegExp('(?:'+body+')','gu'):new RegExp('(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+body+')(?![\\p{L}\\p{M}\\p{N}])','gu');   // الصينية والتايلاندية بلا مسافات
  re._body=body;re._cjk=cjk;re._len=Math.max(...alts.map(t=>t.length));return re}
 function parseList(txt,w){const out=[],seen=new Set();String(txt||'').split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean).forEach(e=>{if(seen.has(e))return;seen.add(e);const re=compile(e);if(re)out.push({id:w+':'+e,label:e.split('/')[0],w,re})});return out}
-function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1),bulky:parseList(t.bulky,1),fragile:parseList(t.fragile,1)}}
+function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1).filter(e=>!MKSET.has(N(e.label).trim())),bulky:parseList(t.bulky,1),fragile:parseList(t.fragile,1)}}
 /* الأداء: كل قائمة تُدمج في تعبير واحد (مجموعة لكل مدخل، الأطول أولاً) فيُقرأ النص مرة واحدة بدل مرة لكل كلمة */
 function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.length)return null;const ord=arr.slice().sort((a,b)=>b.re._len-a.re._len),src=ord.map(e=>'('+e.re._body+')').join('|');
   return{re:new RegExp(bound?'(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+src+')(?![\\p{L}\\p{M}\\p{N}])':'(?:'+src+')','gu'),ord}};
@@ -144,6 +144,15 @@ function trendOf(p,NOW){const d=p.ads.filter(a=>a.start),t=a=>+a.start;
  if(c14>p14&&n14>=1)return p.n<=3?'emerging':'rising';
  return'steady'}
 /* ---------- منتج واحد: الأدلة المشتركة والإقصاء ---------- */
+const MKN=h=>{const m=MARKET.exec(h);const n=m?m[2]:h;return{aliexpress:'AliExpress',alibaba:'Alibaba',amazon:'Amazon',temu:'Temu',jumia:'Jumia',ouedkniss:'Ouedkniss','linktr.ee':'Linktree','bit.ly':'رابط مختصر',tinyurl:'رابط مختصر','t.me':'Telegram'}[n]||n};
+const MKSET=new Set(['jumia','ouedkniss','temu','aliexpress','amazon','alibaba','shein']);
+/* بقايا اسم الصفحة بعد حذف العلامة: كلمات «رسمي/متجر/الدولة» فقط = صفحة العلامة */
+const OFFW=new Set('official officiel officielle store shop boutique online officialstore global international algerie algeria dz dza maroc morocco tunisie tunisia france fr uk usa us eg egypt ksa uae mena africa afrique arabia arab الرسمي الرسميه الرسمية رسمي متجر الجزائر الجزائريه المغرب تونس مصر السعوديه الامارات العربيه'.split(' '));
+function officialBrand(sl,L){if(!L.brands||!L.brands.length)return'';
+ const h=String(sl.host||'').split('.').slice(0,-1).join(' ');let hm=h&&!SOC.test(sl.host||'')?findAll(N(h),L.brands):[];if(hm.length)return hm[0].e.label;
+ const nm=N(sl.name||'').trim();if(!nm)return'';const ms=findAll(nm,L.brands);if(!ms.length)return'';
+ let rest=nm;ms.forEach(m=>{rest=rest.slice(0,m.s)+' '.repeat(Math.max(0,m.t-m.s))+rest.slice(m.t)});
+ const left=rest.split(/[^\p{L}\p{N}]+/u).filter(w=>w&&!OFFW.has(w));return left.length?'':ms[0].e.label}
 const modeOf=a=>{const c=new Map();a.forEach(x=>x&&c.set(x,(c.get(x)||0)+1));let b='',n=0;c.forEach((v,k)=>{if(v>n){n=v;b=k}});return b};
 function mkProduct(ads,NOW,L,proofs){
  clusterSellers(ads);
@@ -159,8 +168,9 @@ function mkProduct(ads,NOW,L,proofs){
  const why=[];
  if(!counted.length)why.push('لا إعلان نشط: كل إعلاناته متوقفة');
  if(counted.length){
-  const bt=N(counted.map(a=>a.page_name+' '+hostOf(a)+' '+a.store_name).join(' \n ')),bm=findAll(bt,L.brands);
-  if(bm.length)why.push('علامة كبيرة مؤكَّدة بين بائعيه: '+[...new Set(bm.map(m=>m.e.label))].join('، '));
+  /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
+  const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
+  if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));
   const tx=N([...new Set(counted.map(a=>a.title+' '+a.body+' '+a.link_description))].join(' \n ')),
    vm=findAll(tx,L.bulky),fm=findAll(tx,L.fragile);
   if(vm.length)why.push('كبير الحجم، لا يصلح للدفع عند الاستلام: '+[...new Set(vm.map(m=>m.e.label))].slice(0,3).join('، '));
@@ -170,6 +180,7 @@ function mkProduct(ads,NOW,L,proofs){
    if(bad.length&&bad.length*2>=counted.length){const by={};bad.forEach(r=>{by[r.kind]=(by[r.kind]||0)+1});const top=Object.keys(by).sort((x,y)=>by[y]-by[x])[0],r=bad.find(x=>x.kind===top);
     why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''))}}}
  P.why=why;P.excl=why.length>0;
+ const mk=counted.map(a=>hostOf(a)).find(h=>MARKET.test(h));P.mktTag=mk?MKN(mk):'';
  let tags=[],tg=new Set(),benOk=false,strong=false;
  counted.forEach(a=>{const r=benefitAd(a,L);if(r.ok&&r.tag){benOk=true;if(r.strong)strong=true;if(!tags.includes(r.tag)&&tags.length<3)tags.push(r.tag);r.tg.forEach(x=>tg.add(x))}});   // الفائدة لا تُحتسب إلا بوسم واحد على الأقل يصفها
  P.benOk=benOk;P.strong=strong;P.tags=tags;P.tg=tg;P.proofs=proofs||new Map();
@@ -195,9 +206,11 @@ function scoreAd(a,P,NOW){
  const raw=ev.reduce((s,e)=>s+e.pts,0),score=NF(raw);
  let cat,range='';
  cat=TIER(dated?ag:null,score);
+ /* الجوهرة تشترط الفائدة + (قلة البائعين أو تعدد النسخ). وإلا «رابح محتمل» مع ما ينقصه */
+ const miss=[];if(cat==='gem'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat='maybe'}
  const promising=dated&&ag>=4&&ag<=7&&P.copies>=2;
  const nS=a.stat==='none',note=nS&&!dated?'بلا حالة وبلا تاريخ':nS?'بلا حالة':!dated?'بلا تاريخ':'';
- return{a,age:ag,ev,raw,score,cat,range,promising,note}}
+ return{a,age:ag,ev,raw,score,cat,range,promising,note,miss}}
 /* ---------- الواجهة الرئيسية للنواة ---------- */
 function analyze(rows,NOW,L){
  const P=groupAds(rows).map(g=>mkProduct(g.ads,NOW,L,g.proofs));
@@ -212,7 +225,7 @@ function analyze(rows,NOW,L){
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
  similar(P);
- const rank={trial:0,gem:1,fire:2,old:3,low:4,excl:5},out=[];
+ const rank={gem:0,fire:1,trial:2,maybe:3,old:4,low:5,excl:6},out=[];   // الجوهرة أولاً ثم الرابح ثم التجربة (الواعد أولاً)
  P.forEach(p=>{
   p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
   p.hits=p.tags.map(t=>({label:t,w:3}));
@@ -228,7 +241,7 @@ function analyze(rows,NOW,L){
    q.days=q.ref.age!=null?q.ref.age:0;q.rank=rank[c];q.also=cats.filter(x=>x!==c);
    q.oldInfo=null;if(c==='old'){const E=q.ref.ev.filter(e=>e.w&&e.k!=='dur'),miss=E.filter(e=>!e.present).map(e=>e.name);q.oldInfo={met:E.filter(e=>e.present).map(e=>e.name),miss,all:!miss.length,up:q.also.filter(x=>x==='gem'||x==='fire')}}
    if(i)q.k=p.k+'#'+c;out.push(q)})});
- out.sort((a,b)=>a.rank-b.rank||b.score-a.score||(a.seas-b.seas));
+ out.sort((a,b)=>a.rank-b.rank||(b.promising?1:0)-(a.promising?1:0)||b.score-a.score||(a.seas-b.seas));
  return out}
 return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
 })();

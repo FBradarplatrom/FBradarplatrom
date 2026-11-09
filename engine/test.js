@@ -21,7 +21,11 @@ eq('عمر4 مع نسخ: واعد',S(4,ALL).promising,true);
 eq('عمر3 مع نسخ: ليس واعداً',S(3,ALL).promising,false);
 eq('عمر5 بلا نسخ: ليس واعداً',S(5,{...ALL,copies:1}).promising,false);
 r=S(20,{copies:1,n:9,benOk:false,simOk:false});eq('مدة جولد وحدها (37) لا تكفي: ضعيف',[r.score,r.cat],[37,'low']);
-r=S(20,{copies:1,n:2,benOk:false,simOk:false});eq('جولد + بائعون قلة (56): جوهرة',[r.score,r.cat],[56,'gem']);
+r=S(20,{copies:1,n:2,benOk:false,simOk:false});eq('جولد + بائعون قلة بلا فائدة (56): رابح محتمل',[r.score,r.cat,r.miss],[56,'maybe',['الفائدة']]);
+r=S(20,{copies:2,n:9,benOk:false,simOk:false});eq('جولد + نسخ بلا فائدة (50): رابح محتمل',[r.score,r.cat],[50,'maybe']);
+r=S(20,{copies:1,n:9,benOk:true,simOk:true});eq('فائدة بلا قلة بائعين ولا نسخ (68): رابح محتمل',[r.score,r.cat,r.miss],[68,'maybe',['قلة البائعين أو تعدد النسخ']]);
+r=S(20,{copies:2,n:9,benOk:true,simOk:false});eq('فائدة + نسخ (76): جوهرة',[r.score,r.cat],[76,'gem']);
+r=S(20,{copies:1,n:2,benOk:true,simOk:false});eq('فائدة + قلة بائعين (82): جوهرة',[r.score,r.cat],[82,'gem']);
 r=S(100,{copies:1,n:2,benOk:false,simOk:false});eq('قديم + بائعون فقط (48.6): ضعيف',[r.score,r.cat],[49,'low']);
 r=S(null,ALL);eq('بلا تاريخ: مدة صفر وضعيف',[r.ev[0].pct,r.score,r.cat,r.note],[0,63,'low','بلا تاريخ']);
 eq('اتجاه السوق بلا درجة',S(20,{...ALL,trend:'rising'}).ev.find(e=>e.k==='trd').pts,0);
@@ -66,11 +70,11 @@ P=A([row({ad_id:'e1',page_id:'z1',start_date:old(90),image_url:'https://c/i/o.jp
  row({ad_id:'e3',page_id:'z3',start_date:old(3),image_url:'https://c/i/t.jpg',title:'يساعد طفلك على النوم'}),
  row({ad_id:'e4',page_id:'z4',status:'Inactive',start_date:old(20),image_url:'https://c/i/x.jpg',title:'يساعد طفلك على النوم'}),
  row({ad_id:'e5',page_id:'z5',start_date:old(20),image_url:'https://c/i/g.jpg',title:'يساعد طفلك على النوم'})]);
-eq('الترتيب: تجربة ثم جوهرة ثم رابح ثم قديم ثم مقصاة',P.map(p=>p.cat),['trial','gem','fire','old','excl']);
+eq('الترتيب: جوهرة ثم رابح ثم تجربة ثم قديم ثم مقصاة',P.map(p=>p.cat),['gem','fire','trial','old','excl']);
 eq('لا فئة للمراقبة',P.some(p=>p.cat==='watch'),false);
 // ===== كل نسخة في تصنيفها =====
 P=A([row({ad_id:'c1',start_date:old(25),image_url:'https://cdn.example.com/i/same.jpg',title:'يساعد طفلك على النوم'}),row({ad_id:'c2',start_date:old(3),image_url:'https://cdn.example.com/i/same.jpg?x=1',title:'يساعد طفلك على النوم'})]);
-eq('إعلان عمره 25 ونسخة عمرها 3: مدخلان جوهرة وتجربة',[P.length,P.map(p=>p.cat)],[2,['trial','gem']]);
+eq('إعلان عمره 25 ونسخة عمرها 3: مدخلان جوهرة وتجربة',[P.length,P.map(p=>p.cat)],[2,['gem','trial']]);
 eq('كل مدخل يرى تصنيف النسخ الأخرى',P.map(p=>p.also.join()).sort(),['gem','trial']);
 eq('مفاتيح المدخلين مختلفة',new Set(P.map(p=>p.k)).size,2);
 // ===== الصور والروابط والقديم =====
@@ -94,4 +98,22 @@ eq('بلا فائدة معروفة: المشابهة غير متحققة',P.find
 P=A([row({ad_id:'1',title:'ثلاجة صغيرة'}),row({ad_id:'2',page_id:'j',page_name:'Jumia',image_url:'https://c/i/j.jpg'}),row({ad_id:'3',page_id:'s',status:'Inactive',image_url:'https://cdn.example.com/i/s.jpg'})]);
 eq('الإقصاء: كبير الحجم/علامة/متوقف',P.map(p=>p.cat).sort(),['excl','excl','excl']);
 eq('اتجاه السوق وسم لا يحذف',P.length,3);
+// ===== قاعدة العلامة الكبيرة: صفحة العلامة فقط، والأسواق وسم =====
+const B=t=>row(Object.assign({title:'يساعد طفلك على النوم بسرعة',body:'مصباح نجوم يهدئ الطفل. السعر 3900 دج والدفع عند الاستلام',start_date:old(15)},t));
+P=A([B({ad_id:'b1',page_id:'p1',page_name:'Dream Lights DZ',link_url:'https://www.aliexpress.com/item/100500123.html',image_url:'https://c/i/b1.jpg'})]);
+eq('رابط AliExpress لا يُقصي: وسم فقط',[P[0].cat!=='excl',P[0].mktTag],[true,'AliExpress']);
+P=A([B({ad_id:'b2',page_id:'p2',page_name:'Jumia Algérie',image_url:'https://c/i/b2.jpg'})]);
+eq('صفحة Jumia (سوق) لم تعد «علامة»',P[0].why.some(w=>/العلامة/.test(w)),false);
+P=A([B({ad_id:'b3',page_id:'p3',page_name:'Samsung Algérie',image_url:'https://c/i/b3.jpg'})]);
+eq('صفحة Samsung الرسمية تُقصى',[P[0].cat,/Samsung|samsung/.test(P[0].why.join(' '))],['excl',true]);
+P=A([B({ad_id:'b4',page_id:'p4',page_name:'شاومي الجزائر الرسمي',image_url:'https://c/i/b4.jpg'})]);
+eq('صفحة «شاومي الجزائر الرسمي» تُقصى',P[0].cat,'excl');
+P=A([B({ad_id:'b5',page_id:'p5',page_name:'Tech Store Oran',body:'غطاء حماية لهاتف Samsung يحمي من الكسر. السعر 1500 دج',image_url:'https://c/i/b5.jpg'})]);
+eq('بائع يذكر Samsung في النص لا يُقصى',P[0].why.some(w=>/العلامة/.test(w)),false);
+P=A([B({ad_id:'b6',page_id:'p6',page_name:'Best Deals',link_url:'https://www.philips.com/c-p/HX1234',image_url:'https://c/i/b6.jpg'})]);
+eq('موقع العلامة نفسه (philips.com) يُقصى',P[0].cat,'excl');
+// الواعد أولاً داخل «التجربة»
+P=A([B({ad_id:'t1',page_id:'q1',start_date:old(2),image_url:'https://c/i/t1.jpg',title:'منتج أ يزيل البقع'}),
+ B({ad_id:'t2',page_id:'q2',start_date:old(5),link_url:'https://hairshop.dz/products/hair-remover-pro',image_url:'https://c/i/t2.jpg',title:'منتج ب يزيل الشعر'}),B({ad_id:'t3',page_id:'q2',start_date:old(6),link_url:'https://hairshop.dz/products/hair-remover-pro',image_url:'https://c/i/t3.jpg',title:'منتج ب يزيل الشعر'})]);
+eq('داخل التجربة: الواعد أولاً',P.filter(p=>p.cat==='trial').map(p=>p.promising),[true,false]);
 console.log(fail?`\n${fail} FAILED`:'\nALL PASSED');process.exit(fail?1:0)

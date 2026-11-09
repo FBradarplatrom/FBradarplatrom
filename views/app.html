@@ -1,5 +1,5 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#4f46e5"><title>رادار المنتجات الرابحة</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><style>:root{--bg:#f5f7fb;--card:#fff;--card2:#f8fafc;--ink:#0f172a;--mut:#64748b;--line:#e5e9f2;--brand:#4f46e5;--brand-h:#4338ca;--soft:#eef2ff;--ok:#059669;--warn:#d97706;--bad:#dc2626;--sh:0 1px 2px rgba(15,23,42,.05),0 10px 28px -14px rgba(15,23,42,.14);--r:16px;
---c-gem:#8b5cf6;--c-fire:#f97316;--c-watch:#3b82f6;--c-low:#94a3b8;--c-old:#78716c;--c-new:#14b8a6;--c-trial:#06b6d4;--c-excl:#b45309}
+--c-gem:#8b5cf6;--c-fire:#f97316;--c-watch:#3b82f6;--c-low:#94a3b8;--c-old:#78716c;--c-new:#14b8a6;--c-trial:#06b6d4;--c-maybe:#d97706;--c-excl:#b45309}
 @media(prefers-color-scheme:dark){:root{--bg:#0b1020;--card:#131a2e;--card2:#18213a;--ink:#e8ecf8;--mut:#93a0bd;--line:#232c47;--brand:#818cf8;--brand-h:#a5b4fc;--soft:#1c2347;--sh:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.6)}}
 *{box-sizing:border-box}html{scroll-behavior:smooth}[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.75 "IBM Plex Sans Arabic",Tahoma,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -73,11 +73,11 @@ details.fx{background:var(--card);border:1px solid var(--line);border-radius:var
 .pc-media .zoom{position:absolute;inset-inline-start:10px;bottom:10px;background:rgba(15,23,42,.7);color:#fff;border-radius:8px;padding:2px 10px;font-size:12px;backdrop-filter:blur(4px);opacity:0;transition:.2s}.pc-media:hover .zoom{opacity:1}
 .pc-top{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
 .bdg{display:inline-block;border-radius:99px;padding:3px 12px;font-size:12.5px;font-weight:700;color:#fff;box-shadow:0 4px 12px -4px rgba(0,0,0,.4)}
-.cat-gem{background:var(--c-gem)}.cat-fire{background:var(--c-fire)}.cat-watch{background:var(--c-watch)}.cat-old{background:var(--c-old)}.cat-low{background:var(--c-low)}.cat-new{background:var(--c-new)}.cat-trial{background:var(--c-trial)}.cat-excl{background:var(--c-excl)}
-.pc-media.cat-gem,.pc-media.cat-fire,.pc-media.cat-watch,.pc-media.cat-old,.pc-media.cat-low,.pc-media.cat-new,.pc-media.cat-trial,.pc-media.cat-excl{background-color:var(--card2)}
+.cat-gem{background:var(--c-gem)}.cat-fire{background:var(--c-fire)}.cat-watch{background:var(--c-watch)}.cat-old{background:var(--c-old)}.cat-low{background:var(--c-low)}.cat-new{background:var(--c-new)}.cat-trial{background:var(--c-trial)}.cat-maybe{background:var(--c-maybe)}.cat-excl{background:var(--c-excl)}
+.pc-media.cat-gem,.pc-media.cat-fire,.pc-media.cat-watch,.pc-media.cat-old,.pc-media.cat-low,.pc-media.cat-new,.pc-media.cat-trial,.pc-media.cat-maybe,.pc-media.cat-excl{background-color:var(--card2)}
 .ring{--c:var(--brand);width:50px;height:50px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(255,255,255,.35) 0);display:grid;place-items:center;position:relative;box-shadow:0 4px 14px -4px rgba(0,0,0,.45)}
 .ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:#0f172a}.ring b{position:relative;color:#fff;font-size:15px}
-.pc.gem .ring{--c:var(--c-gem)}.pc.fire .ring{--c:var(--c-fire)}.pc.watch .ring{--c:var(--c-watch)}.pc.old .ring{--c:var(--c-old)}.pc.low .ring{--c:var(--c-low)}.pc.new .ring{--c:var(--c-new)}.pc.trial .ring{--c:var(--c-trial)}
+.pc.gem .ring{--c:var(--c-gem)}.pc.fire .ring{--c:var(--c-fire)}.pc.watch .ring{--c:var(--c-watch)}.pc.old .ring{--c:var(--c-old)}.pc.low .ring{--c:var(--c-low)}.pc.new .ring{--c:var(--c-new)}.pc.trial .ring{--c:var(--c-trial)}.pc.maybe .ring{--c:var(--c-maybe)}
 .pc.excl{opacity:.9}.pc.excl .pc-media{filter:grayscale(.6)}
 .pc-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px}.pc-ti{font-size:16px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pc-sub{margin:-6px 0 0;color:var(--mut);font-size:13px}.pc-tags,.pc-ch,.pc-lk{display:flex;flex-wrap:wrap;gap:6px}
@@ -198,7 +198,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <label class="fl">كبير الحجم (إقصاء الدفع عند الاستلام)<textarea id="d_bulky" rows="5"></textarea></label>
 <label class="fl">هش (إقصاء الدفع عند الاستلام)<textarea id="d_fragile" rows="5"></textarea></label></div>
 <button id="apply" type="button" class="btn">تطبيق وإعادة الحساب</button></details>
-<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
+<div class="toolbar"><nav id="tabs"><button data-t="all" class="on">الكل<b>0</b></button><button data-t="gem">💎 جوهرة<b>0</b></button><button data-t="fire">🔥 رابح<b>0</b></button><button data-t="trial">🧪 تحت التجربة<b>0</b></button><button data-t="maybe">🔸 رابح محتمل<b>0</b></button><button data-t="old">🕰️ قديم في السوق<b>0</b></button><button data-t="low">ضعيف<b>0</b></button><button data-t="excl">مقصاة<b>0</b></button><button data-t="fav">★ المفضلة<b>0</b></button></nav>
 <div class="acts" style="display:flex;gap:8px"><button id="copy" type="button" class="btn ghost sm">نسخ للجدول</button><button id="csv" type="button" class="btn ghost sm">تحميل CSV</button><button id="gsheet" type="button" class="btn ghost sm" data-tool="sheet" data-src="results">📤 إلى Google Sheets</button></div></div>
 <div id="grid" class="grid"></div><div style="text-align:center;margin-top:20px"><button id="more" type="button" class="btn ghost" hidden>عرض المزيد</button></div>
 </div></section>
@@ -215,7 +215,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <div class="lb-bar"><span id="lb-n"></span><a id="lb-lens" target="_blank" rel="noopener">🔎 عدسة Google</a><button id="lb-dl">⬇ تحميل</button></div></div>
 <div id="toasts"></div>
 </div>
-<script src="/radar-lib/kwdata.js"></script><script src="/radar-lib/markets.js"></script><script src="/radar-lib/productcheck.js"></script><script>const DEF={"strong": "يحل/تحل/حل, يقضي على/تقضي على/قضاء على/قاضي على, يزيل/تزيل/إزالة/مزيل, يمنع/تمنع/منع/مانع, يمنع من/تمنع من/منع من/مانع من, يحمي/تحمي/حماية/حامي, يحمي من/تحمي من/حماية من/حامي من, يصلح/تصلح/إصلاح/تصليح/مصلح, يساعد/تساعد/مساعدة/مساعد, يساعد على/تساعد على/مساعدة على/مساعد على, يخفف/تخفف/تخفيف/مخفف, يخفف من/تخفف من/تخفيف من/مخفف من, يوقف/توقف/إيقاف, يكافح/تكافح/مكافحة/مكافح, تخلص من, وداعا, ودّع, الحل النهائي, حل نهائي, جبنالك الحل, يداوي, تصليح, يحبّس, تخلّص نهائياً, résout/résoudre, élimine/éliminer, supprime/supprimer, empêche/empêcher, protège/protéger, répare/réparer, soulage/soulager, aide à, réduit/réduire, stoppe/arrête, lutte contre, solution définitive, dites adieu à, débarrassez-vous de, en finir avec, stop à, y7el/yhel, y9dhi 3la/yqdi 3la, yzil/yzeel, ymna3/ymne3, y7mi/yahmi, ysal7/ysala7/ysli7, ysa3ed/ysa3d, ykhaffef/ykhafef, yw9ef/ywa9ef/y7bes, ykafe7/yka7ef, ydawi, jbnalek l7al/jibnalek el 7al, l7al nihai/7al nihai, t5alas men/tkhalas men/takhallas men, wada3/ouda3an, tasli7/tsli7", "normal": "تفادي, يحسن/تحسن/تحسين/محسن, يصحح/تصحح/تصحيح/مصحح, يسهل/تسهل/تسهيل/مسهل, يوفر عليك/توفر عليك/توفير عليك, يوفر/توفر/توفير/موفر, ينظف/تنظف/تنظيف/منظف, يهدئ/تهدئ/تهدئة/مهدئ, يريح/تريح, ينذر/تنذر/إنذار/منذر, يكشف/تكشف/كشف/كاشف, ينبه/تنبه/تنبيه/منبه, يراقب/تراقب/مراقبة/مراقب, يتتبع/تتتبع, يقيس/تقيس, يسد/تسد, يسرب/تسرب, يفك/تفك, يقطع/تقطع, يجفف/تجفف/تجفيف/مجفف, يقشر/تقشر, يشد/تشد, يضيق/تضيق, يرطب/ترطب/ترطيب/مرطب, يقوي/تقوي/تقوية/مقوي, يحرق/تحرق, يبيض/تبيض/تبييض/مبيض, يجمل/تجمل, يلمع/تلمع/تلميع/ملمع, يضاعف/تضاعف, ينمي/تنمي/تنمية/منمي, يطور/تطور, يبني/تبني, يسرع/تسرع/تسريع/مسرع, يبطئ/تبطئ, يحفظ/تحفظ/حفظ/حافظ, يحافظ على/تحافظ على/محافظة على/محافظ على, ينظم/تنظم/تنظيم/منظم, يخزن/تخزن/تخزين/مخزن, يطوي/تطوي, بدون حاجة, يلغي/تلغي/إلغاء/ملغي, يطرد/تطرد/طرد/طارد, يسقي/تسقي, يقلم/تقلم, يسخن/تسخن/تسخين/مسخن, يضيء/تضيء/إضاءة/مضيء, يفيد/تفيد, عندك مشكل, راك تعاني, هل تعاني, تعاني من, تعبت من, راح تتهنى, نهائيا, يعاون, يسهّل عليك, ينحي, ينقص, بلا ما تحتاج, ما تحتاجش, ما تبقاش, ما تزيدش, طريقة سهلة, ساهل الاستعمال, متعدد الاستعمالات, évite, améliore, corrige, facilite, simplifie, économise, fait gagner du temps, nettoie, apaise, détecte, alerte, surveille, mesure, sèche, hydrate, renforce, éclaire, range, protège contre, conserve, organise, remplace, vous souffrez de, souffrez-vous de, marre de, fatigué de, vous avez un problème, on a la solution, voici la solution, définitivement, adieu, plus besoin de, sans avoir besoin de, ne plus avoir à, fini les, rak t3ani/rak ta3ani, t3ani men, t3ebt men/ta3bt men, 3andek mochkil/andek mouchkil, rah tethana/ra7 tetheni, nihaiyan/nihayen, ysahel/ysahhel, ysahel 3lik, ywaffer/ywafer, ynaqqes/ynakes, yna7i, ma t7tajch/matahtajch, ma tb9ach/matebqach, ma tzidch/matzidch, bla ma t7taj, tari9a sahla, sahel l isti3mal, mouta3added listi3malat/multi usage", "weak": "يعطي/تعطي, يجعل/تجعل, يقوم/تقوم, يجد/تجد, يفتح/تفتح, يناسب/تناسب, يعلم/تعلم, يشغل/تشغل, يشحن/تشحن, يزيد/تزيد, يضعف/تضعف, يجهد/تجهد, يرافق/ترافق, يربط/تربط, يغطي/تغطي, يخلط/تخلط, donne, rend, fait, permet, convient, ouvre, trouve, accompagne, connecte, mélange", "bulky": "خزانة, خزائن, دولاب, دواليب, ثلاجة, ثلاجات, غسالة, غسالات, كنبة, كنبات, أريكة, أرائك, سرير, أسرّة, طاولة, طاولات, أثاث, مكيف, مكيفات, armoire, meuble, réfrigérateur, lave-linge, canapé, lit, table, climatiseur, khizana, dulab, thalaja, frigo, ghassala, kanaba, kanapé, sarir, tawla, meuble", "fragile": "زجاج, هش, قابل للكسر, خزف, سيراميك, بلور, مرآة, verre, fragile, céramique, cristal, miroir, zoujaj, zejaj, hech, fragile, 9abil lel kasr", "brands": "jumia, ouedkniss, temu, aliexpress, amazon"};
+<script src="/radar-lib/kwdata.js"></script><script src="/radar-lib/markets.js"></script><script src="/radar-lib/productcheck.js"></script><script>const DEF={"strong": "يحل/تحل/حل, يقضي على/تقضي على/قضاء على/قاضي على, يزيل/تزيل/إزالة/مزيل, يمنع/تمنع/منع/مانع, يمنع من/تمنع من/منع من/مانع من, يحمي/تحمي/حماية/حامي, يحمي من/تحمي من/حماية من/حامي من, يصلح/تصلح/إصلاح/تصليح/مصلح, يساعد/تساعد/مساعدة/مساعد, يساعد على/تساعد على/مساعدة على/مساعد على, يخفف/تخفف/تخفيف/مخفف, يخفف من/تخفف من/تخفيف من/مخفف من, يوقف/توقف/إيقاف, يكافح/تكافح/مكافحة/مكافح, تخلص من, وداعا, ودّع, الحل النهائي, حل نهائي, جبنالك الحل, يداوي, تصليح, يحبّس, تخلّص نهائياً, résout/résoudre, élimine/éliminer, supprime/supprimer, empêche/empêcher, protège/protéger, répare/réparer, soulage/soulager, aide à, réduit/réduire, stoppe/arrête, lutte contre, solution définitive, dites adieu à, débarrassez-vous de, en finir avec, stop à, y7el/yhel, y9dhi 3la/yqdi 3la, yzil/yzeel, ymna3/ymne3, y7mi/yahmi, ysal7/ysala7/ysli7, ysa3ed/ysa3d, ykhaffef/ykhafef, yw9ef/ywa9ef/y7bes, ykafe7/yka7ef, ydawi, jbnalek l7al/jibnalek el 7al, l7al nihai/7al nihai, t5alas men/tkhalas men/takhallas men, wada3/ouda3an, tasli7/tsli7", "normal": "تفادي, يحسن/تحسن/تحسين/محسن, يصحح/تصحح/تصحيح/مصحح, يسهل/تسهل/تسهيل/مسهل, يوفر عليك/توفر عليك/توفير عليك, يوفر/توفر/توفير/موفر, ينظف/تنظف/تنظيف/منظف, يهدئ/تهدئ/تهدئة/مهدئ, يريح/تريح, ينذر/تنذر/إنذار/منذر, يكشف/تكشف/كشف/كاشف, ينبه/تنبه/تنبيه/منبه, يراقب/تراقب/مراقبة/مراقب, يتتبع/تتتبع, يقيس/تقيس, يسد/تسد, يسرب/تسرب, يفك/تفك, يقطع/تقطع, يجفف/تجفف/تجفيف/مجفف, يقشر/تقشر, يشد/تشد, يضيق/تضيق, يرطب/ترطب/ترطيب/مرطب, يقوي/تقوي/تقوية/مقوي, يحرق/تحرق, يبيض/تبيض/تبييض/مبيض, يجمل/تجمل, يلمع/تلمع/تلميع/ملمع, يضاعف/تضاعف, ينمي/تنمي/تنمية/منمي, يطور/تطور, يبني/تبني, يسرع/تسرع/تسريع/مسرع, يبطئ/تبطئ, يحفظ/تحفظ/حفظ/حافظ, يحافظ على/تحافظ على/محافظة على/محافظ على, ينظم/تنظم/تنظيم/منظم, يخزن/تخزن/تخزين/مخزن, يطوي/تطوي, بدون حاجة, يلغي/تلغي/إلغاء/ملغي, يطرد/تطرد/طرد/طارد, يسقي/تسقي, يقلم/تقلم, يسخن/تسخن/تسخين/مسخن, يضيء/تضيء/إضاءة/مضيء, يفيد/تفيد, عندك مشكل, راك تعاني, هل تعاني, تعاني من, تعبت من, راح تتهنى, نهائيا, يعاون, يسهّل عليك, ينحي, ينقص, بلا ما تحتاج, ما تحتاجش, ما تبقاش, ما تزيدش, طريقة سهلة, ساهل الاستعمال, متعدد الاستعمالات, évite, améliore, corrige, facilite, simplifie, économise, fait gagner du temps, nettoie, apaise, détecte, alerte, surveille, mesure, sèche, hydrate, renforce, éclaire, range, protège contre, conserve, organise, remplace, vous souffrez de, souffrez-vous de, marre de, fatigué de, vous avez un problème, on a la solution, voici la solution, définitivement, adieu, plus besoin de, sans avoir besoin de, ne plus avoir à, fini les, rak t3ani/rak ta3ani, t3ani men, t3ebt men/ta3bt men, 3andek mochkil/andek mouchkil, rah tethana/ra7 tetheni, nihaiyan/nihayen, ysahel/ysahhel, ysahel 3lik, ywaffer/ywafer, ynaqqes/ynakes, yna7i, ma t7tajch/matahtajch, ma tb9ach/matebqach, ma tzidch/matzidch, bla ma t7taj, tari9a sahla, sahel l isti3mal, mouta3added listi3malat/multi usage", "weak": "يعطي/تعطي, يجعل/تجعل, يقوم/تقوم, يجد/تجد, يفتح/تفتح, يناسب/تناسب, يعلم/تعلم, يشغل/تشغل, يشحن/تشحن, يزيد/تزيد, يضعف/تضعف, يجهد/تجهد, يرافق/ترافق, يربط/تربط, يغطي/تغطي, يخلط/تخلط, donne, rend, fait, permet, convient, ouvre, trouve, accompagne, connecte, mélange", "bulky": "خزانة, خزائن, دولاب, دواليب, ثلاجة, ثلاجات, غسالة, غسالات, كنبة, كنبات, أريكة, أرائك, سرير, أسرّة, طاولة, طاولات, أثاث, مكيف, مكيفات, armoire, meuble, réfrigérateur, lave-linge, canapé, lit, table, climatiseur, khizana, dulab, thalaja, frigo, ghassala, kanaba, kanapé, sarir, tawla, meuble", "fragile": "زجاج, هش, قابل للكسر, خزف, سيراميك, بلور, مرآة, verre, fragile, céramique, cristal, miroir, zoujaj, zejaj, hech, fragile, 9abil lel kasr", "brands": "samsung/سامسونج/سامسونغ, apple/iphone/ابل/آبل/ايفون, xiaomi/شاومي/شياومي, redmi, huawei/هواوي, honor, oppo/اوبو, realme/ريلمي, infinix/انفينكس, tecno/تكنو, vivo, oneplus, nokia/نوكيا, sony/سوني, lg, philips/فيليبس, braun/براون, bosch/بوش, tefal/تيفال, moulinex/مولينكس, dyson/دايسون, rowenta, kenwood/كينوود, delonghi, nespresso, condor/كوندور, iris/ايريس, brandt/براندت, enie, stream system, geant/جيون, nike/نايك, adidas/اديداس, puma/بوما, zara/زارا, decathlon/ديكاتلون, ikea/ايكيا, loreal/l'oreal/لوريال, nivea/نيفيا, garnier/غارنييه, dove, maybelline, gillette/جيليت, oral-b, colgate, anker/انكر, baseus, jbl, lenovo/لينوفو, hp, dell, asus, acer, canon, playstation/بلايستيشن, xbox, nintendo, lego/ليغو, pampers/بامبرز"};
 const CORE=(function(){
 'use strict';
 const D=864e5,NF=Math.round;
@@ -240,7 +240,7 @@ function compile(entry){
  const cjk=alts.some(t=>CJK.test(t)),re=cjk?new RegExp('(?:'+body+')','gu'):new RegExp('(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+body+')(?![\\p{L}\\p{M}\\p{N}])','gu');   // الصينية والتايلاندية بلا مسافات
  re._body=body;re._cjk=cjk;re._len=Math.max(...alts.map(t=>t.length));return re}
 function parseList(txt,w){const out=[],seen=new Set();String(txt||'').split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean).forEach(e=>{if(seen.has(e))return;seen.add(e);const re=compile(e);if(re)out.push({id:w+':'+e,label:e.split('/')[0],w,re})});return out}
-function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1),bulky:parseList(t.bulky,1),fragile:parseList(t.fragile,1)}}
+function buildLists(t){const gold=parseList(t.strong,3).concat(parseList(t.normal,1),parseList(t.weak,.3));return{gold,goldB:gold.filter(e=>e.w>=1),brands:parseList(t.brands,1).filter(e=>!MKSET.has(N(e.label).trim())),bulky:parseList(t.bulky,1),fragile:parseList(t.fragile,1)}}
 /* الأداء: كل قائمة تُدمج في تعبير واحد (مجموعة لكل مدخل، الأطول أولاً) فيُقرأ النص مرة واحدة بدل مرة لكل كلمة */
 function mxOf(list){if(list._mx)return list._mx;const mk=(arr,bound)=>{if(!arr.length)return null;const ord=arr.slice().sort((a,b)=>b.re._len-a.re._len),src=ord.map(e=>'('+e.re._body+')').join('|');
   return{re:new RegExp(bound?'(?<![\\p{L}\\p{M}\\p{N}])'+PRE+'(?:'+src+')(?![\\p{L}\\p{M}\\p{N}])':'(?:'+src+')','gu'),ord}};
@@ -362,6 +362,15 @@ function trendOf(p,NOW){const d=p.ads.filter(a=>a.start),t=a=>+a.start;
  if(c14>p14&&n14>=1)return p.n<=3?'emerging':'rising';
  return'steady'}
 /* ---------- منتج واحد: الأدلة المشتركة والإقصاء ---------- */
+const MKN=h=>{const m=MARKET.exec(h);const n=m?m[2]:h;return{aliexpress:'AliExpress',alibaba:'Alibaba',amazon:'Amazon',temu:'Temu',jumia:'Jumia',ouedkniss:'Ouedkniss','linktr.ee':'Linktree','bit.ly':'رابط مختصر',tinyurl:'رابط مختصر','t.me':'Telegram'}[n]||n};
+const MKSET=new Set(['jumia','ouedkniss','temu','aliexpress','amazon','alibaba','shein']);
+/* بقايا اسم الصفحة بعد حذف العلامة: كلمات «رسمي/متجر/الدولة» فقط = صفحة العلامة */
+const OFFW=new Set('official officiel officielle store shop boutique online officialstore global international algerie algeria dz dza maroc morocco tunisie tunisia france fr uk usa us eg egypt ksa uae mena africa afrique arabia arab الرسمي الرسميه الرسمية رسمي متجر الجزائر الجزائريه المغرب تونس مصر السعوديه الامارات العربيه'.split(' '));
+function officialBrand(sl,L){if(!L.brands||!L.brands.length)return'';
+ const h=String(sl.host||'').split('.').slice(0,-1).join(' ');let hm=h&&!SOC.test(sl.host||'')?findAll(N(h),L.brands):[];if(hm.length)return hm[0].e.label;
+ const nm=N(sl.name||'').trim();if(!nm)return'';const ms=findAll(nm,L.brands);if(!ms.length)return'';
+ let rest=nm;ms.forEach(m=>{rest=rest.slice(0,m.s)+' '.repeat(Math.max(0,m.t-m.s))+rest.slice(m.t)});
+ const left=rest.split(/[^\p{L}\p{N}]+/u).filter(w=>w&&!OFFW.has(w));return left.length?'':ms[0].e.label}
 const modeOf=a=>{const c=new Map();a.forEach(x=>x&&c.set(x,(c.get(x)||0)+1));let b='',n=0;c.forEach((v,k)=>{if(v>n){n=v;b=k}});return b};
 function mkProduct(ads,NOW,L,proofs){
  clusterSellers(ads);
@@ -377,8 +386,9 @@ function mkProduct(ads,NOW,L,proofs){
  const why=[];
  if(!counted.length)why.push('لا إعلان نشط: كل إعلاناته متوقفة');
  if(counted.length){
-  const bt=N(counted.map(a=>a.page_name+' '+hostOf(a)+' '+a.store_name).join(' \n ')),bm=findAll(bt,L.brands);
-  if(bm.length)why.push('علامة كبيرة مؤكَّدة بين بائعيه: '+[...new Set(bm.map(m=>m.e.label))].join('، '));
+  /* «علامة كبيرة»: تُقصى فقط إن كانت الصفحة نفسها هي العلامة أو متجرها الرسمي، أو كان الموقع موقع العلامة. ذكر العلامة في النص لا يُقصي. */
+  const bm=new Set();sellers.forEach(sl=>{const b=officialBrand(sl,L);if(b)bm.add(b)});
+  if(bm.size)why.push('صفحة العلامة نفسها أو متجرها الرسمي: '+[...bm].join('، '));
   const tx=N([...new Set(counted.map(a=>a.title+' '+a.body+' '+a.link_description))].join(' \n ')),
    vm=findAll(tx,L.bulky),fm=findAll(tx,L.fragile);
   if(vm.length)why.push('كبير الحجم، لا يصلح للدفع عند الاستلام: '+[...new Set(vm.map(m=>m.e.label))].slice(0,3).join('، '));
@@ -388,6 +398,7 @@ function mkProduct(ads,NOW,L,proofs){
    if(bad.length&&bad.length*2>=counted.length){const by={};bad.forEach(r=>{by[r.kind]=(by[r.kind]||0)+1});const top=Object.keys(by).sort((x,y)=>by[y]-by[x])[0],r=bad.find(x=>x.kind===top);
     why.push('ليس منتجاً صالحاً للتجارة الإلكترونية: '+r.reasons[0]+(counted.length>1?' · '+bad.length+' من '+counted.length+' إعلان':''))}}}
  P.why=why;P.excl=why.length>0;
+ const mk=counted.map(a=>hostOf(a)).find(h=>MARKET.test(h));P.mktTag=mk?MKN(mk):'';
  let tags=[],tg=new Set(),benOk=false,strong=false;
  counted.forEach(a=>{const r=benefitAd(a,L);if(r.ok&&r.tag){benOk=true;if(r.strong)strong=true;if(!tags.includes(r.tag)&&tags.length<3)tags.push(r.tag);r.tg.forEach(x=>tg.add(x))}});   // الفائدة لا تُحتسب إلا بوسم واحد على الأقل يصفها
  P.benOk=benOk;P.strong=strong;P.tags=tags;P.tg=tg;P.proofs=proofs||new Map();
@@ -413,9 +424,11 @@ function scoreAd(a,P,NOW){
  const raw=ev.reduce((s,e)=>s+e.pts,0),score=NF(raw);
  let cat,range='';
  cat=TIER(dated?ag:null,score);
+ /* الجوهرة تشترط الفائدة + (قلة البائعين أو تعدد النسخ). وإلا «رابح محتمل» مع ما ينقصه */
+ const miss=[];if(cat==='gem'){if(!P.benOk)miss.push('الفائدة');if(!(P.n<=SELL(P.market)||P.copies>=2))miss.push('قلة البائعين أو تعدد النسخ');if(miss.length)cat='maybe'}
  const promising=dated&&ag>=4&&ag<=7&&P.copies>=2;
  const nS=a.stat==='none',note=nS&&!dated?'بلا حالة وبلا تاريخ':nS?'بلا حالة':!dated?'بلا تاريخ':'';
- return{a,age:ag,ev,raw,score,cat,range,promising,note}}
+ return{a,age:ag,ev,raw,score,cat,range,promising,note,miss}}
 /* ---------- الواجهة الرئيسية للنواة ---------- */
 function analyze(rows,NOW,L){
  const P=groupAds(rows).map(g=>mkProduct(g.ads,NOW,L,g.proofs));
@@ -430,7 +443,7 @@ function analyze(rows,NOW,L){
   p.pr=med(p.counted.filter(a=>a._p&&(a._cur||'DZD')===p.cur).map(a=>a._p));p.fmt=top.format;
   const rate=(L.rates||(MKT&&MKT.RATES_DZD)||{})[p.cur||'DZD'];p.prDzd=p.pr&&rate?NF(p.pr*rate):(p.cur==='DZD'||!p.cur?p.pr:0)});
  similar(P);
- const rank={trial:0,gem:1,fire:2,old:3,low:4,excl:5},out=[];
+ const rank={gem:0,fire:1,trial:2,maybe:3,old:4,low:5,excl:6},out=[];   // الجوهرة أولاً ثم الرابح ثم التجربة (الواعد أولاً)
  P.forEach(p=>{
   p.recs=p.counted.map(a=>scoreAd(a,p,NOW));
   p.hits=p.tags.map(t=>({label:t,w:3}));
@@ -446,7 +459,7 @@ function analyze(rows,NOW,L){
    q.days=q.ref.age!=null?q.ref.age:0;q.rank=rank[c];q.also=cats.filter(x=>x!==c);
    q.oldInfo=null;if(c==='old'){const E=q.ref.ev.filter(e=>e.w&&e.k!=='dur'),miss=E.filter(e=>!e.present).map(e=>e.name);q.oldInfo={met:E.filter(e=>e.present).map(e=>e.name),miss,all:!miss.length,up:q.also.filter(x=>x==='gem'||x==='fire')}}
    if(i)q.k=p.k+'#'+c;out.push(q)})});
- out.sort((a,b)=>a.rank-b.rank||b.score-a.score||(a.seas-b.seas));
+ out.sort((a,b)=>a.rank-b.rank||(b.promising?1:0)-(a.promising?1:0)||b.score-a.score||(a.seas-b.seas));
  return out}
 return{analyze,buildLists,MIN_SCORE,firstUrl,normRow,N,price,hostOf,stat,keywordOf,_t:{scoreAd,groupAds,compile,findAll}};
 })();
@@ -476,7 +489,7 @@ const priceTxt=p=>{if(!p.pr)return'—';const m=MK(),c=p.cur||'DZD',sym=m?m.curS
 const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!m)return'';return`<span class="tg soft" title="السوق الذي جاء منه المنتج">${flag(m)} ${esc(mkName(m))}</span>`+(ms.length>1?`<span class="tg" title="${esc(ms.map(mkName).join('، '))}">🌍 يظهر في ${ms.length} أسواق: ${ms.map(flag).join(' ')}</span>`:'')};
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
-const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
+const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
 const TRL={emerging:'بداية انتشار',rising:'صاعد',steady:'مستقر',declining:'في هبوط',saturated:'متشبع'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
@@ -543,10 +556,10 @@ async function analyze(){
 function render(){shown=60;const v=id=>$('#'+id).value,ck=id=>$('#'+id).checked;
  const q=CORE.N(v('q')).trim(),min=+v('minScore')||0,mc=+v('maxComp')||1e9,md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>(p.excl||p.score>=min)&&p.n<=mc&&p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
- const cnt={all:0,trial:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
+ const cnt={all:0,trial:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
  R.querySelectorAll('#tabs button').forEach(b=>{b.querySelector('b').textContent=cnt[b.dataset.t];b.classList.toggle('on',b.dataset.t===tab)});
  VIEW=B.filter(p=>tab==='all'?p.cat!=='excl':tab==='fav'?FAV.has(p.k):p.cat===tab);
- const so=v('sort');VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='comp'?a.n-b.n||b.score-a.score:so==='new'?a.days-b.days:a.rank-b.rank||b.score-a.score||(a.seas-b.seas));
+ const so=v('sort');VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='comp'?a.n-b.n||b.score-a.score:so==='new'?a.days-b.days:a.rank-b.rank||(b.promising?1:0)-(a.promising?1:0)||b.score-a.score||(a.seas-b.seas));
  const act=PROD.reduce((s,p)=>s+p.counted.length,0);
  $('#sum').innerHTML=[[ALL.length,'إعلان'],[act,'نشط ويدخل التحليل'],[ALL.length-act,'متوقف (خارج التحليل)'],[new Set(PROD.map(p=>p.k.split('#')[0])).size,'منتج'],[PROD.length,'مدخل بتصنيفاته'],[cnt.gem,'💎 جوهرة'],[VIEW.length,'معروض الآن']].map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
  draw()}
@@ -595,7 +608,7 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]}${p.promising?' · ⭐ واعد':''}</span>${p.excl?'':`<div class="ring" style="--p:${p.score}"><b>${p.score}</b></div>`}</div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
-<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}<span class="tg">اتجاه السوق: ${TRL[p.trend]||''}</span>`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
+<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}<span class="tg">اتجاه السوق: ${TRL[p.trend]||''}</span>`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.cat==='maybe'&&r&&r.miss&&r.miss.length?`<span class="tg" style="color:#b45309">عمره عمر جوهرة لكن ينقصه: ${r.miss.join(' و')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
 <div class="pc-st"><div><b>${p.n}</b><span>بائع</span></div><div><b>${p.copies}</b><span>إعلانات/بائع</span></div><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join(''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
@@ -613,11 +626,11 @@ function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.
  return{v:2,name:p.name,kw:p.kw||'',cat:p.cat,tier:p.cat,score:p.score,days:p.days,trend:p.trend,seas:p.seas,n:p.n,copies:p.copies,pr:p.pr,price:p.pr,pages:p.pages,why:p.why,stopped:p.stopped,fmt:p.fmt,
   counted:new Array(p.counted.length).fill(0),hits:p.hits.slice(0,8).map(h=>({label:h.label,w:h.w})),tags:p.tags,proofs:[...p.proofs],sim:p.sim,simNames:p.simNames,tgN:p.tg.size,promising:p.promising,also:p.also,oldInfo:p.oldInfo,benOk:p.benOk,top:slim(p.top),images:imgsOf(p),
   sellers:p.sellers.slice(0,12).map(s=>({pid:s.pid||'',name:s.name,host:s.host,copies:s.copies,p:s.p})),
-  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||''}}
+  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising,miss:r.miss})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||'',mktTag:p.mktTag||''}}
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
   top:{library_url:s.lib,link_url:s.link},images:[],sellers:[],recs:[],ref:null,excl:false,saved_at:s.date}}
-function counts(){const c={trial:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
+function counts(){const c={trial:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
 
 $('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;$('#d_bulky').value=DEF.bulky;$('#d_fragile').value=DEF.fragile;
 $('#file').addEventListener('change',e=>load([...e.target.files]));
@@ -654,8 +667,8 @@ window.WPR={sheetRows:()=>rows(),load,msg,PROD:()=>PROD,byKey:k=>PROD.find(p=>p.
 'use strict';
 const R=document.getElementById('wpr-app'),$=s=>R.querySelector(s),W=window;
 const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
-const CC={gem:'#8b5cf6',fire:'#f97316',old:'#78716c',watch:'#3b82f6',low:'#94a3b8',new:'#14b8a6',trial:'#06b6d4',excl:'#b45309'};
+const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
+const CC={gem:'#8b5cf6',fire:'#f97316',old:'#78716c',watch:'#3b82f6',low:'#94a3b8',new:'#14b8a6',trial:'#06b6d4',maybe:'#d97706',excl:'#b45309'};
 const SRC={adlib:'📡 جمع الإعلانات',upload:'⬆️ رفع يدوي'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'}),ft=d=>new Date(d).toLocaleTimeString('ar-DZ',{hour:'2-digit',minute:'2-digit'});
 const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'الآن':m<60?'منذ '+m+' دقيقة':m<1440?'منذ '+Math.round(m/60)+' ساعة':'منذ '+Math.round(m/1440)+' يوم'};
@@ -710,7 +723,7 @@ async function rDash(){
  const gf=L?(L.counts?L.counts.gem+L.counts.fire:L.summary.filter(p=>p.tier==='gem'||p.tier==='fire').length):0;
  let h=`<div class="kps">${kpi('inbox',inbox.reduce((s,r)=>s+r.ads,0),'إعلان وارد من الإضافة')}${kpi('clock',pend,'دفعات بانتظار التحليل')}${kpi('chart',anal.length,'تحليل مكتمل')}${kpi('award',gf,'💎🔥 في آخر تحليل')}${kpi('star',sv.length,'منتج محفوظ')}</div>`;
  if(!rs.length){h+=`<div class="card"><h2>ابدأ في ثلاث خطوات</h2><div class="steps"><div><div class="n">1</div><b>ثبّت الإضافة</b><p class="sub">من «جمع الإعلانات ← الإضافة» نزّلها وثبّتها في Chrome مرة واحدة.</p></div><div><div class="n">2</div><b>اجمع الإعلانات</b><p class="sub">ابدأ بحثاً سريعاً أو جماعياً بالكلمات الذهبية من المنصة نفسها، وتصل إلى «الإعلانات الواردة».</p></div><div><div class="n">3</div><b>حلّل واختر</b><p class="sub">تُصنَّف المنتجات، فاحفظ ما يعجبك وابحث عن مورّده.</p></div></div><p style="margin-top:14px"><button class="btn" data-v="collect">افتح جمع الإعلانات</button> <button class="btn ghost" data-v="analyze">أو ارفع ملفاً الآن</button></p></div>`;$('#d-body').innerHTML=h;return}
- const cn=L&&L.counts,keys=['trial','gem','fire','old','low','excl'].concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
+ const cn=L&&L.counts,keys=['gem','fire','trial','maybe','old','low','excl'].concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
  const days=[...Array(14)].map((_,i)=>{const d=new Date(Date.now()-(13-i)*864e5);return{k:d.toLocaleDateString('en-CA'),n:0,l:d.getDate()}});
  rs.forEach(r=>{const k=new Date(r.created_at).toLocaleDateString('en-CA'),x=days.find(d=>d.k===k);if(x)x.n+=r.ads});const mx=Math.max(1,...days.map(d=>d.n));
  h+=`<div class="grid2"><div class="card"><h2>توزيع تصنيفات آخر تحليل</h2>${cn&&tot?`<div class="stack">${keys.map(k=>cn[k]?`<i style="width:${cn[k]/tot*100}%;background:${CC[k]}" title="${CL[k]}"></i>`:'').join('')}</div><div class="legend">${keys.map(k=>`<span><i style="background:${CC[k]}"></i>${CL[k]}<b>${cn[k]||0}</b></span>`).join('')}</div>`:'<p class="sub">افتح أي تحليل من الأرشيف ليظهر التوزيع هنا.</p>'}</div>

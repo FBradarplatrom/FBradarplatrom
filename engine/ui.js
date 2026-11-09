@@ -23,7 +23,7 @@ const priceTxt=p=>{if(!p.pr)return'—';const m=MK(),c=p.cur||'DZD',sym=m?m.curS
 const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!m)return'';return`<span class="tg soft" title="السوق الذي جاء منه المنتج">${flag(m)} ${esc(mkName(m))}</span>`+(ms.length>1?`<span class="tg" title="${esc(ms.map(mkName).join('، '))}">🌍 يظهر في ${ms.length} أسواق: ${ms.map(flag).join(' ')}</span>`:'')};
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
-const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
+const CL={trial:'🧪 تحت التجربة',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
 const TRL={emerging:'بداية انتشار',rising:'صاعد',steady:'مستقر',declining:'في هبوط',saturated:'متشبع'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
@@ -90,10 +90,10 @@ async function analyze(){
 function render(){shown=60;const v=id=>$('#'+id).value,ck=id=>$('#'+id).checked;
  const q=CORE.N(v('q')).trim(),min=+v('minScore')||0,mc=+v('maxComp')||1e9,md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>(p.excl||p.score>=min)&&p.n<=mc&&p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
- const cnt={all:0,trial:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
+ const cnt={all:0,trial:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
  R.querySelectorAll('#tabs button').forEach(b=>{b.querySelector('b').textContent=cnt[b.dataset.t];b.classList.toggle('on',b.dataset.t===tab)});
  VIEW=B.filter(p=>tab==='all'?p.cat!=='excl':tab==='fav'?FAV.has(p.k):p.cat===tab);
- const so=v('sort');VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='comp'?a.n-b.n||b.score-a.score:so==='new'?a.days-b.days:a.rank-b.rank||b.score-a.score||(a.seas-b.seas));
+ const so=v('sort');VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='comp'?a.n-b.n||b.score-a.score:so==='new'?a.days-b.days:a.rank-b.rank||(b.promising?1:0)-(a.promising?1:0)||b.score-a.score||(a.seas-b.seas));
  const act=PROD.reduce((s,p)=>s+p.counted.length,0);
  $('#sum').innerHTML=[[ALL.length,'إعلان'],[act,'نشط ويدخل التحليل'],[ALL.length-act,'متوقف (خارج التحليل)'],[new Set(PROD.map(p=>p.k.split('#')[0])).size,'منتج'],[PROD.length,'مدخل بتصنيفاته'],[cnt.gem,'💎 جوهرة'],[VIEW.length,'معروض الآن']].map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
  draw()}
@@ -142,7 +142,7 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
  return `<article class="pc ${p.cat}">${media.replace('class="pc-media','class="pc-media cat-'+p.cat)}
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]}${p.promising?' · ⭐ واعد':''}</span>${p.excl?'':`<div class="ring" style="--p:${p.score}"><b>${p.score}</b></div>`}</div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
-<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}<span class="tg">اتجاه السوق: ${TRL[p.trend]||''}</span>`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
+<div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}<span class="tg">اتجاه السوق: ${TRL[p.trend]||''}</span>`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.cat==='maybe'&&r&&r.miss&&r.miss.length?`<span class="tg" style="color:#b45309">عمره عمر جوهرة لكن ينقصه: ${r.miss.join(' و')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
 <div class="pc-st"><div><b>${p.n}</b><span>بائع</span></div><div><b>${p.copies}</b><span>إعلانات/بائع</span></div><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join(''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
@@ -160,11 +160,11 @@ function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.
  return{v:2,name:p.name,kw:p.kw||'',cat:p.cat,tier:p.cat,score:p.score,days:p.days,trend:p.trend,seas:p.seas,n:p.n,copies:p.copies,pr:p.pr,price:p.pr,pages:p.pages,why:p.why,stopped:p.stopped,fmt:p.fmt,
   counted:new Array(p.counted.length).fill(0),hits:p.hits.slice(0,8).map(h=>({label:h.label,w:h.w})),tags:p.tags,proofs:[...p.proofs],sim:p.sim,simNames:p.simNames,tgN:p.tg.size,promising:p.promising,also:p.also,oldInfo:p.oldInfo,benOk:p.benOk,top:slim(p.top),images:imgsOf(p),
   sellers:p.sellers.slice(0,12).map(s=>({pid:s.pid||'',name:s.name,host:s.host,copies:s.copies,p:s.p})),
-  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||''}}
+  recs:recs.map(r=>({a:slim(r.a),age:r.age,cat:r.cat,range:r.range,score:r.score,note:r.note,ev:r.ev,raw:r.raw,promising:r.promising,miss:r.miss})),refIndex:ri,note:'',saved_at:Date.now(),lib:p.top.library_url,link:p.top.link_url,excl:p.excl,market:p.market||'',markets:p.markets||[],cur:p.cur||'',prDzd:p.prDzd||0,seasTag:p.seasTag||'',mktTag:p.mktTag||''}}
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
   top:{library_url:s.lib,link_url:s.link},images:[],sellers:[],recs:[],ref:null,excl:false,saved_at:s.date}}
-function counts(){const c={trial:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
+function counts(){const c={trial:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);c.products=new Set(PROD.map(p=>p.k.split('#')[0])).size;c.ads=ALL.length;c.active=PROD.reduce((s,p)=>s+p.counted.length,0);return c}
 
 $('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;$('#d_bulky').value=DEF.bulky;$('#d_fragile').value=DEF.fragile;
 $('#file').addEventListener('change',e=>load([...e.target.files]));
