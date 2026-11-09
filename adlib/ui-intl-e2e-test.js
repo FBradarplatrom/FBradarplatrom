@@ -55,15 +55,15 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok((await pg.$$eval('#mkt option', o => o.length)) > 40, 'file market selector lists the markets');
     await pg.setInputFiles('#file', f); await pg.waitForSelector('.pc', { timeout: 15000 }); await pg.waitForTimeout(800);
     const cards = await pg.$$eval('.pc', cs => cs.map(c => c.textContent));
-    const merged = cards.find(t => /US Shop|FR Boutique/.test(t));
-    ok(merged && /يظهر في 2 أسواق/.test(merged), 'the same product from the US and France is one product (same supplier link) shown in 2 markets');
+    const merged = cards.find(t => /US Shop/.test(t));
+    ok(cards.length === 3 && merged && /الولايات المتحدة/.test(merged) && cards.some(t => /FR Boutique/.test(t) && /فرنسا/.test(t)), 'each ad is its own card (no grouping) and keeps its own market');
     ok(/US\$/.test(merged) && /≈/.test(merged) && /دج/.test(merged), 'price shows its currency and the DZD equivalent');
     ok(cards.some(t => /DZ Store/.test(t) && /دج/.test(t) && !/≈/.test(t)), 'Algerian price stays in DZD');
     ok((await pg.$$eval('#fmk option', o => o.map(x => x.value))).includes('US'), 'market filter lists the markets of the results');
     ok((await pg.$$eval('#rates [data-rate]', i => i.map(x => x.dataset.rate))).includes('USD'), 'exchange rate editor shows the currencies found');
     ok(await pg.evaluate(() => !!document.querySelector('#actbar') && typeof window.__busy === 'function'), 'activity bar and status pill are installed');
     // حفظ المنتج → فلتر السوق في المحفوظات
-    await pg.click('.pc:has-text("US Shop") button.save, .pc:has-text("FR Boutique") button.save'); await pg.waitForTimeout(800);
+    await pg.click('.pc:has-text("US Shop") button.save'); await pg.waitForTimeout(800);
     await pg.goto(BASE + '/saved'); await pg.waitForSelector('[data-svmk]');
     const btns = await pg.$$eval('[data-svmk]', x => x.map(y => y.textContent));
     ok(btns.some(t => /الولايات المتحدة/.test(t)), 'saved products can be filtered by market (origin kept)');

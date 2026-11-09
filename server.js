@@ -164,11 +164,13 @@ app.get('/api/runs/:id', auth, active, wrap((q, s) => {
   const r = db.prepare('select id,source,label,rows,created_at,batch from runs where id=? and user_id=?').get(q.params.id, q.u.id);
   if (!r) return s.sendStatus(404);
   // المرصود (ما تعرضه ميتا لكل بحث، مجموعاً) والمستبعد عند الاستقبال لهذه الدفعة
-  let stats = null;
+  let stats = null, excl = [];
   if (r.batch) { try { const b = db.prepare('select observed from lib_bstats where user_id=? and batch_id=?').get(q.u.id, r.batch), ob = b ? JSON.parse(b.observed || '{}') : {};
+    // الإعلانات المستبعدة عند الاستقبال تُرسل مع النتيجة (لتظهر في «مستبعد» ويتطابق العدد مع ما جُلب)
+    try { excl = db.prepare('select e.row, e.why from lib_bfilt f join lib_excluded e on e.user_id=f.user_id and e.ad_id=f.ad_id where f.user_id=? and f.batch_id=?').all(q.u.id, r.batch).map(x => Object.assign(JSON.parse(x.row || '{}'), { pre_excl: x.why || 'ليس منتجاً' })); } catch (e) { excl = []; }
     stats = { batch: r.batch, observed: Object.values(ob).reduce((a, x) => a + (+x || 0), 0), searches: Object.keys(ob).length, filtered: db.prepare('select count(*) n from lib_bfilt where user_id=? and batch_id=?').get(q.u.id, r.batch).n }; } catch (e) {} }
   // بلا JSON.parse ثم JSON.stringify لملايين الأحرف: النص المخزَّن يُرسل كما هو
-  s.type('application/json').send('{"id":' + r.id + ',"source":' + JSON.stringify(r.source) + ',"label":' + JSON.stringify(r.label) + ',"created_at":' + r.created_at + ',"stats":' + JSON.stringify(stats) + ',"rows":' + rowsJson(r) + '}');
+  s.type('application/json').send('{"id":' + r.id + ',"source":' + JSON.stringify(r.source) + ',"label":' + JSON.stringify(r.label) + ',"created_at":' + r.created_at + ',"stats":' + JSON.stringify(stats) + ',"excluded":' + JSON.stringify(excl) + ',"rows":' + rowsJson(r) + '}');
 }));
 app.delete('/api/runs/:id', auth, active, wrap((q, s) => { if (db.prepare('delete from runs where id=? and user_id=?').run(q.params.id, q.u.id).changes) db.prepare('delete from lib_rows where run_id=?').run(q.params.id); s.json({ ok: 1 }); }));
 app.post('/api/runs', auth, active, wrap((q, s) => {

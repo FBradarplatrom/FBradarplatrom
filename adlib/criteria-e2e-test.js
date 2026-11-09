@@ -102,18 +102,18 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     if (process.env.SHOT) { await pg.locator('#sum').screenshot({ path: process.env.SHOT + '/sum.png' }); await pg.locator('.pc').first().screenshot({ path: process.env.SHOT + '/card2.png' }); }
     const K = Object.fromEntries(await pg.$$eval('#sum .kpi', ks => ks.map(k => [k.querySelector('span').textContent, k.querySelector('b').textContent])));
     const num = t => +String(t).replace(/[^\d٠-٩]/g, '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-    ok(Object.keys(K).join('|') === 'الإعلانات المرصودة|الإعلانات التي تم جلبها|دخلت التحليل|الإعلانات المستبعدة|عدد المنتجات|عدد البائعين', 'الأرقام الستة بالترتيب المطلوب');
+    ok(Object.keys(K).join('|') === 'الإعلانات المرصودة|الإعلانات التي تم جلبها|دخلت التحليل|الإعلانات المستبعدة|عدد البائعين', 'خمسة أرقام دقيقة فقط (بلا عدد المنتجات): ' + Object.keys(K).join('|'));
     ok(num(K['الإعلانات المرصودة']) === 220 && num(K['الإعلانات التي تم جلبها']) === 6 && num(K['دخلت التحليل']) === 5 && num(K['الإعلانات المستبعدة']) === 1, 'المرصود 220 · المجلوب 6 (بلا تكرار) · التحليل 5 · المستبعد 1: ' + JSON.stringify(K));
     ok(num(K['دخلت التحليل']) + num(K['الإعلانات المستبعدة']) === num(K['الإعلانات التي تم جلبها']), 'المجلوب = دخلت التحليل + المستبعدة');
-    const PR = await pg.evaluate(() => { const u = new Map(); window.WPR.PROD().forEach(p => { if (!u.has(p.ads)) u.set(p.ads, p); }); return [...u.values()].filter(p => !p.excl).map(p => ({ name: p.name, v: p.versions, n: p.n })); });
+    ok(num(K['عدد البائعين']) === 4, 'البائعون = أسماء صفحات مختلفة (4)');
     const tabN = await pg.$$eval('#tabs button', bs => Object.fromEntries(bs.map(b => [b.dataset.t, +b.querySelector('b').textContent])));
-    ok(tabN.all === num(K['عدد المنتجات']) && ['trial', 'prom', 'gem', 'fire', 'old', 'low'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all, '«الكل» = عدد المنتجات = مجموع التبويبات (بطاقة واحدة لكل منتج): ' + JSON.stringify(tabN));
-    ok(num(K['عدد المنتجات']) === PR.length && num(K['عدد البائعين']) === 4, 'المنتجات بلا تكرار، والبائعون 4 صفحات مختلفة: ' + JSON.stringify(PR));
-    const qm = PR.find(p => /رجالية/.test(p.name)), br = PR.find(p => /برنوس/.test(p.name));
-    ok(qm && qm.v === 4 && qm.n === 1, 'النسخ: إعلان عادي + مجموعة من 3 = 4 نسخ، بائع واحد');
-    ok(br && br.n === 2, 'البرنوس: بائعان');
+    ok(tabN.all === num(K['الإعلانات التي تم جلبها']) && ['trial', 'prom', 'gem', 'fire', 'old', 'low', 'excl'].reduce((x, k) => x + (tabN[k] || 0), 0) === tabN.all && tabN.excl === 1, '«الكل» = المجلوب = مجموع التبويبات، و«مستبعد» = 1: ' + JSON.stringify(tabN));
+    ok(await pg.$eval('#tabs [data-t="excl"]', b => /مستبعد/.test(b.textContent)), 'تبويب «🚫 مستبعد» موجود');
+    await pg.click('#tabs [data-t="excl"]'); await pg.waitForTimeout(300);
+    ok(/استُبعد عند الاستقبال/.test(await pg.locator('#grid').textContent()), 'المستبعد عند الاستقبال يظهر في «مستبعد» بسببه');
+    await pg.click('#tabs [data-t="all"]'); await pg.waitForTimeout(300);
     const st = await pg.$$eval('.pc .pc-st', b => b.map(x => x.textContent));
-    ok(st.some(t => /4\s*نسخ/.test(t)) && st.some(t => /2\s*بائعين/.test(t)) && !(await pg.$('.pc .bn')), 'البطاقة: «نسخ» و«بائعين» كمعلومة، ولا وسم فائدة');
+    ok(st.length && st.every(t => !/نسخ|بائعين|نشطة/.test(t)) && !(await pg.$('.pc .bn')), 'البطاقة بلا «نسخ» ولا «بائعين» ولا وسم فائدة');
     // قراءة «~220 نتيجة» من نص الصفحة: علامات اتجاه مخفية، أرقام عربية، فواصل
     const src = fs.readFileSync(path.join(__dirname, '..', 'extensions', 'ad-collector', 'collector.js'), 'utf8');
     const TOT_RE = eval(/const TOT_RE = (\/.*\/i);/.exec(src)[1]), BIDI = eval(/const BIDI = (\/.*\/g);/.exec(src)[1]);

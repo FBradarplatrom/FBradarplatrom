@@ -76,13 +76,18 @@ P=A([row({ad_id:'v1',page_id:'s1',title:'جهاز يزيل البقع',link_url:
  row({ad_id:'v3',page_id:'s2',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro',duplicates:'2',collation_id:'G2'}),row({ad_id:'v4',page_id:'s3',page_name:'متجر 3',title:'جهاز يزيل البقع',link_url:'https://shop.dz/products/stain-remover-pro'})]);
 eq('النسخ: مجموعة ميتا تُعد مرة واحدة (3 + 2 + 1 = 6)، و3 صفحات بنفس المتجر = بائع واحد',[P.length,P[0].versions,P[0].n],[1,6,1]);
 eq('البائعون بلا تكرار عبر المنتجات (صفحة + متجر)',C.sellerCount([{page_id:'1',link_url:'https://a.dz/x'},{page_id:'2',link_url:'https://a.dz/y'},{page_id:'3',link_url:'https://www.aliexpress.com/item/1.html'},{page_id:'4',link_url:'https://www.aliexpress.com/item/2.html'},{page_name:'متجر',link_url:''},{page_name:'متجر',link_url:''}].map(C.normRow)),4);
+// ===== وضع المنصة: بلا تجميع (كل إعلان بطاقة) + المستبعد عند الاستقبال =====
+const LG=Object.assign({},L,{group:false});
+P=C.analyze([row({ad_id:'n1',page_id:'a',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n2',page_id:'b',title:'جهاز يزيل البقع',link_url:'https://x.dz/products/same-item'}),row({ad_id:'n3',page_id:'c',title:'قشابية',pre_excl:'دورة أو تكوين'})],NOW,LG);
+eq('بلا تجميع: 3 إعلانات = 3 بطاقات بمفاتيح مختلفة',[P.length,new Set(P.map(p=>p.k)).size],[3,3]);
+eq('المستبعد عند الاستقبال يظهر «مستبعد» بسببه',[P.filter(p=>p.excl).length,/استُبعد عند الاستقبال: دورة/.test(P.find(p=>p.excl).why[0])],[1,true]);
 // ===== الإقصاء والتنبيهات والمتوقف =====
 P=A([row({ad_id:'f1',page_id:'f1',title:'ثلاجة صغيرة للسيارة',body:'ثلاجة تبرد مشروباتك. السعر 15000 دج',image_url:'https://c/i/f1.jpg'})]);
 eq('كبير الحجم/هش/أكل: تنبيه لا إقصاء',[P[0].cat!=='excl',/قد يكون/.test(P[0].warn||'')],[true,true]);
 P=A([row({ad_id:'s1',page_id:'s1',status:'Inactive',start_date:old(40),end_date:old(15),title:'جهاز يزيل البقع',image_url:'https://c/i/s1.jpg'})]);
 eq('كل إعلاناته متوقفة (ولو بعد 25 يوماً): يُقصى',P[0].cat,'excl');
 P=A([row({ad_id:'s2',page_id:'s2',status:'Inactive',start_date:old(10),end_date:old(7),title:'جهاز يزيل البقع',image_url:'https://c/i/s2.jpg'})]);
-eq('كل إعلاناته متوقفة: سبب واضح',/كل إعلاناته متوقفة/.test(P[0].why.join('')),true);
+eq('كل إعلاناته متوقفة: سبب واضح',/متوقف/.test(P[0].why.join('')),true);
 P=A([row({ad_id:'s3',page_id:'s3',status:'Inactive',title:'جهاز يزيل البقع',image_url:'https://c/i/s3.jpg'})]);
 eq('متوقف بلا تاريخ: يُقصى',P[0].cat,'excl');
 P=A([row({ad_id:'g1',page_id:'g1',start_date:old(20),title:'ساعة يد أنيقة',body:'ساعة عادية',image_url:'https://c/i/g1.jpg'}),row({ad_id:'g2',page_id:'g2',start_date:old(12),title:'جهاز يقضي على الناموس',body:'x',image_url:'https://c/i/g2.jpg'})]);

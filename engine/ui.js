@@ -23,7 +23,7 @@ const priceTxt=p=>{if(!p.pr)return'—';const m=MK(),c=p.cur||'DZD',sym=m?m.curS
 const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!m)return'';return`<span class="tg soft" title="السوق الذي جاء منه المنتج">${flag(m)} ${esc(mkName(m))}</span>`+(ms.length>1?`<span class="tg" title="${esc(ms.map(mkName).join('، '))}">🌍 يظهر في ${ms.length} أسواق: ${ms.map(flag).join(' ')}</span>`:'')};
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
-const CL={ended:'⏹️ توقف بعد نجاح',trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'مقصاة',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
+const CL={ended:'⏹️ توقف بعد نجاح',trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'🚫 مستبعد',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
 const TRL={emerging:'بداية انتشار',rising:'صاعد',steady:'مستقر',declining:'في هبوط',saturated:'متشبع'};
 const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
@@ -65,7 +65,7 @@ async function load(files){VP++;RST=(files&&files[0]&&files[0].stats)||null;for(
  const cd=ALL.map(a=>a.collected).filter(Boolean).map(Number);
  NOW=cd.length?Math.max(...cd):(lm||Date.now());   // تاريخ جمع البيانات
 }finally{window.__busy&&window.__busy('ld')}
- await analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);trackPass().catch(()=>{});setTimeout(()=>vpass().catch(()=>{}),300)}
+ await analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);trackPass().catch(()=>{})}
 
 /* التحليل في خيط خلفي للملفات الكبيرة (الصفحة لا تتجمد)، ومباشرة للصغيرة أو إن تعذّر الخيط */
 let WK=null,WKN=0;const WKW=new Map();
@@ -73,7 +73,7 @@ function worker(){if(WK!==null)return WK;try{WK=new Worker('/engine-worker.js');
 const VHI={};   /* بصمة الصورة: رقم الإعلان في ALL → مجموعة الدمج */
 async function analyze(){
  const MKT=window.RadarMarkets,mg=t=>MKT?', '+MKT.goldText(t):'';   /* الفائدة تُقرأ أيضاً بلغات الأسواق الدولية */
- const src={strong:$('#d_strong').value+mg('strong'),normal:$('#d_mid').value+mg('normal'),brands:$('#d_brand').value,ignore:FIX.ignore||[],allowPages:FIX.allowPages||[]},lk=JSON.stringify(src);
+ const src={strong:$('#d_strong').value+mg('strong'),normal:$('#d_mid').value+mg('normal'),brands:$('#d_brand').value,ignore:FIX.ignore||[],allowPages:FIX.allowPages||[],group:false},lk=JSON.stringify(src);
  if(lk!==LK)ALL.forEach(a=>{delete a._pc});   /* التصحيحات تغيّرت: يُعاد فحص الصلاحية */
  const market=($('#mkt')||{}).value||'',rates=Object.assign({},MK()?MK().RATES_DZD:{},myRates());
  ALL.forEach((a,i)=>{a._i=i;if(VHI[i])a._vh=VHI[i]});
@@ -90,22 +90,23 @@ async function analyze(){
  render()}
 
 /* أرقام أعلى صفحة التحليل: كل إعلان وكل منتج يُعد مرة واحدة */
-function sumStats(){const U=new Map();PROD.forEach(p=>{if(!U.has(p.ads))U.set(p.ads,p)});   /* مداخل المنتج الواحد في عدة تصنيفات تتشارك نفس قائمة الإعلانات */const ps=[...U.values()],ok=ps.filter(p=>!p.excl);
- const inAds=ok.flatMap(p=>p.counted),exclP=ps.filter(p=>p.excl).reduce((s,p)=>s+p.ads.length,0),stoppedIn=ok.reduce((s,p)=>s+p.ads.length-p.counted.length,0),flt=RST&&RST.filtered||0;
- return{observed:RST&&RST.observed?RST.observed:null,searches:RST&&RST.searches||0,fetched:ALL.length+flt,analyzed:inAds.length,excluded:exclP+stoppedIn+flt,
-  excl_detail:`عند الاستقبال (ليست منتجات): ${flt} · في التحليل (علامة رسمية/ليس منتجاً/كل إعلاناته متوقفة): ${exclP} · متوقفة داخل منتجات نشطة: ${stoppedIn}`,products:ok.length,sellers:CORE.sellerCount(inAds)}}
+function sumStats(){const U=new Map();PROD.forEach(p=>{if(!U.has(p.ads))U.set(p.ads,p)});const ps=[...U.values()],ok=ps.filter(p=>!p.excl);
+ const inAds=ok.flatMap(p=>p.ads),exclAds=ps.filter(p=>p.excl).flatMap(p=>p.ads),pre=exclAds.filter(a=>a.pre_excl).length;
+ const pg=new Set(inAds.map(a=>CORE.N(a.page_name||'').trim()||'#'+(a.page_id||'')).filter(x=>x&&x!=='#'));   /* البائع = اسم صفحة الإعلان */
+ return{observed:RST&&RST.observed?RST.observed:null,searches:RST&&RST.searches||0,fetched:ALL.length,analyzed:inAds.length,excluded:exclAds.length,
+  excl_detail:`عند الاستقبال (ليست منتجات): ${pre} · في التحليل (علامة رسمية/ليس منتجاً/متوقف): ${exclAds.length-pre}`,sellers:pg.size}}
 function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'+id)||{}).checked;
  const q=CORE.N(v('q')).trim(),md=+v('minDays')||0,pmin=+v('pmin')||0,pmax=+v('pmax')||1e12,fm=v('fmt');
  const B=PROD.filter(p=>p.days>=md&&(!fm||p.fmt===fm)&&(!q||p.q.includes(q))&&(!(v('pmin')||v('pmax'))||(p.prDzd&&p.prDzd>=pmin&&p.prDzd<=pmax))&&(!$('#fmk')||!v('fmk')||(p.markets||[]).includes(v('fmk')))&&(!ck('cb')||p.benOk)&&(!ck('cs')||!p.seas));
- const cnt={all:0,ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;if(p.cat!=='excl')cnt.all++;if(FAV.has(p.k))cnt.fav++});
+ const cnt={all:0,ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0,fav:0,watch:0,new:0};B.forEach(p=>{cnt[p.cat]++;cnt.all++;if(FAV.has(p.k))cnt.fav++});
  R.querySelectorAll('#tabs button').forEach(b=>{b.querySelector('b').textContent=cnt[b.dataset.t];b.classList.toggle('on',b.dataset.t===tab)});
- VIEW=B.filter(p=>tab==='all'?p.cat!=='excl':tab==='fav'?FAV.has(p.k):p.cat===tab);
+ VIEW=B.filter(p=>tab==='all'?true:tab==='fav'?FAV.has(p.k):p.cat===tab);
  const so=v('sort'),tk=p=>{const t=trackOf(p);return t?(t.act?t.n:-1):0};   /* المتابعة: رُصد نشطاً في أيام جمع أكثر = أوثق */
  VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='new'?a.days-b.days:a.rank-b.rank||(b.ben||0)-(a.ben||0)||tk(b)-tk(a)||(b.days||0)-(a.days||0));
  const S=sumStats(),nf=x=>x==null?'—':Number(x).toLocaleString('ar-DZ');
  $('#sum').innerHTML=[[S.observed,'الإعلانات المرصودة',S.observed==null?'العدد الذي تعرضه مكتبة ميتا أعلى نتائج البحث («~220 نتيجة»). يظهر للدفعات التي جُمعت بالإضافة 1.6 فأحدث: حدّث الإضافة وأعد الجمع':'مجموع ما عرضته مكتبة ميتا أعلى نتائج '+S.searches+' بحث («~N نتيجة»)'],
-  [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار)'],[S.analyzed,'دخلت التحليل','إعلانات نشطة في منتجات غير مستبعدة. تُجمع في منتجات: انظر «عدد المنتجات»'],
-  [S.excluded,'الإعلانات المستبعدة',S.excl_detail],[S.products,'عدد المنتجات','منتجات مختلفة غير مستبعدة (المنتج الواحد يُعد مرة واحدة ولو ظهر في تصنيفين)'],[S.sellers,'عدد البائعين','صفحات/متاجر مختلفة في الإعلانات التي دخلت التحليل']]
+  [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار) = «الكل» = دخلت التحليل + المستبعدة'],[S.analyzed,'دخلت التحليل','إعلانات نشطة غير مستبعدة، كل منها في تصنيف عمره'],
+  [S.excluded,'الإعلانات المستبعدة',S.excl_detail+' · تظهر في تبويب «مستبعد»'],[S.sellers,'عدد البائعين','أسماء صفحات مختلفة في الإعلانات التي دخلت التحليل']]
   .map(x=>`<div class="kpi" title="${esc(x[2]||'')}"><b>${nf(x[0])}</b><span>${x[1]}</span></div>`).join('');
  draw()}
 const ok=u=>/^https?:/i.test(u||'');
@@ -155,11 +156,11 @@ function cardHTML(p,o={}){const t=p.top||{},r=p.ref,imgs=imgsOf(p),im=imgs[0],kw
 <div class="pc-top"><span class="bdg cat-${p.cat}">${CL[p.cat]||p.cat}</span></div>
 <div class="pc-body"><h3 class="pc-ti">${esc(p.name)}</h3><p class="pc-sub">${esc(p.pages||'')}</p>${oldBanner(p)}
 <div class="pc-tags">${p.excl?'':`${r&&r.ev&&r.ev[0]&&r.ev[0].tag?`<span class="tg">${r.ev[0].tag}</span>`:''}${p.warn?`<span class="tg warn">${esc(p.warn)}</span>`:''}`}${p.also&&p.also.length?`<span class="tg">له نسخ أيضاً في: ${p.also.map(c=>CL[c]).join('، ')}</span>`:''}${p.mktTag?`<span class="tg">🔗 يحوّل إلى ${esc(p.mktTag)}</span>`:''}${mkChip(p)}${trackChip(p)}${p.seas?`<span class="tg">موسمي${p.seasTag?': '+esc(p.seasTag):''}</span>`:''}${notes}</div>
-<div class="pc-st"><div><b>${(p.counted||[]).length}</b><span>نشطة</span></div>${p.versions>1?`<div title="مجموع نسخ إعلانات هذا المنتج كما تعرضها مكتبة ميتا («X إعلانات تستخدم هذا التصميم»)، معلومة فقط"><b>${p.versions}</b><span>نسخ</span></div>`:''}${p.n>1?`<div title="صفحات/متاجر مختلفة تعلن عن هذا المنتج، معلومة فقط"><b>${p.n}</b><span>بائعين</span></div>`:''}<div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
+<div class="pc-st"><div><b>${(p.counted||[]).length?'نشط':'متوقف'}</b><span>الحالة</span></div><div><b>${r&&r.age!=null?r.age:'—'}</b><span>عمر (يوم)</span></div><div><b>${pr}</b><span>السعر</span></div></div>
 ${saved?`<label class="fl">الكلمة الدلالية للبحث<input dir="auto" data-f="kw" data-k="${esc(o.k)}" value="${esc(kw)}" placeholder="مثال: قلم التلوين السحري"></label>`:(kw?`<div class="pc-kw">🔑 الكلمة الدلالية: <b>${esc(kw)}</b></div>`:'')}
 <div class="pc-ch">${p.excl?(p.why||[]).map(x=>`<span class="tg bad">${esc(x)}</span>`).join('')+(p.fix&&(p.fix.terms.length||p.fix.pages.length)?`<button class="btn ghost sm" data-fix="${esc(p.k)}" title="أعد هذا المنتج ولا تستبعد بهذا السبب مستقبلاً">↩️ سبب خاطئ</button>`:''):(p.hits||[]).slice(0,6).map(x=>`<span class="tg soft">🟢 ${esc(x.label)}</span>`).join('')}</div>
 ${srcBox(p,kw,imgs)}
-<details class="pc-more" data-lz="${lzPut(()=>`${p.excl||!r?'':`<h4>الإعلان المرجعي</h4>${evTable(r)}`}${proofLine(p)}<h4>إعلانات المنتج، كلٌّ بتصنيفه</h4>${adsTable(p,saved)}
+<details class="pc-more" data-lz="${lzPut(()=>`${p.excl||!r?'':`<h4>الإعلان المرجعي</h4>${evTable(r)}`}<h4>إعلانات المنتج، كلٌّ بتصنيفه</h4>${adsTable(p,saved)}
 <h4>الصفحات المعلِنة</h4><table class="tb"><tr><th>الصفحة</th><th>المتجر</th><th>السعر</th><th></th></tr>${(p.sellers||[]).slice(0,12).map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.host)}</td><td>${s.p||'—'}</td><td>${/^\d{5,}$/.test(s.pid||'')?`<button class="btn ghost sm" data-tool="watch" data-pid="${esc(s.pid)}" data-name="${esc(s.name)}" title="راقب إعلانات هذه الصفحة">👁 راقب</button>`:''}</td></tr>`).join('')}</table>`)}"><summary>${p.excl||!r?'الإعلانات والصفحات':'المعايير والإعلانات والصفحات'}</summary><p class="sub">…</p></details>
 <div class="pc-lk">${[['library_url','الإعلان'],['link_url','المتجر'],['video_url','الفيديو']].map(([f,l])=>{const u=lk(f);return ok(u)?`<a class="lk" href="${esc(u)}" target="_blank" rel="noopener">${l} ↗</a>`:''}).join('')}${ok(im)?`<a class="lk" href="${esc(im)}" target="_blank" rel="noopener">الصورة ↗</a>`:''}</div>
 ${saved?`<label class="fl">ملاحظتي<textarea data-f="note" data-k="${esc(o.k)}" rows="2" placeholder="ملاحظاتك على المنتج">${esc(o.note||'')}</textarea></label><div class="pc-act pc-g"><span class="sub full">نسخة محفوظة بتاريخ ${fd(o.at||Date.now())}</span><button class="btn ghost sm" data-tool="sup" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="ابحث عن هذا المنتج في الأسواق الصينية وقارن بالصورة">🏭 المورّد</button><button class="btn ghost sm" data-tool="ai" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="زاوية البيع والجمهور ونص إعلان جزائري">🧠 تحليل الإعلان</button><button class="btn ghost sm" data-tool="profit" data-k="${esc(saved?o.k:p.k)}" data-sv="${saved?1:0}" title="هل يربح بعد الإعلان والتأكيد والتسليم والمرتجعات؟">💰 حاسبة الربح</button><button class="btn sm w" data-a="togap" data-id="${esc(o.k)}" title="هل يُباع في الجزائر؟">🎯 افحص في الجزائر</button><button class="btn danger sm w" data-a="unsave" data-id="${esc(o.k)}">إزالة من المحفوظات</button></div>`
@@ -176,7 +177,7 @@ function snapshot(p){const recs=p.recs.slice(0,30),ri=Math.max(0,recs.indexOf(p.
 function hydrate(s){if(s.v===2){s.ref=s.recs[s.refIndex]||s.recs[0]||null;return s}
  return{name:s.name||'',kw:s.kw||'',cat:s.tier||'low',score:s.score||0,n:s.n||0,copies:0,pr:s.price||0,days:s.days||0,pages:'',why:[],stopped:0,counted:[],hits:[],trend:'steady',
   top:{library_url:s.lib,link_url:s.link},images:[],sellers:[],recs:[],ref:null,excl:false,saved_at:s.date}}
-function counts(){const c={ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);const S=sumStats();c.products=S.products;c.ads=ALL.length;c.active=S.analyzed;c.sellers=S.sellers;c.observed=S.observed;c.excluded=S.excluded;return c}
+function counts(){const c={ended:0,trial:0,prom:0,maybe:0,gem:0,fire:0,old:0,low:0,excl:0};PROD.forEach(p=>c[p.cat]++);const S=sumStats();c.products=S.analyzed;c.ads=ALL.length;c.active=S.analyzed;c.sellers=S.sellers;c.observed=S.observed;c.excluded=S.excluded;return c}
 
 $('#d_strong').value=DEF.strong;$('#d_mid').value=DEF.normal;$('#d_brand').value=DEF.brands;
 $('#file').addEventListener('change',e=>load([...e.target.files]));
@@ -185,7 +186,7 @@ $('#file').addEventListener('change',e=>load([...e.target.files]));
 $('#drop').addEventListener('drop',e=>load([...e.dataTransfer.files]));
 R.querySelectorAll('.flt input,.flt select').forEach(el=>el.addEventListener('input',render));
 /* سوق الملف وأسعار الصرف يعيدان التحليل */
-$('#mkt')&&$('#mkt').addEventListener('change',()=>{if(ALL.length){analyze();setTimeout(()=>vpass().catch(()=>{}),300)}});
+$('#mkt')&&$('#mkt').addEventListener('change',()=>{if(ALL.length){analyze()}});
 R.addEventListener('change',e=>{const i=e.target.closest('[data-rate]');if(!i)return;const r=myRates();r[i.dataset.rate]=+i.value||undefined;try{localStorage.setItem(RK,JSON.stringify(r))}catch(x){}if(ALL.length)analyze()});
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(b){tab=b.dataset.t;render()}});
 let FIX={ignore:[],allowPages:[]};
