@@ -65,6 +65,10 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
     await pg.click('.dal-i[data-v="help"]'); await pg.waitForSelector('.hc-t .sup-r'); ok(/فُعّل عرضك/.test(await pg.innerText('.hc-t')), 'الرد ظاهر في «طلباتي»');
     await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum'); ok(!/ردّ فريق الدعم/.test(await pg.innerText('#d-body')), 'التنبيه يختفي بعد قراءة الرد');
     await pg.click('[data-a="dper"][data-d="7"]'); await pg.waitForFunction(() => /7/.test(document.querySelector('.dsum h2').textContent)); ok(true, 'أزرار الفترة في الملخص');
+    ok(await pg.evaluate(() => document.querySelectorAll('#d-body i.ico svg').length > 0 && !/[\u{1F300}-\u{1FAFF}]/u.test(document.getElementById('wpr-app').innerText)), 'أيقونات خطية بدل الإيموجي في اللوحة');
+    const lp = await b.newPage({ viewport: { width: 1280, height: 860 } }); await lp.goto(BASE + '/'); await lp.waitForSelector('.mimg svg');
+    ok((await lp.$$('.mimg svg')).length === 3 && !/[\u{1F300}-\u{1FAFF}]/u.test(await lp.innerText('body')), 'الواجهة: أيقونات المنتجات وبلا إيموجي');
+    ok(await lp.evaluate(() => { const a = [...document.querySelectorAll('footer nav a')].filter(x => x.offsetParent); return a.length >= 5 && a.every(x => Math.abs(x.getBoundingClientRect().top - a[0].getBoundingClientRect().top) < 4); }), 'روابط الفوتر في صف أفقي واحد');
     ok(!errs.length, 'لا أخطاء جافاسكربت ' + errs.join(' | '));
     console.log(`PASS ${pass} ui checks`);
   } catch (e) { console.error('FAIL', e.message); process.exitCode = 1; }

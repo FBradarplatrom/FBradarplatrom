@@ -37,7 +37,7 @@ h1{font-size:clamp(32px,5vw,54px);line-height:1.15;margin:18px 0 16px;letter-spa
 .acts{display:flex;gap:12px;flex-wrap:wrap}.note{font-size:13.5px;color:var(--mut);margin-top:14px}
 .mock{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh);padding:18px;position:relative}
 .mrow{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card2);margin-bottom:10px}
-.mimg{width:52px;height:52px;border-radius:12px;flex:none}.mt{flex:1;min-width:0}.mt b{display:block;font-size:14.5px}.mt span{font-size:12.5px;color:var(--mut)}
+.mimg{width:52px;height:52px;border-radius:12px;flex:none;display:grid;place-items:center}.mt{flex:1;min-width:0}.mt b{display:block;font-size:14.5px}.mt span{font-size:12.5px;color:var(--mut)}
 .pill{font-size:12px;font-weight:600;border-radius:99px;padding:3px 10px;color:#fff;white-space:nowrap}
 .bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
 .float{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:10px 14px;font-size:13px;display:flex;gap:8px;align-items:center}
@@ -59,12 +59,12 @@ section{padding:clamp(48px,7vw,84px) 0}
 .faq{max-width:820px;margin:0 auto}.faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 18px;margin-bottom:10px}.faq summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none}.faq summary::after{content:"+";float:inline-end;color:var(--brand)}.faq details[open] summary::after{content:"−"}.faq p{margin:0 0 14px;color:var(--mut)}
 
 .wa{position:fixed;bottom:20px;inset-inline-end:20px;width:56px;height:56px;border-radius:50%;background:#25d366;display:grid;place-items:center;box-shadow:0 8px 24px -6px rgba(0,0,0,.35);z-index:40}.wa[hidden]{display:none}
-footer{border-top:1px solid var(--line);padding:36px 0 84px;color:var(--mut);font-size:14px;background:var(--card)}.fr{display:flex;gap:24px 40px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}.fb{max-width:420px}.fb .lg{margin-bottom:10px}.fb p{margin:0;line-height:1.8}.fcp{text-align:center;border-top:1px solid var(--line);margin-top:24px;padding-top:18px;font-size:13px}.fr nav{display:grid;grid-template-columns:repeat(2,auto);gap:10px 32px}.fr nav a{color:var(--mut)}.fr nav a:hover{color:var(--brand)}
+footer{border-top:1px solid var(--line);padding:32px 0 18px;color:var(--mut);font-size:14px;background:var(--card)}.fr{display:flex;gap:24px 40px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}.fb{max-width:420px}.fb .lg{margin-bottom:10px}.fb p{margin:0;line-height:1.8}.fcp{text-align:center;border-top:1px solid var(--line);margin-top:22px;padding-top:16px;font-size:13px}.fr nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 26px;padding-top:8px}.fr nav a{color:var(--mut)}.fr nav a:hover{color:var(--brand)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.chips span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:14px}
 @media(max-width:900px){.hg,.g3,.g2,.steps,.band{grid-template-columns:1fr}.links{display:none}.f1,.f2{display:none}.mock{margin-top:8px}}
 @media(max-width:420px){.nav .btn.g{display:none}.lg span{display:none}}
 [hidden]{display:none!important}</style>
-<script data-fab data-nolang src="/theme.js"></script></head>
+<script data-fab data-nolang src="/theme.js"></script><script src="/icons.js"></script></head>
 <body>
 <header><div class="w nav">
  <a class="lg" href="/"><i>📡</i><span data-t="brand"></span></a>
@@ -84,9 +84,9 @@ footer{border-top:1px solid var(--line);padding:36px 0 84px;color:var(--mut);fon
   <p class="note" data-t="hero_note"></p>
  </div>
  <div class="mock" aria-hidden="true">
-  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#a2ddbf,#6bc79a)"></div><div class="mt"><b data-t="m1"></b><span data-t="m1s"></span><div class="bar"><i style="width:86%"></i></div></div><span class="pill" style="background:#35ac74" data-t="m_gem"></span></div>
-  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"></div><div class="mt"><b data-t="m2"></b><span data-t="m2s"></span><div class="bar"><i style="width:64%"></i></div></div><span class="pill" style="background:#16a34a" data-t="m_prom"></span></div>
-  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#fed7aa,#f97316)"></div><div class="mt"><b data-t="m3"></b><span data-t="m3s"></span><div class="bar"><i style="width:72%"></i></div></div><span class="pill" style="background:#f97316" data-t="m_fire"></span></div>
+  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#a2ddbf,#6bc79a)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="mt"><b data-t="m1"></b><span data-t="m1s"></span><div class="bar"><i style="width:86%"></i></div></div><span class="pill" style="background:#35ac74" data-t="m_gem"></span></div>
+  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></div><div class="mt"><b data-t="m2"></b><span data-t="m2s"></span><div class="bar"><i style="width:64%"></i></div></div><span class="pill" style="background:#16a34a" data-t="m_prom"></span></div>
+  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#fed7aa,#f97316)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2.34M14 2v2.34"/><path d="M9 4.34h6a1 1 0 0 1 1 1v2.32a1 1 0 0 0 .3.71l.4.4a1 1 0 0 1 .3.7V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9.47a1 1 0 0 1 .3-.7l.4-.4a1 1 0 0 0 .3-.71V5.34a1 1 0 0 1 1-1Z"/><path d="M7 13h10"/></svg></div><div class="mt"><b data-t="m3"></b><span data-t="m3s"></span><div class="bar"><i style="width:72%"></i></div></div><span class="pill" style="background:#f97316" data-t="m_fire"></span></div>
   <div class="float f1">🎯 <span data-t="f1"></span></div>
   <div class="float f2">🏭 <span data-t="f2"></span></div>
  </div>
