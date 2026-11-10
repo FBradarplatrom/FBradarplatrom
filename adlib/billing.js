@@ -258,6 +258,8 @@ create table if not exists error_logs(id integer primary key, at integer, method
       const v = str(b[k], k === 'baridi_info' ? 600 : 300);
       if (CFG.SECRET.has(k) && /^•+/.test(v)) continue;                               // القيمة المخفية لم تُعدَّل
       if (/_mode$/.test(k) && v && !['test', 'live'].includes(v)) throw bad('الوضع: test أو live');
+      if (k === 'ga_id' && v && !/^G-[A-Z0-9]{4,16}$/.test(v)) throw bad('معرّف Google Analytics يبدأ بـ G- مثل G-AB12CD34EF');
+      if (k === 'meta_pixel' && v && !/^\d{8,20}$/.test(v)) throw bad('معرّف Meta Pixel أرقام فقط (8 إلى 20 رقماً)');
       CFG.set(k, v);
     }
     act && act(q.u.id, 'admin_config', q, Object.keys(b).filter(k => CFG.KEYS.includes(k)).join(','));

@@ -25,6 +25,17 @@ const open = f => { try { return new (require('better-sqlite3'))(f, { readonly: 
     ok(/2 من 5/.test(await pg.locator('.onb h2').innerText()) && (await pg.$$('.onb .onr.ok')).length === 2, 'الخطوات المنجزة تُشطب تلقائياً (حفظ منتج + التنبيهات)');
     await pg.click('[data-a="onbhide"]'); await pg.waitForTimeout(300);
     ok(!(await pg.$('.onb')), 'إخفاء الدليل');
+    // المساعدة والدعم
+    await A.request.post(BASE + '/api/login', { data: { email: 'a@t.dz', password: 'password123' } });
+    ok((await A.request.put(BASE + '/api/admin/config', { data: { ga_id: 'bad"><script>' } })).status() === 400, 'معرّف Analytics بصيغة خاطئة يُرفض');
+    ok((await A.request.put(BASE + '/api/admin/config', { data: { ga_id: 'G-AB12CD34EF', meta_pixel: '123456789012', support_email: 'help@t.dz', support_whatsapp: '+213 555 12 34 56' } })).ok(), 'حفظ معرّفات القياس والدعم');
+    await pg.goto(BASE + '/help'); await pg.waitForSelector('#x-help details');
+    ok((await pg.$$('#x-help details')).length >= 8 && !!(await pg.$('a[href^="mailto:help@t.dz"]')) && !!(await pg.$('a[href="https://wa.me/213555123456"]')), 'صفحة المساعدة: أسئلة شائعة + بريد وواتساب الدعم');
+    ok(!(await pg.content()).includes('googletagmanager') && !(await pg.content()).includes('fbevents'), 'لا أدوات قياس داخل المنصة');
+    const lh = await (await fetch(BASE + '/login')).text(), th = await (await fetch(BASE + '/terms')).text();
+    ok(lh.includes('gtag/js?id=G-AB12CD34EF') && lh.includes("fbq('init','123456789012')") && th.includes('G-AB12CD34EF'), 'أدوات القياس في الصفحات العامة');
+    const hj = await (await fetch(BASE + '/api/health')).json();
+    ok(hj.ok === true && !!hj.version && !JSON.stringify(hj).includes('@'), 'فحص صحة الخادم /api/health');
     // تصدير البيانات
     const ex = await pg.request.get(BASE + '/api/me/export'), J = await ex.json();
     ok(/attachment; filename="radar-my-data.json"/.test(ex.headers()['content-disposition']) && J.account.email === 'u@t.dz' && J.saved_products.length === 1 && J.settings.notify && Array.isArray(J.login_activity), 'تصدير البيانات: ملف JSON بالحساب والمحفوظات والإعدادات والنشاط');

@@ -195,6 +195,9 @@ ${field('telegram_token', 'رمز البوت (Token)', '123456:ABC…', 'secret'
 ${field('biz_name', 'اسم النشاط', 'Winning Product Radar')}${field('biz_country', 'البلد (القانون المطبّق)', 'الجزائر')}${field('biz_address', 'العنوان (اختياري)', '')}
 ${field('support_email', 'بريد الدعم', 'support@…')}${field('support_whatsapp', 'واتساب الدعم (اختياري)', '+213…')}${field('refund_days', 'مدة طلب الاسترداد (أيام)', '7')}${field('legal_updated', 'تاريخ آخر تحديث للشروط', '2026-11-10')}
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
+<div class="card"><h2>📈 قياس الزيارات والإعلانات</h2><p class="sub">في الصفحات العامة فقط (الرئيسية، التسجيل، الصفحات القانونية) لقياس نتائج إعلاناتك: زيارة الصفحة، وإنشاء حساب (CompleteRegistration / sign_up). لا يُحمَّل شيء منها داخل المنصة. اتركه فارغاً لتعطيله.</p>
+${field('ga_id', 'Google Analytics 4 (Measurement ID)', 'G-XXXXXXXXXX')}${field('meta_pixel', 'Meta Pixel ID', '123456789012345')}
+<p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
 <div class="card"><h2>🌐 المنصة والبريد</h2>${field('app_url', 'عنوان المنصة الكامل', 'https://winningproductradar.com')}<p class="sub">بريد الإرسال (SMTP): ${cfg && cfg.smtp ? '✅ مضبوط في إعدادات الخادم' : '⚠️ غير مضبوط (SMTP_HOST في إعدادات الخادم)'}</p><p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
 </div>` : ''}`;
     if (notif && W.WPRNOTIFY) W.WPRNOTIFY.draw($('#x-notif'), notif);

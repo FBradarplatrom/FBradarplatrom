@@ -334,20 +334,33 @@ require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يو�
 // ---------- الصفحات ----------
 const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
   .replace(/\{\{CONTACT\}\}/g, process.env.CONTACT_URL || 'mailto:' + (process.env.ADMIN_EMAIL || ''));
+// قياس الزيارات في الصفحات العامة فقط (الرئيسية، التسجيل، الصفحات القانونية): Google Analytics و Meta Pixel من «الربط والتكامل».
+// المعرّفات تُتحقق بصيغة صارمة لأنها تدخل في سكربت مضمَّن. لا شيء من هذا داخل المنصة بعد الدخول.
+function analytics() {
+  const C = require('./adlib/config.js'), ga = C.get('ga_id'), px = C.get('meta_pixel'); let h = '';
+  if (/^G-[A-Z0-9]{4,16}$/.test(ga)) h += `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga}');</script>`;
+  if (/^\d{8,20}$/.test(px)) h += `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${px}');fbq('track','PageView');</script>`;
+  return h;
+}
+const pub = html => { const a = analytics(); return a ? html.replace('</head>', a + '</head>') : html; };
 // صفحات الواجهة تُخدَم من views/ (خارج المجلد العام) فلا تظهر بأسماء ملفاتها (.html). التطبيق صفحة واحدة بروابط حقيقية لكل قسم.
 const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.join(__dirname, 'views', 'login.html');
 const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
-app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(LANDING));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscribers'],
+app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(pub(LANDING)));
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/help', '/subscribers'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 // الصفحات القانونية: شروط الاستخدام، الخصوصية، الاسترداد، الاتصال (بثلاث لغات، ومعلومات النشاط من «الربط والتكامل»)
-const LEGAL_PAGE = path.join(__dirname, 'views', 'legal.html');
-app.get(['/terms', '/privacy', '/refund', '/contact'], (q, s) => s.set('Cache-Control', 'no-cache').sendFile(LEGAL_PAGE));
+const LEGAL_HTML = fs.readFileSync(path.join(__dirname, 'views', 'legal.html'), 'utf8'), LOGIN_HTML = fs.readFileSync(LOGIN_PAGE, 'utf8');
+app.get(['/terms', '/privacy', '/refund', '/contact'], (q, s) => s.set('Cache-Control', 'no-cache').type('html').send(pub(LEGAL_HTML)));
+// فحص صحة الخادم لخدمات المراقبة (UptimeRobot وغيرها): 200 إن كانت قاعدة البيانات تعمل، وإلا 503. لا يكشف أي بيانات.
+const BOOT = Date.now();
+app.get('/api/health', (q, s) => { let okDb = false; try { okDb = db.prepare('select 1 x').get().x === 1; } catch (e) {}
+  s.set('Cache-Control', 'no-store').status(okDb ? 200 : 503).json({ ok: okDb, version: require('./package.json').version, build: VER, uptime: Math.round((Date.now() - BOOT) / 1000) }); });
 app.get('/api/legal/info', (q, s) => { const C = require('./adlib/config.js');
   s.json({ name: C.get('biz_name'), country: C.get('biz_country'), address: C.get('biz_address'), email: C.get('support_email') || process.env.ADMIN_EMAIL || '', whatsapp: C.get('support_whatsapp'), refund_days: +C.get('refund_days') || 7, updated: C.get('legal_updated') || '' }); });
-app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.sendFile(LOGIN_PAGE));
+app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.set('Cache-Control', 'no-cache').type('html').send(pub(LOGIN_HTML)));
 // الأداء: روابط الملفات تحمل رقم نسختها (?v=…) فيحفظها المتصفح سنة كاملة ولا يسأل الخادم عنها في كل زيارة.
 // يتغير الرقم تلقائياً متى تغيّر أي ملف (بعد إعادة تشغيل الخادم عند النشر).
 const VER = (() => { const h = crypto.createHash('sha1'); for (const d of ['public', 'engine', path.join('adlib', 'lib')]) for (const f of fs.readdirSync(path.join(__dirname, d)).filter(x => x.endsWith('.js')).sort()) h.update(fs.readFileSync(path.join(__dirname, d, f))); return h.digest('hex').slice(0, 10); })();
