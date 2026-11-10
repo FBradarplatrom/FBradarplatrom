@@ -356,7 +356,7 @@ const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.jo
 const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(pub(LANDING)));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/help', '/subscribers'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/help', '/guide', '/subscribers'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 // الصفحات القانونية: شروط الاستخدام، الخصوصية، الاسترداد، الاتصال (بثلاث لغات، ومعلومات النشاط من «الربط والتكامل»)

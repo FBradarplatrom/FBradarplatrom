@@ -14,9 +14,9 @@ h1{font-size:26px;margin:0;line-height:1.3;letter-spacing:-.2px}h2{font-size:18p
 .nv{display:flex;align-items:center;gap:12px;width:100%;text-align:start;background:none;border:0;color:var(--mut);padding:10px 12px;border-radius:12px;cursor:pointer;font:inherit;font-weight:500;transition:.15s}
 .nv:hover{background:var(--card2);color:var(--ink)}.nv.on{background:var(--soft);color:var(--brand);font-weight:600}
 .nv svg{width:20px;height:20px;flex:none}.nv .nb{margin-inline-start:auto;background:var(--brand);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:20px;min-width:20px;text-align:center}
-.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}
+.me{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}
 .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#06b6d4);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
-.me div{min-width:0;flex:1}.me b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.me small{display:block;font-size:12px}
+
 .me button{background:none;border:0;color:var(--mut);cursor:pointer;padding:6px;border-radius:8px}.me button:hover{color:var(--bad);background:var(--card)}.me svg{width:19px;height:19px}
 .top{display:none}.scrim{display:none}
 .mn{flex:1;min-width:0;padding:30px clamp(16px,3vw,40px) 60px;max-width:1280px}
@@ -147,26 +147,51 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 .onb{border:2px solid var(--brand);padding:0 20px 20px;overflow:hidden}.onh{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 -20px;padding:18px 20px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}.onh h2{margin:2px 0;color:#fff;font-size:21px}.onh p{margin:0;opacity:.9;font-size:14px}.onh .btn{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)}.onic{font-size:34px;width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}.ontag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.3px;background:#fbbf24;color:#3b2a00;border-radius:99px;padding:2px 10px}
 .lng{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:0 6px;color:var(--mut);font-size:13px}.lng select{flex:1;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--card);color:var(--ink);font:inherit;font-size:13px}
 .onbar{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin:12px 0}.onbar i{display:block;height:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed)}.onl{display:grid;gap:8px}.onr{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.onr.ok{opacity:.6}.onr.ok b{text-decoration:line-through}.onn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--soft);color:var(--brand);flex:none}.onr.ok .onn{background:#059669;color:#fff}
-</style></head><body><div id="wpr-app" dir="rtl" lang="ar">
+
+/* ----- القائمة: مجموعات + طيّ + قائمة الحساب ----- */
+.nvs{display:flex;flex-direction:column;gap:2px}.nv{padding:8px 12px}
+.nvh{font-size:11.5px;font-weight:700;letter-spacing:.4px;color:var(--mut);opacity:.8;margin:14px 12px 4px;text-transform:uppercase}
+.brand{position:relative}.sbc{margin-inline-start:auto;background:none;border:0;color:var(--mut);cursor:pointer;padding:6px;border-radius:8px;display:grid;place-items:center}.sbc:hover{background:var(--card2);color:var(--ink)}.sbc svg{width:18px;height:18px}
+.mew{margin-top:auto;position:relative;padding-top:10px}
+.me{width:100%;margin:0;cursor:pointer;font:inherit;color:inherit;text-align:start;transition:.15s}.me:hover,.me[aria-expanded=true]{border-color:var(--brand)}.me>svg{width:16px;height:16px;color:var(--mut);flex:none}
+.me-t{min-width:0;flex:1}.me-t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.me-t small{display:block;font-size:12px;color:var(--mut)}
+.am{position:absolute;bottom:calc(100% - 4px);inset-inline:0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 18px 40px -16px rgba(15,23,42,.45);z-index:5}
+.am-i{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:var(--ink);padding:9px 10px;border-radius:10px;cursor:pointer;font:inherit;font-size:14px;text-align:start}.am-i:hover{background:var(--card2)}.am-i svg{width:18px;height:18px;color:var(--mut)}.am-i.bad,.am-i.bad svg{color:var(--bad)}
+@media(min-width:961px){#wpr-app.sbmini .sb{width:76px;padding-inline:10px}#wpr-app.sbmini .sb .brand span,#wpr-app.sbmini .nv span,#wpr-app.sbmini .nvh,#wpr-app.sbmini .me-t,#wpr-app.sbmini .me>svg{display:none}
+#wpr-app.sbmini .brand{flex-direction:column;gap:8px;padding-inline:0}#wpr-app.sbmini .sbc{margin:0}#wpr-app.sbmini .nv{justify-content:center;padding:10px 0}#wpr-app.sbmini .nv .nb{position:absolute;top:2px;inset-inline-end:6px;min-width:16px;line-height:16px;font-size:10px;padding:0 4px}
+#wpr-app.sbmini .nvh{display:block;height:1px;background:var(--line);margin:10px 6px;font-size:0}#wpr-app.sbmini .me{justify-content:center;padding:8px}#wpr-app.sbmini .am{inset-inline-end:auto;width:220px}}
+@media(max-width:960px){.sbc{display:none}}
+[dir=ltr] .gd-flow i{display:inline-block;transform:scaleX(-1)}
+</style><script data-fab src="/theme.js"></script></head><body><div id="wpr-app" dir="rtl" lang="ar">
 <header class="top"><button id="burger" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="brand"><i>📡</i>رادار المنتجات</div></header>
 <div class="scrim" id="scrim"></div>
 <aside class="sb" id="sb">
-<div class="brand"><i>📡</i><span>رادار المنتجات<br><small>الرابحة</small></span></div>
+<div class="brand"><i>📡</i><span>رادار المنتجات<br><small>الرابحة</small></span><button type="button" class="sbc" id="sbc" title="طيّ القائمة" aria-label="طيّ القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button></div>
+<nav class="nvs">
 <button class="nv on" data-v="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>لوحة التحكم</span></button>
+<button class="nv" data-v="guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>دليل الاستخدام</span></button>
+<div class="nvh">البحث اليومي</div>
 <button class="nv" data-v="collect"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg><span>جمع الإعلانات</span></button>
 <button class="nv" data-v="inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span>الإعلانات الواردة</span><i class="nb" id="nb-inbox" hidden></i></button>
 <button class="nv" data-v="analyze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><span>تحليل جديد</span></button>
 <button class="nv" data-v="arch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>الأرشيف</span></button>
+<div class="nvh">منتجاتي</div>
 <button class="nv" data-v="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>المنتجات المحفوظة</span></button>
 <button class="nv" data-v="gap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>ثغرات السوق</span><i class="nb" id="nb-gap" hidden></i></button>
-<button class="nv" data-v="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>مراقبة المنافسين</span><i class="nb" id="nb-watch" hidden></i></button>
 <button class="nv" data-v="tiktok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>TikTok</span></button>
+<button class="nv" data-v="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>مراقبة المنافسين</span><i class="nb" id="nb-watch" hidden></i></button>
+<div class="nvh">حسابي</div>
 <button class="nv" data-v="integrations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg><span>الربط والتكامل</span></button>
+<button class="nv" data-v="help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>المساعدة والدعم</span></button>
 <button class="nv" data-v="admin" id="nav-admin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>إدارة المشتركين</span></button>
-<button class="nv" data-v="help" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>المساعدة والدعم</span></button>
-<button class="nv" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>الإعدادات</span></button>
-<label class="lng" translate="no"><span aria-hidden="true">🌐</span><select id="ui-lang" aria-label="Language" onchange="try{localStorage.setItem('wpr_lang',this.value)}catch(e){}location.reload()"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></label>
-<div class="me"><div class="av" id="me-av">؟</div><div><b id="me-name"></b><small id="me-plan"></small></div><button data-a="logout" title="تسجيل الخروج" aria-label="خروج"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+</nav>
+<div class="mew"><div class="am" id="am" hidden role="menu">
+<button type="button" class="am-i" data-v="settings" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>الإعدادات</span></button>
+<button type="button" class="am-i" data-a="billing" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span>العرض والدفع</span></button>
+<button type="button" class="am-i" data-a="security" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>أمان الحساب</span></button>
+<button type="button" class="am-i bad" data-a="logout" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>تسجيل الخروج</span></button>
+</div>
+<button type="button" class="me" id="me-btn" aria-haspopup="menu" aria-expanded="false"><div class="av" id="me-av">؟</div><div class="me-t"><b id="me-name"></b><small id="me-plan"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 15 12 20 17 15"/><polyline points="7 9 12 4 17 9"/></svg></button></div>
 </aside>
 <main class="mn">
 <section id="v-dash" class="view"><div id="d-head"></div><div id="d-body"></div></section>
@@ -215,6 +240,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <section id="v-tiktok" class="view" hidden><div class="ph"><div><h1>🎵 منتجات TikTok</h1><p class="sub">ابحث في TikTok بأشهر عبارات المنتجات الرائجة، وتُرتَّب الفيديوهات بالمشاهدات والتفاعل والحداثة، واحفظ المنتجات لتبحث عن مورّدها وتحلّلها وتفحصها في الجزائر.</p></div></div><div id="x-tiktok"></div></section>
 <section id="v-integrations" class="view" hidden><div class="ph"><div><h1>🔌 الربط والتكامل</h1><p class="sub">كل ما يربط المنصة بالخارج في مكان واحد: الإضافة، TikTok، Google Sheets، التنبيهات، ومفاتيح المنصة (الذكاء الاصطناعي، الدفع، تيليغرام) للمدير.</p></div></div><div id="x-int"></div></section>
 <section id="v-settings" class="view" hidden><div class="ph"><div><h1>الإعدادات</h1><p class="sub">بيانات حسابك وكلمة المرور والاشتراك والأمان.</p></div></div><div id="x-set"></div></section>
+<section id="v-guide" class="view" hidden><div class="ph"><div><h1>دليل الاستخدام</h1><p class="sub">من تثبيت الإضافة إلى معرفة ربحك وفحص المنتج في سوقك: كل الخطوات بالترتيب، بنفس أسماء القائمة.</p></div></div><div id="x-guide"></div></section>
 <section id="v-help" class="view" hidden><div class="ph"><div><h1>المساعدة والدعم</h1><p class="sub">إجابات سريعة لأكثر الأسئلة شيوعاً، وطرق التواصل معنا.</p></div></div><div id="x-help"></div></section>
 <section id="v-admin" class="view" hidden><div class="ph"><div><h1>إدارة المشتركين</h1><p class="sub">أضف أياماً لاشتراك العضو بعد استلام الدفع (رقم سالب للإنقاص)، وعدّل بياناته أو ولّد له رابط استعادة كلمة المرور.</p></div></div><div id="x-link"></div><div id="x-users" class="card pad0"></div></section>
 </main>
@@ -673,7 +699,7 @@ $('#csv').addEventListener('click',()=>{const tx='\uFEFF'+rows().map(r=>r.map(x=
 fillMarkets();
 window.WPR={fix:()=>FIX,setFix:f=>{FIX=f;LK=null},sheetRows:()=>rows(),load,msg,PROD:()=>PROD,byKey:k=>PROD.find(p=>p.k===k),setFav:a=>{FAV=new Set(a)},snapshot,hydrate,cardHTML,counts,imgsOf};
 })();
-</script><script src="/collect.js"></script><script src="/radar-lib/gapmatch.js"></script><script src="/gap.js"></script><script src="/tools.js"></script><script src="/watch.js"></script><script src="/tiktok.js"></script><script src="/account.js"></script><script src="/profit.js"></script><script>(function(){
+</script><script src="/collect.js"></script><script src="/radar-lib/gapmatch.js"></script><script src="/gap.js"></script><script src="/tools.js"></script><script src="/watch.js"></script><script src="/tiktok.js"></script><script src="/account.js"></script><script src="/guide.js"></script><script src="/profit.js"></script><script>(function(){
 'use strict';
 const R=document.getElementById('wpr-app'),$=s=>R.querySelector(s),W=window;
 const e=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -708,18 +734,22 @@ const csv=rows=>'\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""
 W.__dl=(n,t)=>{const b=new Blob([t],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600)};
 const guard=f=>(...a)=>W.__btnBusy(a[0],f(...a)).catch(x=>{if(x.message!=='auth')toast(x.message||'حدث خطأ','err')});
 
-try{document.getElementById('ui-lang').value=W.__LANG||'ar'}catch(x){}
+/* قائمة الحساب والطيّ */
+const amClose=()=>{const m=$('#am');if(m&&!m.hidden){m.hidden=true;$('#me-btn').setAttribute('aria-expanded','false')}};
+try{if(localStorage.getItem('wpr_sbmini')==='1')R.classList.add('sbmini')}catch(x){}
+R.querySelectorAll('.nv[data-v]').forEach(b=>{const s=b.querySelector('span');if(s&&!b.title)b.title=s.textContent.trim()});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')amClose()});
 let cur='dash',ME={},reopenIds=[],SV={},RUNS=[];
-const V=['dash','collect','inbox','analyze','arch','saved','gap','watch','tiktok','integrations','settings','help','admin'];
-const DRAW={collect:async(sub,o)=>{if(!W.WPRLIB)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRLIB.render(sub,o)},dash:rDash,inbox:rInbox,arch:rArch,saved:rSaved,watch:async()=>{if(!W.WPRWATCH)throw new Error('تعذّر تحميل القسم');W.WPRWATCH.render()},tiktok:async()=>{if(!W.WPRTT)throw new Error('تعذّر تحميل القسم');W.WPRTT.render()},gap:async(sub,o)=>{if(!W.WPRGAP)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRGAP.render(sub,o);gapBadge()},integrations:async()=>{if(!W.WPRACC)throw new Error('تعذّر تحميل القسم');await W.WPRACC.integrations()},settings:rSettings,help:rHelp,admin:rAdmin};
+const V=['dash','collect','inbox','analyze','arch','saved','gap','watch','tiktok','integrations','settings','help','guide','admin'];
+const DRAW={collect:async(sub,o)=>{if(!W.WPRLIB)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRLIB.render(sub,o)},dash:rDash,inbox:rInbox,arch:rArch,saved:rSaved,watch:async()=>{if(!W.WPRWATCH)throw new Error('تعذّر تحميل القسم');W.WPRWATCH.render()},tiktok:async()=>{if(!W.WPRTT)throw new Error('تعذّر تحميل القسم');W.WPRTT.render()},gap:async(sub,o)=>{if(!W.WPRGAP)throw new Error('تعذّر تحميل القسم، أعد تحميل الصفحة');W.WPRGAP.render(sub,o);gapBadge()},integrations:async()=>{if(!W.WPRACC)throw new Error('تعذّر تحميل القسم');await W.WPRACC.integrations()},settings:rSettings,help:rHelp,guide:async()=>{if(!W.WPRGUIDE)throw new Error('تعذّر تحميل القسم');W.WPRGUIDE.render($('#x-guide'))},admin:rAdmin};
 /* الروابط: لكل قسم مسار حقيقي، فيعمل زر الرجوع والتحديث ونسخ الرابط */
-const PATH={dash:'/',collect:'/collect',inbox:'/inbox',analyze:'/analyze',arch:'/archive',saved:'/saved',gap:'/gaps',watch:'/watch',tiktok:'/tiktok',integrations:'/integrations',settings:'/settings',help:'/help',admin:'/subscribers'};
-const TITLE={dash:'لوحة التحكم',collect:'جمع الإعلانات',inbox:'الإعلانات الواردة',analyze:'تحليل جديد',arch:'الأرشيف',saved:'المنتجات المحفوظة',gap:'ثغرات السوق',watch:'مراقبة المنافسين',tiktok:'منتجات TikTok',integrations:'الربط والتكامل',settings:'الإعدادات',help:'المساعدة والدعم',admin:'إدارة المشتركين'};
+const PATH={dash:'/',collect:'/collect',inbox:'/inbox',analyze:'/analyze',arch:'/archive',saved:'/saved',gap:'/gaps',watch:'/watch',tiktok:'/tiktok',integrations:'/integrations',settings:'/settings',help:'/help',guide:'/guide',admin:'/subscribers'};
+const TITLE={dash:'لوحة التحكم',collect:'جمع الإعلانات',inbox:'الإعلانات الواردة',analyze:'تحليل جديد',arch:'الأرشيف',saved:'المنتجات المحفوظة',gap:'ثغرات السوق',watch:'مراقبة المنافسين',tiktok:'منتجات TikTok',integrations:'الربط والتكامل',settings:'الإعدادات',help:'المساعدة والدعم',guide:'دليل الاستخدام',admin:'إدارة المشتركين'};
 const viewOf=p=>{const g='/'+(p.split('/')[1]||'');return Object.keys(PATH).find(k=>PATH[k]===g)||'dash'};
 const goUrl=(p,replace)=>{if(location.pathname!==p)history[replace?'replaceState':'pushState']({},'',p)};
-function show(v,o){o=o||{};const forced=!ME.active&&v!=='settings'&&v!=='help';if(forced){v='dash';o={replace:true}}cur=v;V.forEach(x=>$('#v-'+x).hidden=x!==v);
+function show(v,o){o=o||{};const forced=!ME.active&&v!=='settings'&&v!=='help'&&v!=='guide';if(forced){v='dash';o={replace:true}}cur=v;V.forEach(x=>$('#v-'+x).hidden=x!==v);
  document.title='رادار المنتجات الرابحة · '+TITLE[v];if(v!=='collect'&&!o.nopush)goUrl(PATH[v],o.replace);
- R.querySelectorAll('.nv[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));$('#sb').classList.remove('open');$('#scrim').classList.remove('open');
+ R.querySelectorAll('.nv[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));amClose();$('#sb').classList.remove('open');$('#scrim').classList.remove('open');
  DRAW[v]&&guard(DRAW[v])(o.fromUrl?location.pathname.split('/')[2]||'':'',o);scrollTo({top:0})}
 function badge(rs){const n=rs.filter(r=>r.source==='adlib'&&!r.summary).length,b=$('#nb-inbox');b.hidden=!n;b.textContent=n}
 const planName=()=>ME.role==='admin'?'مدير':ME.active?(ME.plan&&ME.plan!=='none'?ME.plan:'تجريبي'):'منتهي';
@@ -747,7 +777,7 @@ async function rDash(){
   ['sv','⭐','احفظ منتجاً يعجبك','ثم ابحث عن مورّده واحسب ربحه من بطاقته.',sv.length>0,'saved','المحفوظات'],
   ['nt','🔔','فعّل التنبيهات','بالبريد أو تيليغرام عند ظهور فرصة جديدة.',!!(ntf&&ntf.prefs&&(ntf.prefs.email||ntf.prefs.tg)),'integrations','الربط']],
   done=ON.filter(x=>x[4]).length;let hide=false;try{hide=localStorage.getItem('wpr_onb_hide')==='1'}catch(x){}
- if(done<ON.length&&!hide)h=`<div class="card onb" style="margin-bottom:16px"><div class="onh"><div class="onic">🧭</div><div style="flex:1;min-width:200px"><div class="ontag">دليل البداية</div><h2>ابدأ من هنا: ${done} من ${ON.length} خطوات</h2><p>اتبع هذه الخطوات بالترتيب لتصل إلى أول منتج رابح. كل خطوة تُشطب تلقائياً عند إنجازها.</p></div><button class="btn ghost sm" data-a="onbhide">إخفاء الدليل</button></div>
+ if(done<ON.length&&!hide)h=`<div class="card onb" style="margin-bottom:16px"><div class="onh"><div class="onic">🧭</div><div style="flex:1;min-width:200px"><div class="ontag">دليل البداية</div><h2>ابدأ من هنا: ${done} من ${ON.length} خطوات</h2><p>اتبع هذه الخطوات بالترتيب لتصل إلى أول منتج رابح. كل خطوة تُشطب تلقائياً عند إنجازها.</p></div><button class="btn sm" data-v="guide" style="background:#fff;color:#4f46e5">📘 الدليل الكامل</button><button class="btn ghost sm" data-a="onbhide">إخفاء الدليل</button></div>
 <div class="onbar"><i style="width:${Math.round(done/ON.length*100)}%"></i></div>
 <div class="onl">${ON.map((x,k)=>`<div class="onr${x[4]?' ok':''}"><span class="onn">${x[4]?'✓':k+1}</span><div class="grow"><b>${x[1]} ${x[2]}</b><div class="muted">${x[3]}</div></div>${x[4]?'':`<button class="btn sm${ON.findIndex(y=>!y[4])===k?'':' ghost'}" data-v="${x[5]}">${x[6]}</button>`}</div>`).join('')}</div></div>`+h;
  const cn=L&&L.counts,keys=['trial','prom','gem','fire','old','excl'].concat(cn&&cn.maybe?['maybe']:[]).concat(['watch','new'].filter(k=>cn&&cn[k])),tot=cn?keys.reduce((s,k)=>s+(cn[k]||0),0):0;
@@ -811,7 +841,7 @@ async function rHelp(){
 <form id="hf" class="grid2" style="margin:8px 0 12px;grid-template-columns:1fr" onsubmit="return false"><label class="fl">الموضوع<input id="hf-s" maxlength="150" placeholder="مثال: مشكلة في الجمع"></label><label class="fl">رسالتك<textarea id="hf-m" rows="4" maxlength="4000" placeholder="صف المشكلة باختصار…"></textarea></label><p style="margin:0"><button class="btn" data-a="hsend">إرسال الرسالة</button></p></form>
 <p style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0">${em?`<a class="btn" href="mailto:${e(em)}?subject=${encodeURIComponent('دعم | '+(ME.email||''))}">✉️ ${e(em)}</a>`:''}${wa?`<a class="btn ghost" href="https://wa.me/${wa}" target="_blank" rel="noopener">🟢 واتساب</a>`:''}${!em&&!wa?'<span class="muted">لم تُضبط وسائل التواصل بعد.</span>':''}</p></div>
 <div class="card" style="margin-bottom:16px"><h2>❓ أسئلة شائعة</h2>${FAQ.map(x=>`<details class="fx"><summary>${x[0]}</summary><p style="margin:0 0 14px;line-height:1.8">${x[1]}</p></details>`).join('')}</div>
-<div class="card"><h2>📄 روابط مفيدة</h2><p style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0"><button class="btn ghost sm" data-a="onbshow">🚀 إظهار دليل البداية</button><a class="btn ghost sm" href="/terms" target="_blank">شروط الاستخدام</a><a class="btn ghost sm" href="/privacy" target="_blank">سياسة الخصوصية</a><a class="btn ghost sm" href="/refund" target="_blank">الاسترداد والإلغاء</a></p></div>`}
+<div class="card"><h2>📄 روابط مفيدة</h2><p style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0"><button class="btn sm" data-v="guide">📘 دليل الاستخدام</button><button class="btn ghost sm" data-a="onbshow">🚀 إظهار دليل البداية</button><a class="btn ghost sm" href="/terms" target="_blank">شروط الاستخدام</a><a class="btn ghost sm" href="/privacy" target="_blank">سياسة الخصوصية</a><a class="btn ghost sm" href="/refund" target="_blank">الاسترداد والإلغاء</a></p></div>`}
 async function rSaved(){const sv=await api('GET','/saved');SV={};sv.forEach(p=>SV[p.k]=p);
  const M=W.RadarMarkets,fl=c=>/^[A-Z]{2}$/.test(c||'')?String.fromCodePoint(...[...c].map(x=>127397+x.charCodeAt())):'',nm=c=>M&&M.COUNTRIES[c]?M.COUNTRIES[c].name:c;
  const ms=[...new Set(sv.map(mkOf).filter(Boolean))],list=sv.filter(p=>!SVMK||mkOf(p)===SVMK||(p.markets||[]).includes(SVMK));
@@ -842,7 +872,7 @@ function drawSet(){try{
 <div class="card" id="x-billing" style="margin-top:16px"><h2>💳 الاشتراك</h2><p class="sub">جارٍ التحميل…</p></div>
 <div class="card" style="margin-top:16px"><h2>🗂️ بياناتي وحسابي</h2><p class="sub">حمّل نسخة من كل بياناتك (المنتجات المحفوظة، التحليلات، الإعدادات، المدفوعات) في ملف واحد، أو احذف حسابك نهائياً.</p>
 <p style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0"><a class="btn ghost" href="/api/me/export" download>⬇ تصدير بياناتي</a><button class="btn danger" data-a="delme">حذف حسابي نهائياً</button></p></div>
-<div class="card" style="margin-top:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">🔒 الأمان: آخر عمليات الدخول</h2><button class="btn danger sm" data-a="logoutall">تسجيل الخروج من كل الأجهزة</button></div>
+<div class="card" id="x-sec" style="margin-top:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">🔒 الأمان: آخر عمليات الدخول</h2><button class="btn danger sm" data-a="logoutall">تسجيل الخروج من كل الأجهزة</button></div>
 <p class="sub">إن رأيت دخولاً لا تعرفه: غيّر كلمة المرور فوراً (يُسجَّل خروج كل الأجهزة الأخرى تلقائياً).</p>
 <div class="tbw"><table class="tb"><tr><th>العملية</th><th>التاريخ</th><th>الجهاز</th><th>العنوان</th></tr>${ACTV.map(a=>`<tr><td>${AK[a.kind]||e(a.kind)}</td><td>${fd(a.at)} ${ft(a.at)}</td><td>${e(uaShort(a.ua))}</td><td dir="ltr">${e(a.ip)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">—</td></tr>'}</table></div></div>`;W.WPRACC&&W.WPRACC.billing()}catch(x){$('#x-set').innerHTML='<div class="alert err">تعذّر عرض الإعدادات: '+e(x.message)+'</div>'}}
 R.addEventListener('submit',async ev=>{const f=ev.target.closest('[data-form]');if(!f)return;ev.preventDefault();const d=Object.fromEntries(new FormData(f));
@@ -869,11 +899,15 @@ W.__onFav=async(k,on)=>{try{if(!on){await api('DELETE','/saved?k='+encodeURIComp
 /* ---------- النقرات ---------- */
 const two=b=>{if(b.dataset.s!=='1'){b.dataset.s='1';b.dataset.t=b.textContent;b.textContent='تأكيد؟';setTimeout(()=>{b.dataset.s='';b.textContent=b.dataset.t||b.textContent},3500);return false}return true};
 R.addEventListener('click',guard(async ev=>{
+ if(ev.target.closest('#me-btn')){const m=$('#am'),o=m.hidden;m.hidden=!o;$('#me-btn').setAttribute('aria-expanded',String(o));return}
+ if(!ev.target.closest('.mew'))amClose();
+ if(ev.target.closest('#sbc')){const on=!R.classList.contains('sbmini');R.classList.toggle('sbmini',on);try{localStorage.setItem('wpr_sbmini',on?'1':'')}catch(x){}return}
  if(ev.target.closest('#burger')){$('#sb').classList.add('open');$('#scrim').classList.add('open');return}
  if(ev.target.id==='scrim'){$('#sb').classList.remove('open');$('#scrim').classList.remove('open');return}
  const sm=ev.target.closest('[data-svmk]');if(sm){SVMK=sm.dataset.svmk;return rSaved()}
  const v=ev.target.closest('[data-v]');if(v)return show(v.dataset.v);
  const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id;
+ if(a==='billing'||a==='security'){amClose();show('settings');const id=a==='billing'?'#x-billing':'#x-sec';let n=0;const go=()=>{const t=$(id);if(t&&t.textContent.trim().length>20)return t.scrollIntoView({behavior:'smooth',block:'start'});if(++n<30)setTimeout(go,150)};go();return}
  if(a==='logout'){await api('POST','/logout',{});location.href='/login';return}
  if(a==='selall'){const bx=R.querySelectorAll('[data-sel]'),all=[...bx].every(x=>x.checked);bx.forEach(x=>x.checked=!all);return}
  if(a==='analyzeSel')return analyzeIds([...R.querySelectorAll('[data-sel]:checked')].map(x=>x.dataset.sel));

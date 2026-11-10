@@ -38,7 +38,7 @@ const SKIP = '[translate=no],[dir=auto],.pc-ti,.pc-sub,.l-chips,script,style,tex
     const pg = await ctx.newPage(); await pg.request.post(BASE + '/api/login', { data: { email: 'a@t.dz', password: 'password123' } });
     await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
     ok(await pg.evaluate(() => !window.I18N_DICT && document.getElementById('wpr-app').dir === 'rtl') && (await pg.innerText('.onb h2')).includes('ابدأ من هنا'), 'العربية: بلا قاموس، من اليمين');
-    await pg.selectOption('#ui-lang', 'en'); await pg.waitForLoadState('load'); await pg.waitForSelector('.onb');
+    await pg.click('.wd-lang'); await pg.click('[data-lang="en"]'); await pg.waitForLoadState('load'); await pg.waitForSelector('.onb');
     ok((await pg.innerText('.onb h2')).includes('Start here'), 'تغيير اللغة من القائمة الجانبية');
     console.log(`PASS ${pass} i18n checks`);
   } catch (e) { console.error('FAIL', e.message); process.exitCode = 1; }
