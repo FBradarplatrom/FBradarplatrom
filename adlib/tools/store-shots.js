@@ -8,7 +8,7 @@ module.exports = async function shots(OUT) {
   for (let i = 0; i < 60; i++) { try { await fetch(BASE + '/'); break; } catch (e) { await new Promise(r => setTimeout(r, 150)); } }
   const b = await chromium.launch(); let n = 0;
   try {
-    const shot = async (pg, name) => { await pg.screenshot({ path: path.join(OUT, name) }); n++; };
+    const shot = async (pg, name) => { await pg.evaluate(() => document.querySelectorAll('.wpr-dock').forEach(d => d.remove())).catch(() => {}); await pg.screenshot({ path: path.join(OUT, name) }); n++; };   // بلا الأزرار العائمة
     // 1) الصفحة الرئيسية (إنجليزية) والأسعار
     const pg = await b.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await pg.goto(BASE + '/?lang=en'); await pg.waitForTimeout(800); await shot(pg, 'screenshot-1-home-en.png');
@@ -22,12 +22,12 @@ module.exports = async function shots(OUT) {
     const f = path.join(DIR, 'demo.json'); fs.writeFileSync(f, JSON.stringify(rows));
     await pg.evaluate(() => { try { localStorage.setItem('wpr_lang', 'en'); } catch (e) {} });   // لوحة التحكم بالإنجليزية لصور المتجر
     await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' }); await pg.setInputFiles('#file', f); await pg.waitForSelector('#grid .pc');
-    await pg.evaluate(C => document.querySelectorAll('#grid .pc-media').forEach((m, i) => { m.style.background = 'linear-gradient(135deg,' + C[i % C.length] + ',#6bc79a)'; m.innerHTML = ''; }), C);
+    await pg.evaluate(C => { const IC = [[/projector|light/i, 'lamp'], [/posture|back/i, 'users'], [/vacuum/i, 'car'], [/snor/i, 'sparkles'], [/phone/i, 'phone'], [/blend/i, 'bottle']]; document.querySelectorAll('#grid .pc-media').forEach((m, i) => { const tx = (m.closest('.pc') || m).innerText, ic = (IC.find(x => x[0].test(tx)) || [0, 'star'])[1]; m.style.background = 'linear-gradient(135deg,' + C[i % C.length] + ',#6bc79a)'; m.innerHTML = '<div style="display:grid;place-items:center;height:100%;min-height:180px;color:#fff;font-size:84px">' + (window.ICO ? window.ICO(ic) : '') + '</div>'; }); }, C);
     await pg.evaluate(() => { const t = document.querySelector('#tabs'); window.scrollTo(0, t.getBoundingClientRect().top + window.scrollY - 20); }); await pg.waitForTimeout(300); await shot(pg, 'screenshot-2-results.png');
     // 3) لوحة ترويجية صغيرة 440×280
     const tile = await b.newPage({ viewport: { width: 440, height: 280 }, deviceScaleFactor: 1 });
     await tile.setContent(`<body style="margin:0;width:440px;height:280px;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:0 34px;box-sizing:border-box;font-family:Inter,system-ui,sans-serif;color:#fff;background:radial-gradient(400px 260px at 90% 0%,#6bc79a,transparent),linear-gradient(135deg,#118553,#0a7040)">
-<div style="font-size:44px">📡</div><div style="font-size:30px;font-weight:800;line-height:1.15">Winning Product Radar</div><div style="font-size:16px;opacity:.9">Find winning products before the market gets crowded</div></body>`);
+<div>${fs.readFileSync(path.join(__dirname, "..", "..", "public", "favicon.svg"), "utf8").replace("<svg ", '<svg width="56" height="56" style="display:block;border-radius:16px;box-shadow:0 0 0 2px rgba(255,255,255,.35)" ')}</div><div style="font-size:30px;font-weight:800;line-height:1.15">Winning Product Radar</div><div style="font-size:16px;opacity:.9">Find winning products before the market gets crowded</div></body>`);
     await shot(tile, 'promo-tile-440x280.png');
   } finally { await b.close(); srv.kill(); }
   return n;
