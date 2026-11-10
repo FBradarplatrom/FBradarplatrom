@@ -58,13 +58,13 @@ create table if not exists error_logs(id integer primary key, at integer, method
   app.get('/api/plans/public', (q, s) => {
     const L = db.prepare('select * from plans where active=1 order by sort, days').all().map(planView)
       .map(p => ({ name: p.name, days: p.days, price: p.price, price_usd: p.price_usd, free: p.free, note: p.note, limits: p.limits, features: p.features }));
-    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, features: catalog().filter(x => x.shown), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!CFG.get('baridi_info') } });
+    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, features: catalog().filter(x => x.shown), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!(CFG.get('baridi_info') || CFG.get('support_whatsapp')) } });
   });
   app.get('/api/billing', auth, wrap((q, s) => {
     const u = q.u;
     s.json({
       plan: u.plan, expires_at: u.expires_at, role: u.role, features: LIM.featuresOf(u), featureLabels: LIM.FLABEL, limits: LIM.limitsOf(u), usage: LIM.usage(u), labels: LIM.LABEL,
-      plans: plans(false), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: CFG.get('baridi_info') || '' },
+      plans: plans(false), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: CFG.get('baridi_info') || '', whatsapp: CFG.get('support_whatsapp') || '' },
       payments: db.prepare('select id,plan_name,days,amount,method,status,ref,created_at,paid_at,note from payments where user_id=? order by created_at desc limit 12').all(u.id)
     });
   }));
@@ -162,8 +162,11 @@ create table if not exists error_logs(id integer primary key, at integer, method
   });
   // BaridiMob / CCP: رقم العملية + صورة الوصل (data URL من المتصفح، مصغّرة)
   app.post('/api/billing/baridi', auth, wrap((q, s) => {
-    const p = getPlan(q.body && q.body.plan_id), ref = str(q.body.ref, 60), img = String(q.body.proof || '');
-    if (!CFG.get('baridi_info')) throw bad('الدفع عبر BaridiMob غير مفعّل');
+    // طريقتان: الوصل عبر واتساب (اسم المتجر فقط هنا، والوصل يصل في واتساب) أو رقم العملية/صورة الوصل هنا
+    const wa = q.body.via === 'whatsapp', store = str(q.body.store, 80);
+    const p = getPlan(q.body && q.body.plan_id), ref = wa ? ('WhatsApp · ' + store).slice(0, 100) : str(q.body.ref, 60), img = wa ? '' : String(q.body.proof || '');
+    if (!CFG.get('baridi_info') && !(wa && CFG.get('support_whatsapp'))) throw bad('الدفع عبر BaridiMob غير مفعّل');
+    if (wa && store.length < 2) throw bad('اكتب اسم متجرك');
     const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(img);
     if (!ref && !m) throw bad('اكتب رقم العملية أو أرفق صورة الوصل');
     if (db.prepare("select count(*) n from payments where user_id=? and status='pending' and method='baridi'").get(q.u.id).n >= 3) throw bad('لديك طلبات قيد المراجعة. انتظر قبولها.');
@@ -171,7 +174,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
     if (m) { const buf = Buffer.from(m[2], 'base64'); if (buf.length > 3e6) throw bad('الصورة كبيرة جداً'); proof = crypto.randomBytes(12).toString('hex') + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]); fs.writeFileSync(path.join(PROOF_DIR, proof), buf); }
     const id = db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,method,status,ref,proof,created_at) values(?,?,?,?,?,'baridi','pending',?,?,?)").run(q.u.id, p.id, p.name, p.days, p.price, ref, proof, now()).lastInsertRowid;
     act && act(q.u.id, 'payment_request', q, 'BaridiMob · ' + p.name);
-    try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.price + ' دج'); } catch (e) {}
+    try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.price + ' دج' + (wa ? ' · الوصل عبر واتساب · المتجر: ' + store : '')); } catch (e) {}
     s.json({ id: Number(id) });
   }));
   app.get('/api/billing/payment/:id', auth, async (q, s, n) => {
@@ -255,7 +258,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
   app.put('/api/admin/config', auth, admin, wrap((q, s) => {
     const b = q.body || {};
     for (const k of CFG.KEYS) if (b[k] !== undefined) {
-      const v = str(b[k], k === 'baridi_info' ? 600 : 300);
+      const v = k === 'baridi_info' ? String(b[k] == null ? '' : b[k]).replace(/\r/g, '').replace(/[\u0000-\u0009\u000b-\u001f]/g, ' ').trim().slice(0, 600) : str(b[k], 300);   // معلومات التحويل: تبقى الأسطر
       if (CFG.SECRET.has(k) && /^•+/.test(v)) continue;                               // القيمة المخفية لم تُعدَّل
       if (/_mode$/.test(k) && v && !['test', 'live'].includes(v)) throw bad('الوضع: test أو live');
       if (k === 'ga_id' && v && !/^G-[A-Z0-9]{4,16}$/.test(v)) throw bad('معرّف Google Analytics يبدأ بـ G- مثل G-AB12CD34EF');

@@ -80,6 +80,8 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(/\$19\.00/.test(await M.locator('.plan-g').textContent()), 'السعر بالدولار ظاهر');
     // BaridiMob: رقم العملية + صورة الوصل
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    ok(await M.isVisible('[data-acc="wa"]') && /اسم متجرك/.test(await M.locator('.pay-m').textContent()), 'الطريقة اليدوية: BaridiMob/CCP/تحويل + زر واتساب');
+    await M.click('.pay-m details summary');
     await M.fill('#bm-ref', 'BM-778899'); await M.setInputFiles('#bm-img', { name: 'r.png', mimeType: 'image/png', buffer: png });
     await M.click('[data-acc="baridi"]'); await toast(M, /أُرسل طلبك/);
     await M.waitForSelector('#x-billing details');

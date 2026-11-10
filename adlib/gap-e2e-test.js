@@ -56,7 +56,7 @@ const raw = (id, o) => ({ ad_archive_id: String(id), page_id: o.page || 'p' + id
 
     // ---- أدوات التجسس حُذفت
     await pg.goto(BASE + '/saved'); await pg.waitForSelector('[data-a="togap"]');
-    ok(!(await pg.$('[data-v="plug"]')) && (await pg.textContent('[data-v="gap"]')).includes('ثغرات السوق الجزائري'), 'spy tools removed, new section in the menu');
+    ok(!(await pg.$('[data-v="plug"]')) && (await pg.textContent('[data-v="gap"]')).includes('ثغرات السوق'), 'spy tools removed, new section in the menu');
     ok((await pg.request.get(BASE + '/spy', { maxRedirects: 0 })).status() === 301, '/spy redirects to /gaps');
     // ---- من المحفوظات إلى القسم
     await pg.click('.pc:has-text("Star Projector") [data-a="togap"], [data-a="togap"][data-id="star-light"]');
@@ -85,13 +85,13 @@ const raw = (id, o) => ({ ad_archive_id: String(id), page_id: o.page || 'p' + id
     await pg.waitForFunction(() => window.__sent.some(x => x.cmd === 'ack' && x.seqs[0] === 1), null, { timeout: 30000 });
     ok(true, 'ads acknowledged after comparison');
     const live = await pg.textContent('#g-live');
-    ok(/4\s*إعلان جزائري فُحص/.test(live.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))), 'live counter shows 4 scanned ads');
+    ok(/4\s*إعلان فُحص/.test(live.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))), 'live counter shows 4 scanned ads');
     const inbox = await (await pg.request.get(BASE + '/api/runs')).json();
     ok(!inbox.length, 'gap scan ads do not go to the inbox');
     // ---- انتهاء الفحص
     await pg.evaluate(b => { window.__state = { active: false, id: b, items: window.__state.items.map(i => Object.assign({}, i, { status: 'done', seen: 4 })) };
       window.postMessage({ tag: 'WPR_BRIDGE', evt: 'state', state: window.__state }, location.origin); window.postMessage({ tag: 'WPR_BRIDGE', evt: 'done', id: b, reason: 'done' }, location.origin); }, batch);
-    await pg.waitForFunction(() => !document.querySelector('#g-live h2') && /إعلانات جزائرية مطابقة/.test(document.querySelector('#x-gap').textContent), null, { timeout: 15000 });
+    await pg.waitForFunction(() => !document.querySelector('#g-live h2') && /إعلانات مطابقة في/.test(document.querySelector('#x-gap').textContent), null, { timeout: 15000 });
     const id = +pg.url().split('/').pop();
     let p = await (await pg.request.get(BASE + '/api/gap/' + id)).json();
     const byAd = Object.fromEntries(p.matches.map(m => [m.ad_id, m]));

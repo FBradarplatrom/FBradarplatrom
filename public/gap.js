@@ -1,5 +1,5 @@
-/* قسم «🎯 ثغرات السوق الجزائري»: منتج رابح في سوق أجنبي (من المحفوظات) ← هل يُعلَن عنه في الجزائر؟
-   الإضافة تبحث في مكتبة إعلانات ميتا (الجزائر) بعبارات جزائرية، وهذه الصفحة تقارن كل إعلان لحظة وصوله:
+/* قسم «🎯 ثغرات السوق»: منتج رابح في سوق أجنبي (من المحفوظات) ← هل يُعلَن عنه في السوق المستهدف (p.target، الجزائر افتراضياً)؟
+   الإضافة تبحث في مكتبة إعلانات ميتا (السوق المستهدف) بعبارات بلغاته، وهذه الصفحة تقارن كل إعلان لحظة وصوله:
    بصمة الصورة + رابط المورّد + كلمات المنتج المميزة (adlib/lib/gapmatch.js). يعمل مع app.html عبر WPRGAP.init(ctx) و WPRGAP.render(). */
 (function () {
   'use strict';
@@ -32,17 +32,21 @@
   document.head.appendChild(st);
 
   const VL = {
-    new: ['⚫', 'لم يُفحص بعد', 'جهّز عبارات البحث الجزائرية ثم ابدأ الفحص.'],
-    gap: ['🟢', 'ثغرة مؤكدة', 'لم نجد هذا المنتج في إعلانات الجزائر بعد البحث بكل العبارات. فرصة لتكون الأول.'],
+    new: ['⚫', 'لم يُفحص بعد', 'جهّز عبارات البحث ثم ابدأ الفحص.'],
+    gap: ['🟢', 'ثغرة مؤكدة', 'لم نجد هذا المنتج في إعلانات السوق المستهدف بعد البحث بكل العبارات. فرصة لتكون الأول.'],
     weak: ['🟡', 'منافسة ضعيفة', 'موجود عند بائع أو بائعين فقط بإعلانات نشطة. ما زالت فرصة إن دخلت بسرعة وبعرض أفضل.'],
-    tried: ['🔵', 'جُرّب وتوقف', 'وُجدت إعلانات قديمة متوقفة فقط: جرّبه أحد في الجزائر ثم توقف. ادرس السبب (السعر؟ العرض؟) قبل الدخول.'],
-    saturated: ['🔴', 'مشبع', 'ثلاثة بائعين أو أكثر يعلنون عنه الآن في الجزائر.'],
+    tried: ['🔵', 'جُرّب وتوقف', 'وُجدت إعلانات قديمة متوقفة فقط: جرّبه أحد في هذا السوق ثم توقف. ادرس السبب (السعر؟ العرض؟) قبل الدخول.'],
+    saturated: ['🔴', 'مشبع', 'ثلاثة بائعين أو أكثر يعلنون عنه الآن في هذا السوق.'],
     check: ['🟠', 'يحتاج تحققك', 'وجدنا إعلانات مشابهة غير مؤكدة. قارنها بصورة المنتج واضغط «نفس المنتج» أو «ليس هو».'],
     inconclusive: ['⚪', 'غير حاسم', 'اكتمل أقل من بحثين. أعد الفحص أو أضف عبارات أخرى.']
   };
   const badge = v => { const x = VL[v] || VL.new; return `<span class="g-v ${e(v)}">${x[0]} ${x[1]}</span>`; };
-  const LANGS = { ar: 'الفصحى', dz: 'الدارجة', fr: 'الفرنسية', arz: 'الأرابيزي', en: 'الإنجليزية' };
   const cname = c => { const M = W.RadarMarkets; return c && M && M.COUNTRIES[c] ? M.COUNTRIES[c].name : c || 'سوق أجنبي'; };
+  // لغات السوق المستهدف (للعبارات) واختيار الدولة
+  const langsOf = t => { const M = W.RadarMarkets; const L = M ? M.langsOf(t) : ['ar', 'dz', 'fr', 'arz']; return Object.fromEntries(L.map(l => [l, M && M.LANGS[l] ? M.LANGS[l].name : l])); };
+  const TG = p => (p && p.target) || 'DZ';
+  let TARGET = 'DZ';
+  const countrySel = (cur, attr) => { const M = W.RadarMarkets; if (!M) return ''; return `<select ${attr}>${Object.keys(M.REGIONS).filter(r => r !== 'all').map(r => { const cs = Object.keys(M.COUNTRIES).filter(c => c !== 'ALL' && M.COUNTRIES[c].region === r); return cs.length ? `<optgroup label="${e(M.REGIONS[r])}">${cs.map(c => `<option value="${c}"${c === cur ? ' selected' : ''}>${e(M.COUNTRIES[c].name)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select>`; };
 
   /* ---------- حالة الفحص الجاري (تبقى بعد إعادة تحميل الصفحة) ---------- */
   const SK = 'wpr_gap_scan_v1', QK = 'wpr_gap_queue_v1';
@@ -74,31 +78,31 @@
   function pool(list, n, f) { let i = 0; return Promise.all(Array.from({ length: Math.min(n, list.length) }, async () => { while (i < list.length) { const k = i++; await f(list[k], k); } })); }
 
   /* ---------- الإضافة ---------- */
-  const libUrl = q => 'https://www.facebook.com/ads/library/?' + new URLSearchParams({ active_status: 'all', ad_type: 'all', country: 'DZ', is_targeted_country: 'false', media_type: 'all', q, search_type: 'keyword_unordered' }).toString();
+  const libUrl = (q, t) => 'https://www.facebook.com/ads/library/?' + new URLSearchParams({ active_status: 'all', ad_type: 'all', country: t || 'DZ', is_targeted_country: 'false', media_type: 'all', q, search_type: 'keyword_unordered' }).toString();
   const label = p => ('🎯 ثغرة #' + p.id + ': ' + p.name).slice(0, 150);
   async function startScan(p) {
     const b = BR();
     if (!b || !b.ok()) throw new Error('الإضافة غير متصلة. ثبّتها من «جمع الإعلانات ← الإضافة» ثم أعد تحميل الصفحة.');
     if (b.running()) throw new Error('هناك عملية جمع أو فحص تعمل الآن. انتظر انتهاءها.');
     const terms = p.terms.filter(t => t.q.trim());
-    if (!terms.length) throw new Error('اكتب عبارة بحث جزائرية واحدة على الأقل');
+    if (!terms.length) throw new Error('اكتب عبارة بحث واحدة على الأقل');
     let stats = b.stats(); if (!stats) stats = await b.loadStats();
     await X.api('POST', '/lib/batch', { count: terms.length });                 // حدود الجمع اليومية نفسها (حماية حسابك)
     await ctxOf(p);
     const { scan } = await X.api('POST', '/gap/' + p.id + '/scan', { queries: terms });
     const settings = Object.assign({}, b.settings(), { activeOnly: false, maxAds: Math.min(200, (stats && stats.limits.maxAdsPerSearch) || 200) });
-    const r = await b.start({ items: terms.map(t => ({ q: t.q, niche: '', url: libUrl(t.q) })), settings, limits: stats && stats.limits, label: label(p) }, 8000);
+    const r = await b.start({ items: terms.map(t => ({ q: t.q, niche: '', url: libUrl(t.q, TG(p)) })), settings, limits: stats && stats.limits, label: label(p) }, 8000);
     if (!r.ok) throw new Error({ busy: 'هناك عملية جمع تعمل الآن', tab: 'تعذّر فتح تبويب فيسبوك', no_items: 'لا توجد عبارات صالحة' }[r.error] || 'تعذّر بدء الفحص');
-    S = { pid: p.id, scan, batch: r.batch, name: p.name }; ls(SK, S);
+    S = { pid: p.id, scan, batch: r.batch, name: p.name, target: TG(p) }; ls(SK, S);
     Object.assign(LIVE, { scanned: 0, strong: 0, possible: 0, items: terms.map(t => ({ q: t.q, status: 'pending', seen: 0 })), last: [] });
-    X.toast('بدأ الفحص في الجزائر. سيُفتح تبويب فيسبوك، اتركه ظاهراً.');
+    X.toast('بدأ الفحص في ' + cname(TG(p)) + '. سيُفتح تبويب فيسبوك، اتركه ظاهراً.');
     drawLive();
   }
 
   /* ---------- وصول الإعلانات: مقارنة لحظية ---------- */
   async function onAds(ev) {
     const s = S; if (!s) return;
-    W.__busy && W.__busy('gap', 'جارٍ مقارنة الإعلانات الجزائرية بالمنتج (الصورة، الرابط، الكلمات)…');
+    W.__busy && W.__busy('gap', 'جارٍ مقارنة الإعلانات بالمنتج (الصورة، الرابط، الكلمات)…');
     try {
     const r = await X.api('POST', '/gap/' + s.pid + '/ingest', { scan: s.scan, ads: ev.ads, query: (ev.ctx && ev.ctx.query) || '' });
     LIVE.scanned = r.scanned;
@@ -132,7 +136,7 @@
       W.__busy && W.__busy('gapf', 'جارٍ حساب النتيجة…');
       let p; try { p = await X.api('POST', '/gap/' + s.pid + '/finish', { scan: s.scan, items }); } finally { W.__busy && W.__busy('gapf'); }
       S = null; ls(SK, null);
-      X.toast('انتهى الفحص: ' + (VL[p.verdict] || VL.new)[1] + ' · فُحص ' + num(p.stats.scanned) + ' إعلاناً جزائرياً');
+      X.toast('انتهى الفحص: ' + (VL[p.verdict] || VL.new)[1] + ' · فُحص ' + num(p.stats.scanned) + ' إعلاناً');
       if (CUR && CUR.id === p.id) CUR = p;
       LIST = null;
       const q = ls(QK) || [];
@@ -153,7 +157,7 @@
     const L = { pending: 'بالانتظار', running: 'يبحث…', done: 'تم', skipped: 'تُخطّي', timeout: 'انتهت المهلة', stopped: 'أُوقف' };
     return `<div class="card" style="margin-bottom:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">⏳ يفحص الآن: ${e(S.name)} <small>(${num(done)}/${num(LIVE.items.length)})</small></h2>
 <button class="btn ghost sm" data-g="skip">تخطّي العبارة</button><button class="btn danger sm" data-g="stop">إيقاف</button></div>
-<div class="g-nums"><div><b>${num(LIVE.scanned)}</b><span>إعلان جزائري فُحص</span></div><div><b>${num(LIVE.strong)}</b><span>تطابق مؤكد</span></div><div><b>${num(LIVE.possible)}</b><span>يحتاج تحققك</span></div></div>
+<div class="g-nums"><div><b>${num(LIVE.scanned)}</b><span>إعلان فُحص</span></div><div><b>${num(LIVE.strong)}</b><span>تطابق مؤكد</span></div><div><b>${num(LIVE.possible)}</b><span>يحتاج تحققك</span></div></div>
 ${LIVE.items.map(i => `<div class="g-q"><span class="q" dir="auto">${e(i.q)}</span><span class="muted">${i.seen ? num(i.seen) + ' إعلان · ' : ''}${L[i.status] || i.status}</span></div>`).join('')}
 ${LIVE.last.length ? `<div class="l-sub" style="margin-top:10px">آخر ما وُجد</div>${LIVE.last.map(f => `<div class="g-ev" dir="auto">${f.level === 'strong' ? '✅' : '❔'} ${e(f.row.page_name)} · ${e(f.ev.why)}</div>`).join('')}` : ''}</div>`;
   }
@@ -161,24 +165,26 @@ ${LIVE.last.length ? `<div class="l-sub" style="margin-top:10px">آخر ما و�
 
   async function drawList() {
     const root = $('#x-gap');
-    if (!LIST) { root.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>'; const r = await X.api('GET', '/gap'); LIST = r.products; AI = r.ai; }
+    if (!LIST) { root.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>'; const r = await X.api('GET', '/gap'); LIST = r.products; AI = r.ai; TARGET = r.target || 'DZ'; W.__TGT = TARGET; }
     const cnt = { all: LIST.length }; LIST.forEach(p => { cnt[p.verdict] = (cnt[p.verdict] || 0) + 1; }); cnt.due = LIST.filter(p => p.due).length;
     const tabs = [['all', 'الكل'], ['gap', '🟢 ثغرات'], ['weak', '🟡 منافسة ضعيفة'], ['tried', '🔵 جُرّب وتوقف'], ['check', '🟠 تحقق'], ['saturated', '🔴 مشبع'], ['new', '⚫ لم يُفحص'], ['due', '🔁 مستحق إعادة الفحص']];
     const shown = LIST.filter(p => FILTER === 'all' || (FILTER === 'due' ? p.due : p.verdict === FILTER));
     root.innerHTML = `<div id="g-live">${liveHtml()}</div>
-${cnt.due ? `<div class="alert info" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1">🔁 ${num(cnt.due)} منتج مستحق لإعادة الفحص الأسبوعية (هل ظهر منافس جديد في الجزائر؟)</span><button class="btn sm" data-g="rundue">افحص المستحق تباعاً</button></div>` : ''}
+<div class="card" style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="flex:1;min-width:200px">🎯 سوقك المستهدف <small class="muted" style="font-weight:500">المنتجات الجديدة تُفحص في هذه الدولة (ويمكن تغييرها لكل منتج)</small></b>${countrySel(TARGET, 'data-g="target" style="width:auto"')}</div>
+${cnt.due ? `<div class="alert info" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1">🔁 ${num(cnt.due)} منتج مستحق لإعادة الفحص الأسبوعية (هل ظهر منافس جديد؟)</span><button class="btn sm" data-g="rundue">افحص المستحق تباعاً</button></div>` : ''}
 ${LIST.length ? `<div class="g-kp">${tabs.filter(t => t[0] === 'all' || cnt[t[0]]).map(([k, t]) => `<button data-gf="${k}" class="${FILTER === k ? 'on' : ''}">${t} <b>${num(cnt[k] || 0)}</b></button>`).join('')}</div>` : ''}
 <div class="g-list">${shown.map(p => `<div class="g-card" data-gopen="${p.id}"><div class="im" style="background-image:url('${e(img((p.snap.images || [])[0]))}')"></div><div class="bd">
 <div>${badge(p.verdict)} ${p.due ? '<span class="pill warn">🔁 مستحق</span>' : ''}${scanning(p.id) ? '<span class="pill">⏳ يُفحص</span>' : ''}</div>
-<b dir="auto">${e(p.name)}</b><small>من ${e(cname(p.snap.country))}${p.snap.score ? ' · درجته هناك ' + num(p.snap.score) : ''}</small>
-<small class="muted">${p.last_scan_at ? 'فُحص ' + num(p.stats.scanned) + ' إعلاناً جزائرياً · ' + X.ago(p.last_scan_at) : 'لم يُفحص بعد'}${p.stats.sellers ? ' · ' + num(p.stats.sellers) + ' بائع' : ''}</small></div></div>`).join('') ||
-  `<div class="empty" style="grid-column:1/-1">${LIST.length ? 'لا منتجات في هذا التصنيف.' : 'لا منتجات هنا بعد.<br>افتح «المنتجات المحفوظة» واضغط «🎯 افحص في الجزائر» على منتج وجدته في سوق أجنبي.'}</div>`}</div>`;
+<b dir="auto">${e(p.name)}</b><small>من ${e(cname(p.snap.country))} ← ${e(cname(TG(p)))}${p.snap.score ? ' · درجته هناك ' + num(p.snap.score) : ''}</small>
+<small class="muted">${p.last_scan_at ? 'فُحص ' + num(p.stats.scanned) + ' إعلاناً · ' + X.ago(p.last_scan_at) : 'لم يُفحص بعد'}${p.stats.sellers ? ' · ' + num(p.stats.sellers) + ' بائع' : ''}</small></div></div>`).join('') ||
+  `<div class="empty" style="grid-column:1/-1">${LIST.length ? 'لا منتجات في هذا التصنيف.' : 'لا منتجات هنا بعد.<br>افتح «المنتجات المحفوظة» واضغط «🎯 افحص في سوقك» على منتج وجدته في سوق أجنبي.'}</div>`}</div>`;
   }
 
   function termsHtml(p) {
-    const rows = p.terms.length ? p.terms : [{ q: '', lang: 'ar' }, { q: '', lang: 'fr' }, { q: '', lang: 'dz' }];
-    return rows.map((t, i) => `<div class="g-t"><input dir="auto" data-gt="${i}" value="${e(t.q)}" placeholder="${['مثال: مصباح ليلي نجوم للأطفال', 'Ex: veilleuse projecteur étoiles', 'مثال: بروجكتور ليلي للدراري'][i % 3]}">
-<select data-glang="${i}">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}"${t.lang === k ? ' selected' : ''}>${v}</option>`).join('')}</select><button class="btn ghost sm" data-g="tdel" data-i="${i}" title="حذف">✕</button></div>`).join('');
+    const LG = langsOf(TG(p)), ks = Object.keys(LG);
+    const rows = p.terms.length ? p.terms : ks.slice(0, 3).map(l => ({ q: '', lang: l }));
+    return rows.map((t, i) => `<div class="g-t"><input dir="auto" data-gt="${i}" value="${e(t.q)}" placeholder="${e(LG[t.lang] || '')}…">
+<select data-glang="${i}">${Object.entries(Object.assign({}, LG, LG[t.lang] || !t.lang ? {} : { [t.lang]: t.lang })).map(([k, v]) => `<option value="${k}"${t.lang === k ? ' selected' : ''}>${v}</option>`).join('')}</select><button class="btn ghost sm" data-g="tdel" data-i="${i}" title="حذف">✕</button></div>`).join('');
   }
   function matchHtml(m) {
     const r = m.row, dec = m.decision;
@@ -200,15 +206,16 @@ ${(p.snap.texts || [])[0] ? `<p class="sub" dir="auto" style="margin-top:10px;ma
 <label class="fl chk" style="margin-top:10px"><input type="checkbox" data-g="watch"${p.watch ? ' checked' : ''}> 🔁 مراقبة أسبوعية: أعد فحصه كل 7 أيام لأعرف متى يظهر أول منافس</label></div>
 <div class="card"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">النتيجة</h2>${badge(p.verdict)}</div>
 <p class="sub">${e(V[2])}</p>
-${p.last_scan_at ? `<div class="g-nums"><div><b>${num(s.scanned)}</b><span>إعلان جزائري فُحص</span></div><div><b>${num(s.queriesDone)}/${num(s.queries)}</b><span>عبارة اكتمل بحثها</span></div><div><b>${num(s.matches)}</b><span>إعلان مطابق</span></div><div><b>${num(s.activeSellers)}</b><span>بائع نشط</span></div></div>
+${p.last_scan_at ? `<div class="g-nums"><div><b>${num(s.scanned)}</b><span>إعلان فُحص</span></div><div><b>${num(s.queriesDone)}/${num(s.queries)}</b><span>عبارة اكتمل بحثها</span></div><div><b>${num(s.matches)}</b><span>إعلان مطابق</span></div><div><b>${num(s.activeSellers)}</b><span>بائع نشط</span></div></div>
 <p class="sub">آخر فحص ${X.ago(p.last_scan_at)}${s.firstSeen ? ' · أقدم إعلان نشط مطابق بدأ ' + e(s.firstSeen) : ''}${p.watch && p.next_check_at ? ' · الفحص القادم ' + X.fd(p.next_check_at) : ''}</p>` : ''}
-<h3 style="margin:14px 0 4px">عبارات البحث في الجزائر</h3><p class="sub">كما يكتبها البائع الجزائري: الاسم بالعربية والفرنسية والدارجة، وعبارة بالفائدة. ${AI ? 'اضغط «اقتراح بالذكاء الاصطناعي» ثم راجعها.' : 'الذكاء الاصطناعي غير مفعّل (أضف OPENAI_API_KEY في إعدادات الخادم)، اكتبها بنفسك.'}</p>
+<label class="fl" style="margin:14px 0 0">🎯 السوق الذي يُفحص فيه ${countrySel(TG(p), 'data-g="ptarget"')}</label>
+<h3 style="margin:14px 0 4px">عبارات البحث في ${e(cname(TG(p)))}</h3><p class="sub">كما يكتبها البائع هناك: اسم المنتج بلغات السوق (${e(Object.values(langsOf(TG(p))).join('، '))})، وعبارة بالفائدة. ${AI ? 'اضغط «اقتراح بالذكاء الاصطناعي» ثم راجعها.' : 'الذكاء الاصطناعي غير مفعّل (أضف OPENAI_API_KEY في إعدادات الخادم)، اكتبها بنفسك.'}</p>
 <div id="g-terms">${termsHtml(p)}</div>
 <p style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><button class="btn ghost sm" data-g="tadd">+ عبارة</button>${AI ? '<button class="btn ghost sm" data-g="ai">✨ اقتراح بالذكاء الاصطناعي</button>' : ''}<button class="btn ghost sm" data-g="tsave">حفظ العبارات</button></p>
 <label class="fl">كلمات المنتج المميزة (للمقارنة، افصل بفاصلة)<input dir="auto" data-g="kw" value="${e((p.keywords || []).join('، '))}" placeholder="مثال: نجوم، بروجكتور، ضوضاء بيضاء، veilleuse"></label>
-<p style="margin:12px 0 0"><button class="btn" data-g="scan"${scanning(p.id) ? ' disabled' : ''}>${p.last_scan_at ? '🔁 أعد الفحص في الجزائر' : '🎯 ابدأ الفحص في الجزائر'}</button> <button class="btn danger sm" data-g="del">حذف من القسم</button></p>
-<p class="sub" style="margin-top:6px">يبحث في مكتبة إعلانات ميتا (الجزائر، النشطة والمتوقفة) بكل عبارة، ويقارن كل إعلان لحظة وصوله: بصمة الصورة، رابط المورّد، وكلمات المنتج. يستهلك من حدّ عمليات البحث اليومي.</p></div></div>
-<div class="card" style="margin-top:14px"><h2>✅ إعلانات جزائرية مطابقة <small>(${num(strong.length)})</small></h2>${strong.map(matchHtml).join('') || '<p class="sub">لا شيء مؤكد.</p>'}</div>
+<p style="margin:12px 0 0"><button class="btn" data-g="scan"${scanning(p.id) ? ' disabled' : ''}>${p.last_scan_at ? '🔁 أعد الفحص في ' + e(cname(TG(p))) : '🎯 ابدأ الفحص في ' + e(cname(TG(p)))}</button> <button class="btn danger sm" data-g="del">حذف من القسم</button></p>
+<p class="sub" style="margin-top:6px">يبحث في مكتبة إعلانات ميتا (${e(cname(TG(p)))}، النشطة والمتوقفة) بكل عبارة، ويقارن كل إعلان لحظة وصوله: بصمة الصورة، رابط المورّد، وكلمات المنتج. يستهلك من حدّ عمليات البحث اليومي.</p></div></div>
+<div class="card" style="margin-top:14px"><h2>✅ إعلانات مطابقة في ${e(cname(TG(p)))} <small>(${num(strong.length)})</small></h2>${strong.map(matchHtml).join('') || '<p class="sub">لا شيء مؤكد.</p>'}</div>
 ${maybe.length ? `<div class="card" style="margin-top:14px"><h2>❔ محتملة: قارنها بصور المنتج وقرّر <small>(${num(maybe.length)})</small></h2>${maybe.map(matchHtml).join('')}</div>` : ''}
 ${rejected.length ? `<details class="fx" style="margin-top:14px"><summary>استبعدتها أنت (${num(rejected.length)})</summary>${rejected.map(matchHtml).join('')}</details>` : ''}`;
   }
@@ -236,7 +243,7 @@ ${rejected.length ? `<details class="fx" style="margin-top:14px"><summary>است
     if (a === 'skip') return BR() && BR().send('skip').catch(() => {});
     if (a === 'rundue') { const ids = LIST.filter(p => p.due && p.terms.length).map(p => p.id); if (!ids.length) return X.toast('المنتجات المستحقة بلا عبارات بحث', 'err'); ls(QK, ids.slice(1)); return runQueued(ids[0]); }
     if (!CUR) return;
-    if (a === 'tadd') { CUR.terms = readTerms().concat([{ q: '', lang: 'ar' }]); $('#g-terms').innerHTML = termsHtml(CUR); return; }
+    if (a === 'tadd') { CUR.terms = readTerms().concat([{ q: '', lang: Object.keys(langsOf(TG(CUR)))[0] || 'ar' }]); $('#g-terms').innerHTML = termsHtml(CUR); return; }
     if (a === 'tdel') { const t = readTerms(); t.splice(+b.dataset.i, 1); CUR.terms = t; $('#g-terms').innerHTML = termsHtml(CUR); return; }
     if (a === 'tsave') { await saveTerms(); return X.toast('حُفظت العبارات'); }
     if (a === 'ai') { b.disabled = true; b.textContent = '✨ يقترح…'; try { const r = await X.api('POST', '/gap/' + CUR.id + '/suggest', {}); if (!r.ai) return X.toast('الذكاء الاصطناعي غير مفعّل', 'err'); CUR.terms = r.terms; CUR.keywords = r.keywords; MCTX.delete(CUR.id); X.toast('اقتُرحت ' + r.terms.length + ' عبارات. راجعها ثم ابدأ الفحص.'); return drawProduct(CUR.id); } finally { b.disabled = false; } }
@@ -248,6 +255,8 @@ ${rejected.length ? `<details class="fx" style="margin-top:14px"><summary>است
     }
   }
   async function onChange(ev) {
+    const tg = ev.target.closest('[data-g="target"]'); if (tg) { TARGET = (await X.api('PUT', '/gap-target', { target: tg.value })).target; W.__TGT = TARGET; return X.toast('السوق المستهدف: ' + cname(TARGET)); }
+    const pt = ev.target.closest('[data-g="ptarget"]'); if (pt && CUR) { await saveTerms().catch(() => {}); CUR = Object.assign(CUR, await X.api('PUT', '/gap/' + CUR.id, { target: pt.value })); MCTX.delete(CUR.id); X.toast('يُفحص الآن في ' + cname(CUR.target)); return drawProduct(CUR.id); }
     const w = ev.target.closest('[data-g="watch"]'); if (w && CUR) { await X.api('PUT', '/gap/' + CUR.id, { watch: w.checked }); CUR.watch = w.checked; X.toast(w.checked ? 'سيُعاد فحصه أسبوعياً' : 'أُوقفت المراقبة'); }
   }
   const guard = f => ev => { if (X.cur() === VIEW) (W.__btnBusy ? W.__btnBusy(ev, Promise.resolve().then(() => f(ev))) : Promise.resolve().then(() => f(ev))).catch(x => { if (x && x.message !== 'auth') X.toast(x.message || 'حدث خطأ', 'err'); }); };

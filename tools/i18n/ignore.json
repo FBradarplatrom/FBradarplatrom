@@ -17,5 +17,13 @@
  "لا تعمل هذه الإضافة إلا مع المنصة التي نزّلتها منها، ولا تخزّن مفاتيح ولا كلمات مرور.",
  "تتطلب Chrome 116 فأحدث على الحاسوب.",
  "keywords: 8-14 distinctive words (Arabic and French) that would appear in an Algerian ad for this exact product (type, material, key feature), not generic words like \"جودة\" or \"livraison\".",
- "Never invent facts about the product (specs, certifications, reviews) that are not in the ad text; say \"غير مذكور\" when unknown. Answer in Arabic (Modern Standard), except the ad copies. Return ONLY JSON."
+ "Never invent facts about the product (specs, certifications, reviews) that are not in the ad text; say \"غير مذكور\" when unknown. Answer in Arabic (Modern Standard), except the ad copies. Return ONLY JSON.",
+ "السلام عليكم 👋",
+ "أرسل لكم وصل الدفع لتفعيل عرضي في رادار المنتجات الرابحة:",
+ "• العرض:",
+ "• المبلغ:",
+ "• اسم المتجر:",
+ "• بريد الحساب:",
+ "• رقم الطلب: #",
+ "📎 صورة الوصل مرفقة."
 ]

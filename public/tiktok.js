@@ -122,7 +122,7 @@
     if (a === 'open') { X.url('/tiktok/' + id); CUR = null; return redraw(); }
     if (a === 'back') { X.url('/tiktok'); RUNS = null; return redraw(); }
     if (a === 'del') { if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد؟'; return; } await X.api('DELETE', '/tt/' + id); RUNS = null; return redraw(); }
-    if (a === 'save' && vid) { await saveVideo(vid); b.textContent = '★ محفوظ'; return X.toast('حُفظ في «المنتجات المحفوظة»: من هناك ابحث عن مورّده أو حلّله أو افحصه في الجزائر'); }
+    if (a === 'save' && vid) { await saveVideo(vid); b.textContent = '★ محفوظ'; return X.toast('حُفظ في «المنتجات المحفوظة»: من هناك ابحث عن مورّده أو حلّله أو افحصه في سوقك'); }
     if (a === 'fb' && vid) { localStorage.setItem('wpr_collect_quick', titleOf(vid)); X.show('collect'); return X.toast('اكتب كلمة البحث بلغة السوق في «بحث سريع». وصف الفيديو: ' + titleOf(vid).slice(0, 60)); }
     if (a === 'selall') { $$('[data-tsel]').slice(0, 20).forEach(c => { c.checked = true; }); return; }
     if (a === 'savesel') { const ids = $$('[data-tsel]:checked').map(c => c.dataset.tsel); if (!ids.length) return X.toast('اختر فيديوهات أولاً', 'err'); for (const i of ids) await saveVideo(CUR.items.find(v => v.id === i)); return X.toast('حُفظ ' + num(ids.length) + ' منتجاً في «المحفوظات»'); }

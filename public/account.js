@@ -8,7 +8,7 @@
   const dz = n => num(n) + ' دج';
   const $ = s => X.root.querySelector(s);
   const ST = { pending: ['warn', 'قيد المراجعة'], paid: ['ok', 'مدفوع'], rejected: ['bad', 'مرفوض'], failed: ['bad', 'فشل'] };
-  const MT = { satim: '💳 CIB / الذهبية', stripe: '💳 بطاقة دولية (Stripe)', paypal: '🅿️ PayPal', card: '💳 بطاقة', baridi: '📱 BaridiMob / CCP' };
+  const MT = { satim: '💳 CIB / الذهبية', stripe: '💳 بطاقة دولية (Stripe)', paypal: '🅿️ PayPal', card: '💳 بطاقة', baridi: '📱 BaridiMob / CCP / تحويل' };
   const money = (a, c) => (c === 'USD' ? '$' + Number(a || 0).toFixed(2) : dz(a));
   const priceOf = x => [x.price > 0 ? dz(x.price) : '', x.price_usd > 0 ? '$' + Number(x.price_usd).toFixed(2) : ''].filter(Boolean).join(' · ');
   const st = document.createElement('style');
@@ -17,6 +17,7 @@
 .adm-t{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}.adm-t button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}.adm-t button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kpis div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}.kpis b{display:block;font-size:22px}.kpis span{font-size:12.5px;color:var(--mut)}
 .bars{display:flex;align-items:flex-end;gap:6px;height:140px;margin-top:10px}.bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:11px;color:var(--mut)}.bars i{display:block;width:100%;background:linear-gradient(180deg,#8b5cf6,#6366f1);border-radius:6px 6px 0 0;min-height:2px}
+.btn.wa{background:#25d366;color:#fff;border-color:#25d366;display:inline-flex;gap:8px;align-items:center}.btn.wa:hover{background:#1ebe5b}
 .int-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}.int-s{display:inline-flex;align-items:center;gap:6px;font-size:13px}.int-s i{width:9px;height:9px;border-radius:50%;background:var(--bad)}.int-s i.ok{background:var(--ok)}`;
   document.head.appendChild(st);
 
@@ -31,32 +32,54 @@
 ${adm ? '<span class="sub"> حساب مدير، بلا انتهاء ولا حدود.</span>' : `<span class="sub"> ${me.active ? 'ينتهي في ' + X.fd(BL.expires_at) + ' (باقي ' + num(left) + ' يوم)' : 'منتهٍ'}</span>`}</p>
 ${!adm && me.active && left <= 5 ? '<div class="alert">⏰ اشتراكك ينتهي قريباً. جدّده الآن حتى لا يتوقف عملك.</div>' : ''}
 ${Object.keys(BL.labels).map(k => meter(BL.labels[k], ({ searchesPerDay: BL.usage.searchesToday, aiMonth: 0, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth })[k] || 0, BL.limits[k])).join('')}
-${adm ? '' : BL.plans.length ? `<p style="margin:10px 0 0"><button class="btn" data-acc="plans">${me.active ? '🔄 جدّد أو غيّر الباقة' : '💳 اشترك الآن'}</button></p>` : `<p class="sub">الدفع الإلكتروني غير متاح بعد.${me.contact ? ` <a href="${e(me.contact)}" target="_blank" rel="noopener">تواصل مع الإدارة</a>` : ''}</p>`}
+${adm ? '' : BL.plans.length ? `<p style="margin:10px 0 0"><button class="btn" data-acc="plans">${me.active ? '💳 الدفع أو تغيير العرض' : '💳 اشترك الآن'}</button></p>` : `<p class="sub">الدفع الإلكتروني غير متاح بعد.${me.contact ? ` <a href="${e(me.contact)}" target="_blank" rel="noopener">تواصل مع الإدارة</a>` : ''}</p>`}
 ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td></tr>`).join('')}</table></div></details>` : ''}`;
   }
   function plansModal() {
     const T = W.WPRTOOLS; if (!T) return;
     let sel = BL.plans[0] && BL.plans[0].id;
     const draw = () => {
-      const b = T.open('💳 اختر باقتك', '');
+      const b = T.open('💳 الدفع أو تغيير العرض', '');
       const p = BL.plans.find(x => x.id === sel) || BL.plans[0];
-      b.innerHTML = `<div class="plan-g">${BL.plans.map(x => `<div class="plan${x.id === sel ? ' on' : ''}" data-acc="pick" data-id="${x.id}" style="cursor:pointer"><b>${e(x.name)}</b><span class="pr">${priceOf(x)}</span><small>${num(x.days)} يوماً${x.days >= 60 && x.price > 0 ? ' · ' + dz(Math.round(x.price / x.days * 30)) + ' للشهر' : ''}</small>
+      b.innerHTML = `<h3 style="margin:0 0 8px">1. اختر العرض</h3><div class="plan-g">${BL.plans.map(x => `<div class="plan${x.id === sel ? ' on' : ''}" data-acc="pick" data-id="${x.id}" style="cursor:pointer"><b>${e(x.name)}</b><span class="pr">${priceOf(x)}</span><small>${num(x.days)} يوماً${x.days >= 60 && x.price > 0 ? ' · ' + dz(Math.round(x.price / x.days * 30)) + ' للشهر' : ''}</small>
 <ul>${Object.keys(BL.labels).map(k => `<li>${e(BL.labels[k])}: <b>${num(x.limits[k])}</b></li>`).join('')}</ul>${x.note ? `<small>${e(x.note)}</small>` : ''}</div>`).join('')}</div>
-<h3 style="margin:16px 0 6px">طريقة الدفع لباقة «${e(p.name)}» · ${priceOf(p)}</h3>
+<h3 style="margin:16px 0 6px">2. ادفع: العرض «${e(p.name)}» · ${priceOf(p)}</h3>
 ${BL.methods.satim && p.price > 0 ? `<div class="card" style="margin:8px 0"><b>💳 بطاقة CIB أو الذهبية (Edahabia)</b><p class="sub">دفع آمن مباشرة عبر بوابة SATIM بالدينار. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="satim">ادفع ${dz(p.price)}</button></div>` : ''}
 ${BL.methods.stripe && p.price_usd > 0 ? `<div class="card" style="margin:8px 0"><b>💳 Visa / Mastercard (Stripe)</b><p class="sub">لكل الدول. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="stripe">ادفع $${Number(p.price_usd).toFixed(2)}</button></div>` : ''}
 ${BL.methods.paypal && p.price_usd > 0 ? `<div class="card" style="margin:8px 0"><b>🅿️ PayPal</b><p class="sub">ادفع من حسابك في PayPal أو ببطاقتك. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="paypal">ادفع $${Number(p.price_usd).toFixed(2)} بـ PayPal</button></div>` : ''}
-${BL.methods.baridi && p.price > 0 ? `<div class="card" style="margin:8px 0"><b>📱 BaridiMob أو CCP</b><div class="alert info" style="white-space:pre-wrap;margin:8px 0">${e(BL.methods.baridi)}</div>
-<p class="sub">حوّل <b>${dz(p.price)}</b> ثم أدخل رقم العملية وأرفق صورة الوصل. يُفعَّل اشتراكك بعد مراجعة الإدارة (عادة خلال ساعات).</p>
+${(BL.methods.baridi || BL.methods.whatsapp) && p.price > 0 ? `<div class="card pay-m" style="margin:8px 0"><b>📱 BaridiMob أو CCP أو تحويل بنكي</b>
+<p class="sub" style="margin:6px 0">حوّل <b>${dz(p.price)}</b> ثم أرسل الوصل مع اسم متجرك: يُفعَّل عرضك عند الاستلام.</p>
+${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:8px 0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : '<p class="sub">اطلب معلومات التحويل عبر واتساب.</p>'}
+<label class="fl">اسم متجرك<input id="bm-store" maxlength="80" dir="auto" placeholder="مثال: Boutique Amine"></label>
+${BL.methods.whatsapp ? `<p style="margin:10px 0 0"><button class="btn wa" data-acc="wa"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg> إرسال الوصل عبر واتساب</button></p>
+<p class="sub" style="margin:6px 0 0">يفتح واتساب برسالة جاهزة (العرض، المبلغ، اسم المتجر، بريد حسابك): أرفق صورة الوصل وأرسلها.</p>` : ''}
+${BL.methods.baridi ? `<details class="fx" style="margin:10px 0 0"><summary>أو أرفق الوصل هنا بدل واتساب</summary>
 <div class="grid2" style="gap:8px;margin:0"><label class="fl">رقم العملية<input id="bm-ref" dir="ltr"></label><label class="fl">صورة الوصل<input id="bm-img" type="file" accept="image/*"></label></div>
-<p style="margin:8px 0 0"><button class="btn" data-acc="baridi">أرسل طلب التفعيل</button></p></div>` : ''}
-${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.baridi ? '<div class="alert">لا توجد طريقة دفع مفعّلة بعد. تواصل مع الإدارة.</div>' : ''}`;
+<p style="margin:8px 0 12px"><button class="btn ghost" data-acc="baridi">أرسل طلب التفعيل</button></p></details>` : ''}</div>` : ''}
+${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.baridi && !BL.methods.whatsapp ? '<div class="alert">لا توجد طريقة دفع مفعّلة بعد. تواصل مع الإدارة.</div>' : ''}`;
       b.onclick = async ev => {
         const t = ev.target.closest('[data-acc]'); if (!t) return;
         const a = t.dataset.acc;
         if (a === 'pick') { sel = +t.dataset.id; return draw(); }
         const run = f => { const pr = Promise.resolve().then(f); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => X.toast(x.message || 'خطأ', 'err')); };
         if (a === 'pay') run(async () => { const r = await X.api('POST', '/billing/checkout', { plan_id: sel, method: t.dataset.m }); location.href = r.url; });
+        if (a === 'wa') {
+          const store = b.querySelector('#bm-store').value.trim(); if (store.length < 2) { b.querySelector('#bm-store').focus(); return X.toast('اكتب اسم متجرك', 'err'); }
+          const win = W.open('', '_blank');                        // يُفتح الآن (قبل الانتظار) حتى لا يمنعه المتصفح
+          run(async () => {
+            try {
+              const p = BL.plans.find(x => x.id === sel), r = await X.api('POST', '/billing/baridi', { plan_id: sel, via: 'whatsapp', store });
+              const lg = W.__LANG || 'ar', me = X.me(), amount = dz(p.price);
+              const M = { ar: ['السلام عليكم 👋', 'أرسل لكم وصل الدفع لتفعيل عرضي في رادار المنتجات الرابحة:', '• العرض: ' + p.name + ' (' + p.days + ' يوماً)', '• المبلغ: ' + amount, '• اسم المتجر: ' + store, '• بريد الحساب: ' + me.email, '• رقم الطلب: #' + r.id, '📎 صورة الوصل مرفقة.'],
+                en: ['Hello 👋', 'Here is my payment receipt to activate my Winning Product Radar plan:', '• Plan: ' + p.name + ' (' + p.days + ' days)', '• Amount: ' + amount, '• Store name: ' + store, '• Account email: ' + me.email, '• Request: #' + r.id, '📎 Receipt photo attached.'],
+                fr: ['Bonjour 👋', 'Voici mon reçu de paiement pour activer mon offre Radar des produits gagnants :', '• Offre : ' + p.name + ' (' + p.days + ' jours)', '• Montant : ' + amount, '• Boutique : ' + store, '• E-mail du compte : ' + me.email, '• Demande : #' + r.id, '📎 Photo du reçu jointe.'] };
+              const url = 'https://wa.me/' + String(BL.methods.whatsapp).replace(/[^\d]/g, '') + '?text=' + encodeURIComponent((M[lg] || M.ar).join('\n'));
+              if (win) win.location.href = url; else location.href = url;
+              T.close(); X.toast('أرسل صورة الوصل في واتساب. يُفعَّل عرضك عند الاستلام.'); drawBilling();
+            } catch (x) { if (win) win.close(); throw x; }
+          });
+          return;
+        }
         if (a === 'baridi') run(async () => {
           const ref = b.querySelector('#bm-ref').value.trim(), f = b.querySelector('#bm-img').files[0];
           const proof = f ? await shrink(f) : '';
@@ -206,8 +229,8 @@ ${field('stripe_secret', 'المفتاح السري (Secret key)', 'sk_test_… 
 <div class="card"><h2>🅿️ PayPal</h2>${S(C.paypal_client && C.paypal_client.set && C.paypal_secret && C.paypal_secret.set, C.paypal_secret && C.paypal_secret.set ? 'مفعّل · ' + (C.paypal_mode && C.paypal_mode.value === 'live' ? 'حقيقي' : 'تجريبي') : 'غير مفعّل')}<p class="sub">من developer.paypal.com: أنشئ تطبيقاً وانسخ Client ID و Secret.</p>
 ${field('paypal_client', 'Client ID', '')}${field('paypal_secret', 'Secret', '', 'secret')}<label class="fl">الوضع<select data-cfg="paypal_mode"><option value="test"${!C.paypal_mode || C.paypal_mode.value !== 'live' ? ' selected' : ''}>تجريبي (test)</option><option value="live"${C.paypal_mode && C.paypal_mode.value === 'live' ? ' selected' : ''}>حقيقي (live)</option></select></label>
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
-<div class="card"><h2>📱 BaridiMob / CCP</h2>${S(C.baridi_info && C.baridi_info.set, C.baridi_info && C.baridi_info.set ? 'مفعّل' : 'غير مفعّل')}<p class="sub">ما يراه المشترك عند الدفع: رقم RIP / الحساب، الاسم، والتعليمات. تراجع الطلبات من «إدارة المشتركين ← المدفوعات».</p>
-<label class="fl">معلومات التحويل<textarea data-cfg="baridi_info" rows="4" dir="auto" placeholder="RIP: 00799999…\nالاسم: …\nاكتب بريدك في ملاحظة التحويل">${e(C.baridi_info ? C.baridi_info.value : '')}</textarea></label>
+<div class="card"><h2>📱 BaridiMob / CCP / تحويل بنكي</h2>${S(C.baridi_info && C.baridi_info.set, C.baridi_info && C.baridi_info.set ? 'مفعّل' : 'غير مفعّل')}<p class="sub">ما يراه المشترك عند الدفع: رقم RIP البريدي، حساب CCP، الحساب البنكي (RIB)، والاسم. يرسل المشترك الوصل مع اسم متجره عبر واتساب (رقم «واتساب الدعم» أدناه)، ويظهر طلبه في «إدارة المشتركين ← المدفوعات» لتقبله بضغطة.</p>
+<label class="fl">معلومات التحويل<textarea data-cfg="baridi_info" rows="5" dir="auto" placeholder="BaridiMob (RIP): 00799999…\nCCP: 0000000000 clé 00\nBanque (RIB): …\nالاسم: …">${e(C.baridi_info ? C.baridi_info.value : '')}</textarea></label>
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
 <div class="card"><h2>✈️ بوت تيليغرام (للتنبيهات)</h2>${S(C.telegram_token && C.telegram_token.set, C.telegram_token && C.telegram_token.set ? 'مفعّل' : 'غير مفعّل')}<p class="sub">أنشئ بوتاً من <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> وضع رمزه واسمه هنا، فيستطيع كل مشترك ربط حسابه وتلقي التنبيهات.</p>
 ${field('telegram_token', 'رمز البوت (Token)', '123456:ABC…', 'secret')}${field('telegram_bot', 'اسم البوت', 'RadarProductsBot')}

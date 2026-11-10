@@ -121,7 +121,7 @@ app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
 // تسجيل الخروج من كل الأجهزة
 app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
 app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
-app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: process.env.CONTACT_URL || '' }));
+app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: process.env.CONTACT_URL || '', gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
@@ -267,6 +267,10 @@ const fgot = new Map();
 const transport = () => { if (!process.env.SMTP_HOST) return null; const nm = require('nodemailer'), p = +process.env.SMTP_PORT || 465;
   return process.env.SMTP_HOST === 'json' ? nm.createTransport({ jsonTransport: true })
     : nm.createTransport({ host: process.env.SMTP_HOST, port: p, secure: p === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } }); };
+const RESET_MAIL = {
+  ar: { subject: 'استعادة كلمة المرور | رادار المنتجات الرابحة', hi: 'وصلنا طلب لاستعادة كلمة المرور لحسابك.', btn: 'تعيين كلمة مرور جديدة', note: 'الرابط صالح لمدة ساعة واحدة. إن لم تطلبه فتجاهل هذه الرسالة.' },
+  en: { subject: 'Reset your password | Winning Product Radar', hi: 'We received a request to reset the password of your account.', btn: 'Set a new password', note: 'This link is valid for one hour. If you didn’t request it, just ignore this email.' },
+  fr: { subject: 'Réinitialisation du mot de passe | Radar des produits gagnants', hi: 'Nous avons reçu une demande de réinitialisation du mot de passe de votre compte.', btn: 'Choisir un nouveau mot de passe', note: 'Ce lien est valable une heure. Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail.' } };
 app.post('/api/forgot', async (q, s, n) => { try {
   const f = fgot.get(q.ip); if (f && f.n >= 5 && now() - f.t < 9e5) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
   fgot.set(q.ip, { n: (f && now() - f.t < 9e5 ? f.n : 0) + 1, t: now() });
@@ -277,8 +281,10 @@ app.post('/api/forgot', async (q, s, n) => { try {
     const t = crypto.randomBytes(24).toString('hex'), url = (process.env.APP_URL || q.protocol + '://' + q.get('host')).replace(/\/$/, '') + '/reset?t=' + t;
     db.prepare('delete from resets where user_id=? or exp<?').run(u.id, now());
     db.prepare('insert into resets(h,user_id,exp) values(?,?,?)').run(sha(t), u.id, now() + 36e5);
-    tr.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: u.email, subject: 'استعادة كلمة المرور | رادار المنتجات الرابحة',
-      html: `<div dir="rtl" style="font-family:Tahoma,sans-serif;line-height:1.9"><p>وصلنا طلب لاستعادة كلمة المرور لحسابك.</p><p><a href="${url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">تعيين كلمة مرور جديدة</a></p><p>الرابط صالح لمدة ساعة واحدة. إن لم تطلبه فتجاهل هذه الرسالة.</p></div>` })
+    // الرسالة بلغة صفحة الدخول التي طُلبت منها (العربية / English / Français)
+    const lg = ['en', 'fr'].includes(q.body.lang) ? q.body.lang : 'ar', M = RESET_MAIL[lg];
+    tr.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: u.email, subject: M.subject,
+      html: `<div dir="${lg === 'ar' ? 'rtl' : 'ltr'}" style="font-family:Tahoma,Arial,sans-serif;line-height:1.9"><p>${M.hi}</p><p><a href="${url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">${M.btn}</a></p><p>${M.note}</p><p style="color:#64748b;font-size:13px">${url}</p></div>` })
       .then(i => { if (process.env.SMTP_HOST === 'json') console.log('MAIL', i.message); }).catch(e => console.error('mail error', e.message));
   }
   s.json({ ok: 1 });   // نفس الرد دائماً، فلا يُكشف وجود الحساب

@@ -1,9 +1,9 @@
 'use strict';
-// قسم «ثغرات السوق الجزائري»: منتج رابح في سوق أجنبي (من المحفوظات) ← هل يُعلَن عنه في الجزائر؟
-// 1) عبارات بحث جزائرية (ذكاء اصطناعي إن وُجد OPENAI_API_KEY، وإلا كتابة يدوية)
-// 2) الإضافة تبحث في مكتبة إعلانات ميتا (الجزائر، النشطة والمتوقفة) والصفحة تقارن لحظياً (بصمة الصورة، رابط المورّد، الكلمات المميزة)
+// قسم «ثغرات السوق»: منتج رابح في سوق أجنبي (من المحفوظات) ← هل يُعلَن عنه في السوق المستهدف (الجزائر افتراضياً، أو أي دولة يختارها المشترك)؟
+// 1) عبارات بحث بلغات ذلك السوق (ذكاء اصطناعي إن وُجد OPENAI_API_KEY، وإلا كتابة يدوية)
+// 2) الإضافة تبحث في مكتبة إعلانات ميتا (السوق المستهدف، النشطة والمتوقفة) والصفحة تقارن لحظياً (بصمة الصورة، رابط المورّد، الكلمات المميزة)
 // 3) الحكم: ثغرة مؤكدة · منافسة ضعيفة · جُرّب وتوقف · مشبع · يحتاج تحققك · غير حاسم. والثغرات تُراقَب أسبوعياً.
-const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js');
+const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js'), MK = require('./lib/markets.js');
 
 const ENV = (k, d) => (process.env[k] !== undefined && process.env[k] !== '' ? process.env[k] : d);
 const WEEK = 7 * 864e5;
@@ -22,12 +22,17 @@ create table if not exists gap_scans(id integer primary key, gp_id integer, user
 create table if not exists gap_matches(id integer primary key, gp_id integer, user_id integer, ad_id text, scan_id integer, row text, ev text, level text, decision text,
   created_at integer, unique(gp_id, ad_id));
 create index if not exists gap_m_gp on gap_matches(gp_id);`);
+  try { db.exec("alter table gap_products add column target text default 'DZ'"); } catch (e) {}   // السوق المستهدف لكل منتج
+  // السوق المستهدف: دولة من lib/markets.js (ليس «كل الدول»). اختيار المشترك الافتراضي محفوظ في user_kv
+  const okC = c => { c = String(c || '').toUpperCase(); return MK.COUNTRIES[c] && c !== 'ALL' ? c : null; };
+  const userTarget = uid => { try { return okC(J((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(uid) || {}).v, '')) || 'DZ'; } catch (e) { return 'DZ'; } };
+  const cnameAr = c => (MK.COUNTRIES[c] || {}).name || c;
   // أدوات التجسس حُذفت نهائياً: نتائجها القديمة لا تبقى في الأرشيف
   try { db.prepare("delete from runs where source='spy'").run(); } catch (e) {}
 
   const own = (uid, id) => { const p = db.prepare('select * from gap_products where id=? and user_id=?').get(+id, uid); if (!p) throw bad('غير موجود', 404); return p; };
   const view = p => ({
-    id: p.id, k: p.k, name: p.name, snap: J(p.snap, {}), terms: J(p.terms, []), keywords: J(p.keywords, []), hashes: J(p.hashes, []), verdict: p.verdict,
+    id: p.id, k: p.k, name: p.name, target: okC(p.target) || 'DZ', snap: J(p.snap, {}), terms: J(p.terms, []), keywords: J(p.keywords, []), hashes: J(p.hashes, []), verdict: p.verdict,
     stats: J(p.stats, {}), watch: !!p.watch, created_at: p.created_at, last_scan_at: p.last_scan_at, next_check_at: p.next_check_at,
     due: !!(p.watch && p.next_check_at && p.next_check_at <= now())
   });
@@ -64,7 +69,12 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
   /* ---------- القائمة ---------- */
   app.get('/api/gap', auth, active, wrap((q, s) => {
     const ps = db.prepare('select * from gap_products where user_id=? order by created_at desc').all(q.u.id).map(view);
-    s.json({ products: ps, ai: AI.enabled(), due: ps.filter(p => p.due).length });
+    s.json({ products: ps, ai: AI.enabled(), due: ps.filter(p => p.due).length, target: userTarget(q.u.id) });
+  }));
+  app.put('/api/gap-target', auth, wrap((q, s) => {
+    const c = okC(q.body && q.body.target); if (!c) throw bad('دولة غير معروفة');
+    db.prepare("insert into user_kv(user_id,k,v) values(?,'gap_target',?) on conflict(user_id,k) do update set v=excluded.v").run(q.u.id, JSON.stringify(c));
+    s.json({ target: c });
   }));
   app.get('/api/gap/due', auth, active, wrap((q, s) => s.json({ due: db.prepare('select count(*) n from gap_products where user_id=? and watch=1 and next_check_at<=?').get(q.u.id, now()).n })));
   app.get('/api/gap/:id', auth, active, wrap((q, s) => { const p = own(q.u.id, q.params.id); s.json(Object.assign(view(p), { matches: matchesOf(p.id) })); }));
@@ -87,8 +97,9 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
       country: p.market || uniq(ads.map(a => a.country))[0] || '', markets: (p.markets || []).slice(0, 10),
       texts: uniq(ads.map(a => str([a.title, a.body].filter(Boolean).join(' — '), 600))).slice(0, 4), tags: (p.tags || []).slice(0, 3)
     };
-    const id = db.prepare('insert into gap_products(user_id,k,name,snap,terms,keywords,hashes,stats,created_at) values(?,?,?,?,?,?,?,?,?)')
-      .run(q.u.id, k, snap.name || 'منتج', JSON.stringify(snap), '[]', '[]', '[]', '{}', now()).lastInsertRowid;
+    const target = okC(q.body.target) || userTarget(q.u.id);
+    const id = db.prepare('insert into gap_products(user_id,k,name,snap,terms,keywords,hashes,stats,created_at,target) values(?,?,?,?,?,?,?,?,?,?)')
+      .run(q.u.id, k, snap.name || 'منتج', JSON.stringify(snap), '[]', '[]', '[]', '{}', now(), target).lastInsertRowid;
     s.json({ id: Number(id) });
   }));
   app.delete('/api/gap/:id', auth, active, wrap((q, s) => {
@@ -97,7 +108,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     db.prepare('delete from gap_products where id=?').run(p.id); s.json({ ok: 1 });
   }));
   // العبارات والكلمات المميزة وبصمات الصور والمراقبة
-  const cleanTerms = a => (Array.isArray(a) ? a : []).slice(0, 12).map(t => ({ q: str(t && t.q, 100), lang: ['ar', 'dz', 'fr', 'arz', 'en'].includes(t && t.lang) ? t.lang : 'ar' })).filter(t => t.q);
+  const cleanTerms = a => (Array.isArray(a) ? a : []).slice(0, 12).map(t => ({ q: str(t && t.q, 100), lang: MK.LANGS[t && t.lang] ? t.lang : 'ar' })).filter(t => t.q);
   const cleanWords = a => [...new Set((Array.isArray(a) ? a : []).map(w => str(w, 40)).filter(w => w.length >= 2))].slice(0, 30);
   app.put('/api/gap/:id', auth, active, wrap((q, s) => {
     const p = own(q.u.id, q.params.id), b = q.body || {};
@@ -105,24 +116,27 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     if (b.keywords) db.prepare('update gap_products set keywords=? where id=?').run(JSON.stringify(cleanWords(b.keywords)), p.id);
     if (Array.isArray(b.hashes)) db.prepare('update gap_products set hashes=? where id=?').run(JSON.stringify(b.hashes.filter(h => /^[0-9a-f]{16}$/.test(h)).slice(0, 30)), p.id);
     if (b.watch !== undefined) db.prepare('update gap_products set watch=? where id=?').run(b.watch ? 1 : 0, p.id);
+    if (b.target !== undefined) { const c = okC(b.target); if (!c) throw bad('دولة غير معروفة'); db.prepare('update gap_products set target=? where id=?').run(c, p.id); }
     s.json(view(own(q.u.id, p.id)));
   }));
 
-  /* ---------- اقتراح العبارات الجزائرية بالذكاء الاصطناعي ---------- */
-  async function aiTerms(snap) {
+  /* ---------- اقتراح عبارات السوق المستهدف بالذكاء الاصطناعي ---------- */
+  async function aiTerms(snap, target) {
     if (!AI.enabled()) return null;
-    const sys = 'You help an Algerian e-commerce researcher check whether a product that sells abroad is already advertised in Algeria on the Facebook Ad Library. ' +
-      'Algerian advertisers write in Modern Standard Arabic, Algerian Darija (Arabic script), French, and sometimes Arabizi. Return ONLY JSON.';
+    let country = target; try { country = new Intl.DisplayNames(['en'], { type: 'region' }).of(target); } catch (e) {}
+    const langs = MK.langsOf(target), ln = langs.map(l => l + ' = ' + ((MK.LANGS[l] || {}).native || l)).join(', ');
+    const sys = 'You help an e-commerce researcher check whether a product that sells abroad is already advertised in ' + country + ' on the Facebook Ad Library. ' +
+      'Advertisers in ' + country + ' write in these languages (code = language): ' + ln + '. Return ONLY JSON.';
     const user = 'Product (from a foreign ' + (snap.country || '') + ' ad):\nName: ' + snap.name + '\nKeyword: ' + snap.kw + '\nAd texts:\n- ' + (snap.texts || []).join('\n- ') +
-      '\n\nReturn JSON {"name_ar":"","name_fr":"","queries":[{"q":"","lang":"ar|dz|fr|arz"}],"keywords":[""]}.\n' +
-      'queries: 5 short searches (1-4 words) the way an Algerian seller would name or advertise THIS product: the generic product name in Arabic, in French, in Darija, and 1-2 phrases with its main benefit. No brand names unless the product is known by it. ' +
-      'keywords: 8-14 distinctive words (Arabic and French) that would appear in an Algerian ad for this exact product (type, material, key feature), not generic words like "جودة" or "livraison".';
+      '\n\nReturn JSON {"names":[""],"queries":[{"q":"","lang":"' + langs.join('|') + '"}],"keywords":[""]}.\n' +
+      'queries: 5 short searches (1-4 words) the way a seller in ' + country + ' would name or advertise THIS product: the generic product name in each of the main local languages, and 1-2 phrases with its main benefit. No brand names unless the product is known by it. ' +
+      'names: the generic product name in each local language. keywords: 8-14 distinctive words (in the local languages) that would appear in an ad in ' + country + ' for this exact product (type, material, key feature), not generic words like quality, delivery or price.';
     const r = await AI.chatJSON(sys, user); const o = r.data;
-    return { terms: cleanTerms(o.queries), keywords: cleanWords([].concat(o.keywords || [], o.name_ar ? [o.name_ar] : [], o.name_fr ? [o.name_fr] : [])), model: r.model };
+    return { terms: cleanTerms(o.queries), keywords: cleanWords([].concat(o.keywords || [], Array.isArray(o.names) ? o.names : [], o.name_ar ? [o.name_ar] : [], o.name_fr ? [o.name_fr] : [])), model: r.model };
   }
   app.post('/api/gap/:id/suggest', auth, active, (q, s, n) => {
     let p; try { p = own(q.u.id, q.params.id); if (AI.enabled()) LIM.useAI(q.u); } catch (e) { return n(e); }
-    aiTerms(J(p.snap, {})).then(r => {
+    aiTerms(J(p.snap, {}), okC(p.target) || 'DZ').then(r => {
       if (!r) return s.json({ ai: false });
       db.prepare('update gap_products set terms=?, keywords=? where id=?').run(JSON.stringify(r.terms), JSON.stringify(r.keywords), p.id);
       s.json(Object.assign({ ai: true }, r));
@@ -136,14 +150,14 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     const id = db.prepare('insert into gap_scans(gp_id,user_id,started_at,queries,seen) values(?,?,?,?,?)').run(p.id, q.u.id, now(), JSON.stringify(qs), '[]').lastInsertRowid;
     s.json({ scan: Number(id) });
   }));
-  // إعلانات جزائرية من الإضافة → صفوف موحّدة تعود للصفحة لتقارنها (الصورة تُقارن في المتصفح)
+  // إعلانات السوق المستهدف من الإضافة → صفوف موحّدة تعود للصفحة لتقارنها (الصورة تُقارن في المتصفح)
   app.post('/api/gap/:id/ingest', auth, active, wrap((q, s) => {
     const p = own(q.u.id, q.params.id), b = q.body || {};
     const sc = db.prepare('select * from gap_scans where id=? and gp_id=?').get(+b.scan, p.id); if (!sc) throw bad('scan', 404);
     if (!Array.isArray(b.ads) || b.ads.length > 400) throw bad('ads');
     const seen = new Set(J(sc.seen, [])), rows = [], t = now();
     for (const raw of b.ads) {
-      let r = null; try { r = C.rowFromRaw(raw, { query: str(b.query, 120), niche: '', country: 'DZ', src: raw && raw._src === 'dom' ? 'dom' : 'net' }, t); } catch (e) {}
+      let r = null; try { r = C.rowFromRaw(raw, { query: str(b.query, 120), niche: '', country: okC(p.target) || 'DZ', src: raw && raw._src === 'dom' ? 'dom' : 'net' }, t); } catch (e) {}
       if (!r || seen.has(r.ad_id)) continue;
       seen.add(r.ad_id);
       rows.push({ ad_id: r.ad_id, library_url: r.library_url, page_id: r.page_id, page_name: r.page_name, status: r.status, start_date: r.start_date, days_running: r.days_running,
@@ -175,7 +189,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     db.prepare('update gap_products set last_scan_at=?, next_check_at=? where id=?').run(now(), now() + WEEK, p.id);
     // تنبيه: منافسون جدد ظهروا في هذا الفحص (أول ظهور لإعلانهم)
     const fresh = db.prepare("select count(*) n, sum(level='strong') st from gap_matches where gp_id=? and created_at>=? and (decision is null or decision!='no')").get(p.id, sc.started_at || 0);
-    if (fresh.n) NT.fire(q.u.id, 'gap', '🎯 «' + (p.name || 'منتج') + '»: ' + fresh.n + ' إعلان جديد في الجزائر' + (fresh.st ? ' (' + fresh.st + ' مطابق بقوة)' : ' (محتمل)') + '. افتحه لتتحقق: هل دخل منافس؟', '/gaps/' + p.id);
+    if (fresh.n) NT.fire(q.u.id, 'gap', '🎯 «' + (p.name || 'منتج') + '»: ' + fresh.n + ' إعلان جديد في ' + cnameAr(okC(p.target) || 'DZ') + (fresh.st ? ' (' + fresh.st + ' مطابق بقوة)' : ' (محتمل)') + '. افتحه لتتحقق: هل دخل منافس؟', '/gaps/' + p.id);
     s.json(Object.assign(view(refresh(p)), { matches: matchesOf(p.id) }));
   }));
   // تحققك اليدوي: هذا هو المنتج نفسه / ليس هو
