@@ -272,7 +272,7 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
   db.prepare('update users set email=?, role=? where id=?').run(em, role, id); act(q.u.id, 'admin_update', q, '#' + id + ' ' + em + ' ' + role); s.json({ ok: 1 });
 }));
 // حذف حساب وكل بياناته (يُستعمل من المدير ومن المشترك نفسه). سجلات الدفع تبقى لأن القانون قد يفرض الاحتفاظ بها
-const USER_TABLES = ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log', 'lib_bstats', 'lib_bfilt', 'activity', 'contact_msgs'];
+const USER_TABLES = ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'edge_runs', 'notify_log', 'lib_bstats', 'lib_bfilt', 'activity', 'contact_msgs'];
 function deleteUser(id) {
   USER_TABLES.forEach(t => { try { db.prepare(`delete from ${t} where user_id=?`).run(id); } catch (e) {} });
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
@@ -290,6 +290,7 @@ app.get('/api/me/export', auth, wrap((q, s) => {
     saved_products: all('select k, snap, created_at from saved where user_id=?', id).map(r => Object.assign({ key: r.k, saved_at: new Date(r.created_at).toISOString() }, J(r.snap))),
     analyses: all('select id, source, label, ads, summary, created_at from runs where user_id=? order by created_at desc', id).map(r => ({ id: r.id, source: r.source, label: r.label, ads: r.ads, summary: J(r.summary), created_at: new Date(r.created_at).toISOString() })),
     market_gaps: all('select name, snap, verdict, created_at from gap_products where user_id=?', id).map(r => ({ name: r.name, product: J(r.snap), verdict: r.verdict, created_at: r.created_at })),
+    compete_ideas: all('select name, input, data, created_at from edge_runs where user_id=? and status=?', id, 'done').map(r => ({ name: r.name, input: J(r.input), ideas: J(r.data), created_at: new Date(r.created_at).toISOString() })),
     watched_pages: all('select page_id, name, note, created_at, stats from watch_pages where user_id=?', id).map(r => Object.assign({}, r, { stats: J(r.stats) })),
     settings: Object.fromEntries(all('select k, v from user_kv where user_id=?', id).map(r => [r.k, J(r.v)])),
     payments: all('select plan_name, days, amount, currency, method, status, created_at, paid_at from payments where user_id=? order by created_at desc', id),
@@ -304,12 +305,7 @@ app.delete('/api/me', auth, wrap((q, s) => {
 
 // ---------- نسيت كلمة المرور (بريد SMTP) ----------
 const fgot = new Map();
-const transport = () => { if (!process.env.SMTP_HOST) return null; const nm = require('nodemailer'), p = +process.env.SMTP_PORT || 465;
-  return process.env.SMTP_HOST === 'json' ? nm.createTransport({ jsonTransport: true })
-    : nm.createTransport({ host: process.env.SMTP_HOST, port: p, secure: p === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      // استضافة مشتركة: شهادة خادم البريد قد تحمل اسم الخادم لا اسم الدومين. SMTP_TLS_SERVERNAME يحدد الاسم الصحيح، و SMTP_TLS_INSECURE=1 حل أخير
-      tls: Object.assign({}, process.env.SMTP_TLS_SERVERNAME ? { servername: process.env.SMTP_TLS_SERVERNAME } : {}, process.env.SMTP_TLS_INSECURE === '1' ? { rejectUnauthorized: false } : {}), connectionTimeout: 15000 }); };
-const MAIL_FROM = () => process.env.SMTP_FROM || process.env.MAIL_FROM || process.env.SMTP_USER;   // MAIL_FROM أو SMTP_FROM
+const ML = require('./adlib/mail.js'), transport = ML.transport, MAIL_FROM = ML.FROM;   // البريد: الاتصال وآخر نتيجة وفحص الدومين
 const RESET_MAIL = {
   ar: { subject: 'استعادة كلمة المرور | رادار المنتجات الرابحة', hi: 'وصلنا طلب لاستعادة كلمة المرور لحسابك.', btn: 'تعيين كلمة مرور جديدة', note: 'الرابط صالح لمدة ساعة واحدة. إن لم تطلبه فتجاهل هذه الرسالة.' },
   en: { subject: 'Reset your password | Winning Product Radar', hi: 'We received a request to reset the password of your account.', btn: 'Set a new password', note: 'This link is valid for one hour. If you didn’t request it, just ignore this email.' },
@@ -326,9 +322,9 @@ app.post('/api/forgot', async (q, s, n) => { try {
     db.prepare('insert into resets(h,user_id,exp) values(?,?,?)').run(sha(t), u.id, now() + 36e5);
     // الرسالة بلغة صفحة الدخول التي طُلبت منها (العربية / English / Français)
     const lg = ['en', 'fr'].includes(q.body.lang) ? q.body.lang : 'ar', M = RESET_MAIL[lg];
-    tr.sendMail({ from: MAIL_FROM(), to: u.email, subject: M.subject,
-      html: `<div dir="${lg === 'ar' ? 'rtl' : 'ltr'}" style="font-family:Tahoma,Arial,sans-serif;line-height:1.9"><p>${M.hi}</p><p><a href="${url}" style="background:#118553;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">${M.btn}</a></p><p>${M.note}</p><p style="color:#5d6661;font-size:13px">${url}</p></div>` })
-      .then(i => { if (process.env.SMTP_HOST === 'json') console.log('MAIL', i.message); }).catch(e => { console.error('mail error', e.message); BX.logError && BX.logError(Object.assign(new Error('استعادة كلمة المرور: تعذّر إرسال البريد: ' + e.message), { status: 500 }), q); });
+    ML.send({ to: u.email, subject: M.subject, text: M.hi + '\n\n' + M.btn + ':\n' + url + '\n\n' + M.note,
+      html: `<div dir="${lg === 'ar' ? 'rtl' : 'ltr'}" style="font-family:Tahoma,Arial,sans-serif;line-height:1.9"><p>${M.hi}</p><p><a href="${url}" style="background:#118553;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">${M.btn}</a></p><p>${M.note}</p><p style="color:#5d6661;font-size:13px">${url}</p></div>` }, 'reset')
+      .catch(e => { console.error('mail error', e.message); BX.logError && BX.logError(Object.assign(new Error('استعادة كلمة المرور: تعذّر إرسال البريد: ' + e.message + (e.hint ? ' — ' + e.hint : '')), { status: 500 }), q); });
   }
   s.json({ ok: 1 });   // نفس الرد دائماً، فلا يُكشف وجود الحساب
 } catch (e) { n(e); } });
@@ -374,20 +370,16 @@ const imgData = async u => { if (!/^https?:\/\//.test(u || '')) return ''; const
   if (fs.existsSync(f + '.bin')) { buf = fs.readFileSync(f + '.bin'); type = fs.readFileSync(f + '.type', 'utf8'); } else { const r = await fetchImg(u); buf = r.buf; type = r.type; }
   return buf.length > 3.5e6 ? '' : 'data:' + type + ';base64,' + buf.toString('base64'); };
 require('./adlib/tools.js')(app, { db, auth, active, wrap, now, imgData });
+require('./adlib/edge.js')(app, { db, auth, active, wrap, now, imgData });   // الخروج من المنافسة (أفكار بالذكاء الاصطناعي)
 const optUser = q => { try { const t = jwt.verify(q.cookies.t, SECRET), u = db.prepare('select id, email, name, tv from users where id=?').get(t.id); return u && (t.v || 0) === (u.tv || 0) ? u : null; } catch (e) { return null; } };
 const BX = { db, auth, active, admin, wrap, now, act, blocked, fail, optUser, DATA_DIR: path.dirname(path.resolve(DBF)) };
-Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport() }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
+Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport(), sendMail: ML.send }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
 require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
 require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يومية لقاعدة البيانات
 require('./adlib/support.js')(app, BX);  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
 // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
-// المدير: بريد تجريبي لفحص إعدادات SMTP (يُظهر سبب الفشل بالضبط)
-app.post('/api/admin/mail-test', auth, admin, async (q, s) => {
-  const tr = transport(); if (!tr) return s.status(400).json({ error: 'البريد غير مضبوط: أضف SMTP_HOST و SMTP_USER و SMTP_PASS في ملف .env ثم أعد تشغيل المنصة' });
-  try { await tr.verify(); await tr.sendMail({ from: MAIL_FROM(), to: q.u.email, subject: 'بريد تجريبي | رادار المنتجات الرابحة', text: 'وصل البريد التجريبي: إعدادات البريد تعمل.' }); s.json({ ok: 1, to: q.u.email, from: MAIL_FROM() }); }
-  catch (e) { const m = String(e.message || e); s.status(400).json({ error: 'فشل الإرسال: ' + m + (/altnames|certificate|self.signed/i.test(m) ? ' — اضبط SMTP_TLS_SERVERNAME باسم خادم البريد (من cPanel ← Email Accounts ← Connect Devices) أو SMTP_TLS_INSECURE=1' : /auth|535|credentials/i.test(m) ? ' — تحقق من SMTP_USER و SMTP_PASS' : /ECONNREFUSED|ETIMEDOUT|ENOTFOUND/i.test(m) ? ' — تحقق من SMTP_HOST و SMTP_PORT (465 أو 587)' : '') }); }
-});
+ML.routes(app, BX);   // المدير: حالة البريد، بريد تجريبي إلى أي عنوان، فحص SPF/DKIM
 // ---------- الصفحات ----------
 const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
   .replace(/\{\{CONTACT\}\}/g, process.env.CONTACT_URL || 'mailto:' + (process.env.ADMIN_EMAIL || ''));
@@ -405,7 +397,7 @@ const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.jo
 const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(pub(LANDING)));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscription', '/security', '/help', '/guide', '/subscribers', '/admin', '/payments', '/payments/:tab', '/support-inbox', '/platform', '/platform/:tab'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/compete', '/compete/:id', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscription', '/security', '/help', '/guide', '/subscribers', '/admin', '/payments', '/payments/:tab', '/support-inbox', '/platform', '/platform/:tab'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 // الصفحات القانونية: شروط الاستخدام، الخصوصية، الاسترداد، الاتصال (بثلاث لغات، ومعلومات النشاط من «الربط والتكامل»)

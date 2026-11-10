@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const CFG = require('./config.js');
 const EV = { gap: '🎯 ظهر منافس لمنتج تتابعه في «ثغرات السوق»', support: '💬 رد من فريق الدعم', watch: '👁 إعلانات جديدة لمنافس تراقبه', gem: '💎 منتج جديد صار «جوهرة» في تحليلك',
   payment: '💳 الدفع والاشتراك', expiry: '⏰ تذكير قبل انتهاء الاشتراك', admin: '🛠 للمدير: طلبات دفع جديدة' };
-let db = null, mailer = null, appName = 'رادار المنتجات الرابحة';
+let db = null, mailer = null, sendMail = null, appName = 'رادار المنتجات الرابحة';
 const now = () => Date.now();
 const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
 const kvGet = (u, k, d) => { const r = db.prepare('select v from user_kv where user_id=? and k=?').get(u, k); return r ? J(r.v, d) : d; };
@@ -27,8 +27,10 @@ async function tgSend(chat, text) {
 }
 async function mailSend(to, subject, text, link) {
   const tr = mailer && mailer(); if (!tr) throw new Error('البريد غير مضبوط في الخادم');
-  const i = await tr.sendMail({ from: process.env.SMTP_FROM || process.env.MAIL_FROM || process.env.SMTP_USER, to, subject: subject + ' | ' + appName,
-    html: `<div dir="rtl" style="font-family:Tahoma,sans-serif;line-height:1.9;font-size:15px"><p>${esc(text).replace(/\n/g, '<br>')}</p>${link ? `<p><a href="${esc(link)}" style="background:#118553;color:#fff;padding:9px 18px;border-radius:8px;text-decoration:none">افتح في المنصة</a></p>` : ''}<p style="color:#888;font-size:12px">يمكنك إيقاف هذه التنبيهات من «الربط والتكامل».</p></div>` });
+  const msg = { to, subject: subject + ' | ' + appName, text: text + (link ? '\n\n' + link : ''),
+    html: `<div dir="rtl" style="font-family:Tahoma,sans-serif;line-height:1.9;font-size:15px"><p>${esc(text).replace(/\n/g, '<br>')}</p>${link ? `<p><a href="${esc(link)}" style="background:#118553;color:#fff;padding:9px 18px;border-radius:8px;text-decoration:none">افتح في المنصة</a></p>` : ''}<p style="color:#888;font-size:12px">يمكنك إيقاف هذه التنبيهات من «الربط والتكامل».</p></div>` };
+  if (sendMail) return sendMail(msg, 'notify');
+  const i = await tr.sendMail(Object.assign({ from: process.env.SMTP_FROM || process.env.MAIL_FROM || process.env.SMTP_USER }, msg));
   if (process.env.SMTP_HOST === 'json') console.log('MAIL', i.message);
 }
 function log(uid, ev, text, via, ok) {
@@ -72,7 +74,7 @@ async function pollTg() {
 }
 
 module.exports = function mountNotify(app, X) {
-  const { auth, active, admin, wrap } = X; db = X.db; mailer = X.mailer;
+  const { auth, active, admin, wrap } = X; db = X.db; mailer = X.mailer; sendMail = X.sendMail;
   db.exec(`create table if not exists user_kv(user_id integer, k text, v text, primary key(user_id, k));
 create table if not exists notify_log(id integer primary key, user_id integer, at integer, ev text, text text, via text, ok integer);
 create index if not exists notify_log_u on notify_log(user_id, id);`);

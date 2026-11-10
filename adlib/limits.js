@@ -43,11 +43,13 @@ function usage(u) {
 // يُستدعى قبل كل طلب ذكاء اصطناعي: يرفض إن نفد الرصيد الشهري، وإلا يحتسبه
 function useAI(u) {
   const L = limitsOf(u), m = month(), r = db.prepare('select n from ai_usage where user_id=? and month=?').get(u.id, m), n = r ? r.n : 0;
-  if (n >= L.aiPerMonth) throw err(`بلغت حد باقتك من طلبات الذكاء الاصطناعي هذا الشهر (${L.aiPerMonth}). رقِّ باقتك من «الإعدادات ← الاشتراك».`);
+  if (n >= L.aiPerMonth) throw err(`بلغت حد باقتك من طلبات الذكاء الاصطناعي هذا الشهر (${L.aiPerMonth}). رقِّ باقتك من «اشتراكي».`);
   db.prepare('insert into ai_usage(user_id,month,n) values(?,?,1) on conflict(user_id,month) do update set n=n+1').run(u.id, m);
 }
+// طلب ذكاء اصطناعي فشل (خطأ من المزوّد): لا يُحتسب
+function refundAI(uid) { try { db.prepare('update ai_usage set n=max(0,n-1) where user_id=? and month=?').run(uid, month()); } catch (e) {} }
 function check(u, key, current) {
   const L = limitsOf(u);
-  if (current >= L[key]) throw err(`بلغت حد باقتك: ${LABEL[key]} (${L[key]}). رقِّ باقتك من «الإعدادات ← الاشتراك».`);
+  if (current >= L[key]) throw err(`بلغت حد باقتك: ${LABEL[key]} (${L[key]}). رقِّ باقتك من «اشتراكي».`);
 }
-module.exports = { init, limitsOf, usage, useAI, check, KEYS, LABEL, DEF, FEATS, FLABEL, featuresOf, has };
+module.exports = { init, limitsOf, usage, useAI, refundAI, check, KEYS, LABEL, DEF, FEATS, FLABEL, featuresOf, has };

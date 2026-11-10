@@ -33,5 +33,8 @@
  "وصل البريد التجريبي: إعدادات البريد تعمل.",
  "— اضبط SMTP_TLS_SERVERNAME باسم خادم البريد (من cPanel ← Email Accounts ← Connect Devices) أو SMTP_TLS_INSECURE=1",
  "— تحقق من SMTP_USER و SMTP_PASS",
- "— تحقق من SMTP_HOST و SMTP_PORT (465 أو 587)"
+ "— تحقق من SMTP_HOST و SMTP_PORT (465 أو 587)",
+ "Return JSON exactly like: {\"product\":{\"what\":\"ما هو المنتج بدقة\",\"job\":\"المهمة التي يشتريه الزبون من أجلها\",\"buyer\":\"من يشتريه اليوم\"},",
+ "\"diagnosis\":{\"saturation\":\"low|medium|high\",\"why\":\"لماذا\",\"common_angle\":\"ما يقوله ويفعله كل المنافسين\",\"price_war\":\"هل توجد حرب أسعار وما مداها\",\"gaps\":[\"زوايا أو شرائح لا يستعملها أحد\"]},",
+ "\"top\":[{\"i\":0,\"reason\":\"لماذا هذه من أفضل 3\"}],\"plan\":[{\"day\":\"1-2\",\"do\":\"ماذا تفعل\"}],\"avoid\":[\"أخطاء لا تقع فيها\"],\"assumptions\":[\"افتراضات تحتاج تحققاً من المورّد\"]}"
 ]

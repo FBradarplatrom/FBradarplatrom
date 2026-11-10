@@ -243,6 +243,7 @@ ${r.allow.length ? `<p class="sub" style="margin-top:12px">صفحات مسموح
         const t = b.dataset.tool, run = f => { const pr = Promise.resolve().then(f); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => { if (x && x.message !== 'auth') X.toast(x.message || 'حدث خطأ', 'err'); }); };
         if (t === 'sup') run(() => openSupplier(b.dataset.k, b.dataset.sv === '1'));
         if (t === 'ai') run(() => openAI(b.dataset.k, b.dataset.sv === '1'));
+        if (t === 'edge') run(() => { const p = productOf(b.dataset.k, b.dataset.sv === '1'); if (!p) throw new Error('المنتج غير موجود'); if (!W.WPREDGE) throw new Error('تعذّر تحميل القسم'); W.WPREDGE.from(p); });
         if (t === 'profit') run(() => W.WPRPROFIT && W.WPRPROFIT.open(b.dataset.k, b.dataset.sv === '1'));
         if (t === 'watch') run(() => watchPage(b.dataset.pid, b.dataset.name));
         if (t === 'sheet') run(() => pushSheet(b.dataset.src));

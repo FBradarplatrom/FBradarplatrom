@@ -157,7 +157,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await M.goto(BASE + '/saved'); await M.waitForSelector('.pc-g [data-tool="profit"]');
     const tops = await M.locator('.pc-g').first().evaluate(g => [...g.children].map(c => [c.textContent.trim().slice(0, 12), Math.round(c.getBoundingClientRect().top)]));
     const eq = (x, y) => Math.abs(x - y) < 4;
-    ok(tops.length === 6 && eq(tops[1][1], tops[2][1]) && eq(tops[2][1], tops[3][1]) && eq(tops[4][1], tops[5][1]) && tops[4][1] > tops[1][1] && tops[0][1] < tops[1][1], 'الأزرار: التاريخ ثم 3 في صف ثم 2: ' + JSON.stringify(tops));
+    ok(tops.length === 7 && eq(tops[1][1], tops[2][1]) && eq(tops[3][1], tops[4][1]) && eq(tops[5][1], tops[6][1]) && tops[0][1] < tops[1][1] && tops[1][1] < tops[3][1] && tops[3][1] < tops[5][1], 'الأزرار: التاريخ ثم صفوف من زرين (4 أدوات ثم الثغرات والإزالة): ' + JSON.stringify(tops));
     await M.locator('.pc-g [data-tool="profit"]').first().click(); await M.waitForSelector('[data-pf="price"]');
     await M.fill('[data-pf="price"]', '3900'); await M.fill('[data-pf="cost"]', '40'); await M.selectOption('[data-pf="costCur"]', 'CNY');
     await M.fill('[data-pf="ship"]', '350'); await M.fill('[data-pf="deliv"]', '0'); await M.fill('[data-pf="pack"]', '50'); await M.fill('[data-pf="cpl"]', '400');

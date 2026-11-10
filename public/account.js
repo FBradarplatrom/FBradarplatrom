@@ -129,14 +129,30 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     if (bar) { bar.hidden = T.length < 2; bar.innerHTML = T.map(([k, t]) => `<button data-adm="${k}" class="${ATAB === k ? 'on' : ''}">${t}</button>`).join(''); }
     return drawAdmin().catch(x => { if (x.message !== 'auth') X.toast(x.message, 'err'); });
   }
+  // حالة البريد: الإعدادات الحالية وآخر محاولة إرسال (نجحت أو فشلت ولماذا)
+  async function mailStatus() {
+    const el = $('#mail-st'); if (!el) return;
+    try {
+      const j = await X.api('GET', '/admin/mail-status'), L = j.last;
+      el.innerHTML = !j.configured ? '<div class="alert err">البريد غير مضبوط: أضف إعدادات SMTP في ملف .env ثم أعد تشغيل المنصة.</div>'
+        : `<div class="sub" dir="auto">الخادم: <code dir="ltr">${e(j.host)}:${e(j.port)}</code> · المستخدم: <code dir="ltr">${e(j.user)}</code> · المرسِل: <code dir="ltr">${e(j.from)}</code></div>` +
+          (!L ? '<div class="sub" style="margin-top:4px">لم تُرسل أي رسالة منذ آخر تشغيل للمنصة.</div>'
+            : L.ok ? `<div class="alert ok" style="margin-top:8px">آخر إرسال (${e(X.ago(L.at))} إلى ${e(L.to)}) قَبِله الخادم. ردّه: <code dir="ltr">${e(L.response)}</code></div>`
+            : `<div class="alert err" style="margin-top:8px">آخر إرسال (${e(X.ago(L.at))} إلى ${e(L.to)}) فشل: <code dir="ltr">${e(L.error)}</code>${L.hint ? '<br>الحل: ' + e(L.hint) : ''}</div>`);
+    } catch (x) { el.textContent = ''; }
+  }
   async function drawAdmin() {
     const el = $('#x-' + AVIEW); if (!el) return; el.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>';
     if (['methods', 'general', 'ai', 'tg'].includes(ATAB)) {
       const c = cfgUI(await X.api('GET', '/admin/config').catch(() => null));
       const intro = { methods: 'الطرق التي يراها المشترك عند الدفع أو تغيير العرض. تظهر كل طريقة فقط بعد ضبطها.', general: 'معلومات نشاطك وطرق التواصل: تظهر في الصفحات القانونية وصفحة المساعدة وزر واتساب.', ai: 'يُستعمل في تحليل الإعلان، التعرّف على المنتج من صورته، واقتراح عبارات البحث.', tg: 'بوت تيليغرام يرسل التنبيهات للمشتركين. البريد يُضبط في إعدادات الخادم (SMTP).' }[ATAB];
       const pick = { methods: ['baridi', 'satim', 'stripe', 'paypal'], general: ['biz', 'platform', 'analytics'], ai: ['ai'], tg: ['tg'] }[ATAB];
-      const mail = ATAB === 'tg' ? `<div class="card"><h2>البريد (SMTP)</h2><p class="sub">يرسل رسائل استعادة كلمة المرور والتنبيهات بالبريد. يُضبط في ملف <code>.env</code> على الخادم: SMTP_HOST، SMTP_PORT، SMTP_USER، SMTP_PASS، MAIL_FROM.</p><p style="margin:8px 0 0"><button class="btn sm" data-int="mailtest">إرسال بريد تجريبي إلى بريدك</button></p><div id="mail-r"></div></div>` : '';
+      const mail = ATAB === 'tg' ? `<div class="card" id="mail-c"><h2>البريد (SMTP)</h2><p class="sub">يرسل رسائل استعادة كلمة المرور والتنبيهات. يُضبط في ملف <code>.env</code> على الخادم: SMTP_HOST، SMTP_PORT، SMTP_USER، SMTP_PASS، MAIL_FROM.</p>
+<div id="mail-st" class="sub">…</div>
+<div class="row" style="align-items:flex-end;margin-top:10px"><label class="grow">أرسل بريداً تجريبياً إلى<input id="mail-to" type="email" dir="ltr" placeholder="you@gmail.com"></label><button class="btn sm" data-int="mailtest">إرسال</button><button class="btn ghost sm" data-int="maildns">فحص إعدادات الدومين</button></div>
+<p class="sub" style="margin-top:6px">جرّب بريداً على Gmail: إن وصل إلى بريد الدومين ولم يصل إلى Gmail فالسبب غالباً SPF/DKIM، وإشعار الرفض يصل إلى صندوق بريد الإرسال نفسه (Webmail).</p><div id="mail-r"></div></div>` : '';
       el.innerHTML = `<p class="sub" style="margin:0 0 12px">${intro} المفاتيح السرية تُحفظ مشفّرة ولا تظهر كاملة بعد الحفظ.</p><div class="int-g">${pick.map(k => c[k]).join('')}${mail}</div>`;
+      if (mail) mailStatus();
       return;
     }
     if (ATAB === 'stats') {
@@ -300,7 +316,9 @@ ${notif ? `<div class="card" id="x-notif"></div>` : ''}
     if (['tglink', 'tgcheck', 'tgoff', 'ntest'].includes(a)) return onNotify(a, b);
     if (a === 'ext') { localStorage.setItem('wpr_collect_prefs_v1', JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('wpr_collect_prefs_v1') || '{}'), { tab: 'ext' }))); return; }
     if (a === 'save') { const body = {}; b.closest('.card').querySelectorAll('[data-cfg]').forEach(i => { body[i.dataset.cfg] = i.value; }); await X.api('PUT', '/admin/config', body); X.toast('حُفظت الإعدادات'); return X.cur() === 'integrations' ? drawIntegrations() : drawAdmin(); }
-    if (a === 'mailtest') { const r = $('#mail-r'); try { const j = await X.api('POST', '/admin/mail-test', {}); r.innerHTML = `<div class="alert ok" style="margin-top:10px">✅ أُرسل إلى ${e(j.to)} من ${e(j.from)}. افحص صندوق الوارد (والرسائل غير المرغوبة).</div>`; } catch (x) { r.innerHTML = `<div class="alert err" style="margin-top:10px">${e(x.message)}</div>`; } return; }
+    if (a === 'mailtest') { const r = $('#mail-r'); try { const j = await X.api('POST', '/admin/mail-test', { to: ($('#mail-to') || {}).value || '' }); r.innerHTML = `<div class="alert ok" style="margin-top:10px">أُرسل إلى ${e(j.to)} من ${e(j.from)}. ردّ الخادم: <code dir="ltr">${e(j.response || '')}</code><br>افحص صندوق الوارد والرسائل غير المرغوبة. إن لم يصل خلال دقائق فاضغط «فحص إعدادات الدومين».</div>`; } catch (x) { r.innerHTML = `<div class="alert err" style="margin-top:10px">${e(x.message)}</div>`; } mailStatus(); return; }
+    if (a === 'maildns') { const r = $('#mail-r'); r.innerHTML = '<p class="sub">جارٍ الفحص…</p>'; try { const j = await X.api('POST', '/admin/mail-dns', {}); const bad = j.checks.filter(c => !c.ok && !c.warn).length;
+      r.innerHTML = `<div class="alert ${bad ? 'err' : 'ok'}" style="margin-top:10px">${bad ? 'وُجدت مشكلة في إعدادات الدومين ' + e(j.domain) + ': بسببها لا تصل الرسائل إلى Gmail وغيره.' : 'إعدادات الدومين ' + e(j.domain) + ' سليمة.'}</div><table style="margin-top:8px"><tbody>${j.checks.map(c => `<tr><td><b dir="ltr">${e(c.k)}</b></td><td>${c.ok ? '<span class="pill ok">سليم</span>' : c.warn ? '<span class="pill warn">يُستحسن</span>' : '<span class="pill bad">ناقص</span>'}</td><td>${e(c.msg)}${c.val ? `<br><small class="muted" dir="ltr" style="word-break:break-all">${e(c.val)}</small>` : ''}</td></tr>`).join('')}</tbody></table>`; } catch (x) { r.innerHTML = `<div class="alert err" style="margin-top:10px">${e(x.message)}</div>`; } return; }
     if (a === 'testai') { const r = await X.api('POST', '/admin/config/test-ai', {}); X.toast('✅ الذكاء الاصطناعي يعمل (' + r.model + ')'); }
   }
 

@@ -15,7 +15,7 @@ async function chatJSON(system, user, opts) {
       const r = await fetch(base + '/chat/completions', {
         method: 'POST', signal: AbortSignal.timeout((opts && opts.timeout) || 25000),
         headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
-        body: JSON.stringify({ model, response_format: { type: 'json_object' }, temperature: 0.2, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
+        body: JSON.stringify({ model, response_format: { type: 'json_object' }, temperature: (opts && opts.temperature != null) ? opts.temperature : 0.2, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { lastErr = (j.error && j.error.message) || ('HTTP ' + r.status); if (r.status === 401) break; continue; }
