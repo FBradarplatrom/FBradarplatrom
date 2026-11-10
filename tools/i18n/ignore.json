@@ -28,5 +28,10 @@
  "📎 صورة الوصل مرفقة.",
  "يحل",
  "يساعد على",
- "وداعا"
+ "وداعا",
+ "بريد تجريبي | رادار المنتجات الرابحة",
+ "وصل البريد التجريبي: إعدادات البريد تعمل.",
+ "— اضبط SMTP_TLS_SERVERNAME باسم خادم البريد (من cPanel ← Email Accounts ← Connect Devices) أو SMTP_TLS_INSECURE=1",
+ "— تحقق من SMTP_USER و SMTP_PASS",
+ "— تحقق من SMTP_HOST و SMTP_PORT (465 أو 587)"
 ]

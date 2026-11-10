@@ -45,7 +45,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       ok(!/الجزائري|algérien|Algerian market/i.test(await pg.locator('.hero').innerText()), lg + ': لا عبارة «للسوق الجزائري» في الواجهة');
       ok(!/(أوزان|weights|pondération|الكلمات الذهبية|golden word|mots dorés|عدد البائعين|number of sellers|37|26 نقطة)/i.test(txt), lg + ': لا كشف لطريقة التصنيف والأوزان');
       ok(!/(للجزائر فقط|لكل الأسواق|Every market|Tous les marchés|only for one country|réservé à un seul pays)/i.test(txt) && (await pg.$$('#faqs details')).length >= 8, lg + ': أسئلة مفيدة، وبلا «للجزائر فقط» ولا «لكل الأسواق»');
-      await pg.waitForSelector('.wd-lang'); ok(await pg.isVisible('.wd-lang') && !(await pg.isVisible('#lang')), lg + ': اختيار اللغة من الزر العائم (بلا قائمة مكررة)');
+      await pg.waitForSelector('.wpr-dock .wd-th'); ok(await pg.isVisible('#lang-b') && !(await pg.$('.wpr-dock .wd-lang')) && !(await pg.isVisible('#lang')), lg + ': اللغة في الأعلى، والأزرار العائمة واتساب والوضع فقط');
+      ok(await pg.isVisible('footer .fb p') && await pg.isVisible('footer .fcp') && /BaridiMob/.test(await pg.innerText('#pay')) && !/طرق الدفع:|Payment methods:|Moyens de paiement/.test(await pg.innerText('#pay')), lg + ': فوتر بالوصف والحقوق، وجملة الدفع');
       const free = pg.locator('#plans .plan').first(), offs = await free.locator('li.off').allTextContents(), ons = await pg.locator('#plans .plan').nth(1).locator('li.off').count();
       ok(offs.length === 2 && offs.some(x => /TikTok/.test(x)) && offs.some(x => /واتساب|WhatsApp/.test(x)) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (✕ لغير المشمول): ' + offs.join(' | '));
       if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/landing-' + lg + '.png', fullPage: true });

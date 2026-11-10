@@ -805,7 +805,6 @@ async function dashAlerts(pend){
  if(gd&&gd.due)A.push(['info','🔁',gd.due+' منتج مستحق لإعادة الفحص في سوقك','data-v="gap"']);
  if(ME.role!=='admin'&&ME.active){const left=Math.ceil((ME.expires_at-Date.now())/864e5);if(left<=5)A.push(['warn','⏰','اشتراكك ينتهي خلال '+left+' يوم: جدّده الآن','data-v="sub"'])}
  if(bl&&bl.limits){const hot=Object.keys(bl.labels).filter(k=>{const mx=bl.limits[k],u=({searchesPerDay:bl.usage.searchesToday,gapProducts:bl.usage.gapProducts,watchPages:bl.usage.watchPages,aiPerMonth:bl.usage.aiMonth})[k]||0;return Number.isFinite(mx)&&mx>0&&mx<1e9&&u/mx>=.8});if(hot.length)A.push(['warn','⚠️','اقتربت من حد عرضك: '+hot.map(k=>bl.labels[k]).join('، '),'data-v="sub"'])}
- if(!ME.totp_on)A.push(['info','🔐','احمِ حسابك: فعّل التحقق بخطوتين','data-v="sec"']);
  let seen=0;try{seen=+localStorage.getItem('wpr_sup_seen')||0}catch(x){}
  const nr=(mine||[]).filter(m=>m.reply&&m.replied_at>seen).length;if(nr)A.push(['ok','💬','ردّ فريق الدعم على طلبك','data-v="help"']);
  return A}

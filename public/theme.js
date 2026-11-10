@@ -51,11 +51,11 @@
     var st = D.createElement('style'); st.textContent = css; D.head.appendChild(st);
     var l = LG(), t = TX[l], d = D.createElement('div'); d.className = 'wpr-dock'; d.setAttribute('translate', 'no');
     d.innerHTML = '<a id="wa" class="wd-b wd-wa" hidden target="_blank" rel="noopener" aria-label="WhatsApp" title="' + t.wa + '">' + WA + '</a>' +
-      '<div class="wd-l"><button type="button" class="wd-b wd-lang" aria-haspopup="menu" aria-expanded="false" title="' + t.lg + '">' + GLOBE + '<span>' + SHORT[l] + '</span></button>' +
-      '<div class="wd-m" role="menu" hidden>' + NAMES.map(function (n) { return '<button type="button" role="menuitemradio" data-lang="' + n[0] + '" class="' + (n[0] === l ? 'on' : '') + '" lang="' + n[0] + '">' + n[1] + (n[0] === l ? ' <span>✓</span>' : '') + '</button>'; }).join('') + '</div></div>' +
+      (me.hasAttribute('data-nolang') ? '' : '<div class="wd-l"><button type="button" class="wd-b wd-lang" aria-haspopup="menu" aria-expanded="false" title="' + t.lg + '">' + GLOBE + '<span>' + SHORT[l] + '</span></button>' +
+      '<div class="wd-m" role="menu" hidden>' + NAMES.map(function (n) { return '<button type="button" role="menuitemradio" data-lang="' + n[0] + '" class="' + (n[0] === l ? 'on' : '') + '" lang="' + n[0] + '">' + n[1] + (n[0] === l ? ' <span>✓</span>' : '') + '</button>'; }).join('') + '</div></div>') +
       '<button type="button" class="wd-b wd-th" aria-label="' + t.th + '" title="' + t.th + '">' + (isDark() ? SUN : MOON) + '</button>';
     D.body.appendChild(d);
-    var menu = d.querySelector('.wd-m'), lb = d.querySelector('.wd-lang');
+    var menu = d.querySelector('.wd-m') || D.createElement('div'), lb = d.querySelector('.wd-lang') || D.createElement('button');
     d.addEventListener('click', function (ev) {
       if (ev.target.closest('.wd-th')) return W.WPRTHEME.toggle();
       if (ev.target.closest('.wd-lang')) { menu.hidden = !menu.hidden; lb.setAttribute('aria-expanded', String(!menu.hidden)); return; }

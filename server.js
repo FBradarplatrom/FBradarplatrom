@@ -306,7 +306,10 @@ app.delete('/api/me', auth, wrap((q, s) => {
 const fgot = new Map();
 const transport = () => { if (!process.env.SMTP_HOST) return null; const nm = require('nodemailer'), p = +process.env.SMTP_PORT || 465;
   return process.env.SMTP_HOST === 'json' ? nm.createTransport({ jsonTransport: true })
-    : nm.createTransport({ host: process.env.SMTP_HOST, port: p, secure: p === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } }); };
+    : nm.createTransport({ host: process.env.SMTP_HOST, port: p, secure: p === 465, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      // استضافة مشتركة: شهادة خادم البريد قد تحمل اسم الخادم لا اسم الدومين. SMTP_TLS_SERVERNAME يحدد الاسم الصحيح، و SMTP_TLS_INSECURE=1 حل أخير
+      tls: Object.assign({}, process.env.SMTP_TLS_SERVERNAME ? { servername: process.env.SMTP_TLS_SERVERNAME } : {}, process.env.SMTP_TLS_INSECURE === '1' ? { rejectUnauthorized: false } : {}), connectionTimeout: 15000 }); };
+const MAIL_FROM = () => process.env.SMTP_FROM || process.env.MAIL_FROM || process.env.SMTP_USER;   // MAIL_FROM أو SMTP_FROM
 const RESET_MAIL = {
   ar: { subject: 'استعادة كلمة المرور | رادار المنتجات الرابحة', hi: 'وصلنا طلب لاستعادة كلمة المرور لحسابك.', btn: 'تعيين كلمة مرور جديدة', note: 'الرابط صالح لمدة ساعة واحدة. إن لم تطلبه فتجاهل هذه الرسالة.' },
   en: { subject: 'Reset your password | Winning Product Radar', hi: 'We received a request to reset the password of your account.', btn: 'Set a new password', note: 'This link is valid for one hour. If you didn’t request it, just ignore this email.' },
@@ -323,9 +326,9 @@ app.post('/api/forgot', async (q, s, n) => { try {
     db.prepare('insert into resets(h,user_id,exp) values(?,?,?)').run(sha(t), u.id, now() + 36e5);
     // الرسالة بلغة صفحة الدخول التي طُلبت منها (العربية / English / Français)
     const lg = ['en', 'fr'].includes(q.body.lang) ? q.body.lang : 'ar', M = RESET_MAIL[lg];
-    tr.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: u.email, subject: M.subject,
-      html: `<div dir="${lg === 'ar' ? 'rtl' : 'ltr'}" style="font-family:Tahoma,Arial,sans-serif;line-height:1.9"><p>${M.hi}</p><p><a href="${url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">${M.btn}</a></p><p>${M.note}</p><p style="color:#64748b;font-size:13px">${url}</p></div>` })
-      .then(i => { if (process.env.SMTP_HOST === 'json') console.log('MAIL', i.message); }).catch(e => console.error('mail error', e.message));
+    tr.sendMail({ from: MAIL_FROM(), to: u.email, subject: M.subject,
+      html: `<div dir="${lg === 'ar' ? 'rtl' : 'ltr'}" style="font-family:Tahoma,Arial,sans-serif;line-height:1.9"><p>${M.hi}</p><p><a href="${url}" style="background:#118553;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">${M.btn}</a></p><p>${M.note}</p><p style="color:#5d6661;font-size:13px">${url}</p></div>` })
+      .then(i => { if (process.env.SMTP_HOST === 'json') console.log('MAIL', i.message); }).catch(e => { console.error('mail error', e.message); BX.logError && BX.logError(Object.assign(new Error('استعادة كلمة المرور: تعذّر إرسال البريد: ' + e.message), { status: 500 }), q); });
   }
   s.json({ ok: 1 });   // نفس الرد دائماً، فلا يُكشف وجود الحساب
 } catch (e) { n(e); } });
@@ -379,6 +382,12 @@ require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يو�
 require('./adlib/support.js')(app, BX);  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
 // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
+// المدير: بريد تجريبي لفحص إعدادات SMTP (يُظهر سبب الفشل بالضبط)
+app.post('/api/admin/mail-test', auth, admin, async (q, s) => {
+  const tr = transport(); if (!tr) return s.status(400).json({ error: 'البريد غير مضبوط: أضف SMTP_HOST و SMTP_USER و SMTP_PASS في ملف .env ثم أعد تشغيل المنصة' });
+  try { await tr.verify(); await tr.sendMail({ from: MAIL_FROM(), to: q.u.email, subject: 'بريد تجريبي | رادار المنتجات الرابحة', text: 'وصل البريد التجريبي: إعدادات البريد تعمل.' }); s.json({ ok: 1, to: q.u.email, from: MAIL_FROM() }); }
+  catch (e) { const m = String(e.message || e); s.status(400).json({ error: 'فشل الإرسال: ' + m + (/altnames|certificate|self.signed/i.test(m) ? ' — اضبط SMTP_TLS_SERVERNAME باسم خادم البريد (من cPanel ← Email Accounts ← Connect Devices) أو SMTP_TLS_INSECURE=1' : /auth|535|credentials/i.test(m) ? ' — تحقق من SMTP_USER و SMTP_PASS' : /ECONNREFUSED|ETIMEDOUT|ENOTFOUND/i.test(m) ? ' — تحقق من SMTP_HOST و SMTP_PORT (465 أو 587)' : '') }); }
+});
 // ---------- الصفحات ----------
 const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
   .replace(/\{\{CONTACT\}\}/g, process.env.CONTACT_URL || 'mailto:' + (process.env.ADMIN_EMAIL || ''));

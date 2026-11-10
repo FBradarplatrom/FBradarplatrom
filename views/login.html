@@ -293,7 +293,7 @@ run($('f-register'),async()=>{const nm=$('r-name').value.trim(),un=$('r-un').val
  if(pw!==$('r-pw2').value)throw new Error('كلمتا المرور غير متطابقتين.');
  await post('register',{name:nm,username:un,email:em,password:pw});try{window.fbq&&fbq('track','CompleteRegistration');window.gtag&&gtag('event','sign_up')}catch(x){}setTimeout(()=>location.href='/',window.fbq||window.gtag?400:0)});
 run($('f-forgot'),async()=>{const id=$('f-id').value.trim();if(!id)throw new Error('أدخل بريدك أو اسم المستخدم.');
- const j=await post('forgot',{email:id,lang:L});$('ttl').textContent=tr(j.manual?'استعادة عبر الإدارة':'تحقق من بريدك');$('lead').hidden=true;document.querySelectorAll('form').forEach(f=>f.hidden=true);$('back').hidden=false;
+ const j=await post('forgot',{email:id,lang:window.__L||'ar'});$('ttl').textContent=tr(j.manual?'استعادة عبر الإدارة':'تحقق من بريدك');$('lead').hidden=true;document.querySelectorAll('form').forEach(f=>f.hidden=true);$('back').hidden=false;
  const ct=/^(https?:|mailto:)/i.test(j.contact||'')?j.contact:'';
  $('done').hidden=false;$('done').innerHTML=j.manual
   ?'<div class="ic">💬</div><b>الاستعادة التلقائية غير مفعّلة</b><p>تواصل مع الإدارة وأخبرهم ببريد حسابك، وسيرسلون لك رابطاً لتعيين كلمة مرور جديدة صالحاً لمدة ساعة.</p>'+(ct?'<a class="btn" href="'+esc(ct)+'" target="_blank" rel="noopener">تواصل مع الإدارة</a>':'')

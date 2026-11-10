@@ -27,8 +27,8 @@ async function tgSend(chat, text) {
 }
 async function mailSend(to, subject, text, link) {
   const tr = mailer && mailer(); if (!tr) throw new Error('البريد غير مضبوط في الخادم');
-  const i = await tr.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to, subject: subject + ' | ' + appName,
-    html: `<div dir="rtl" style="font-family:Tahoma,sans-serif;line-height:1.9;font-size:15px"><p>${esc(text).replace(/\n/g, '<br>')}</p>${link ? `<p><a href="${esc(link)}" style="background:#4f46e5;color:#fff;padding:9px 18px;border-radius:8px;text-decoration:none">افتح في المنصة</a></p>` : ''}<p style="color:#888;font-size:12px">يمكنك إيقاف هذه التنبيهات من «الربط والتكامل».</p></div>` });
+  const i = await tr.sendMail({ from: process.env.SMTP_FROM || process.env.MAIL_FROM || process.env.SMTP_USER, to, subject: subject + ' | ' + appName,
+    html: `<div dir="rtl" style="font-family:Tahoma,sans-serif;line-height:1.9;font-size:15px"><p>${esc(text).replace(/\n/g, '<br>')}</p>${link ? `<p><a href="${esc(link)}" style="background:#118553;color:#fff;padding:9px 18px;border-radius:8px;text-decoration:none">افتح في المنصة</a></p>` : ''}<p style="color:#888;font-size:12px">يمكنك إيقاف هذه التنبيهات من «الربط والتكامل».</p></div>` });
   if (process.env.SMTP_HOST === 'json') console.log('MAIL', i.message);
 }
 function log(uid, ev, text, via, ok) {

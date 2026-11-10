@@ -65,6 +65,12 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       for (let i = 0; i < 20 && !/MAIL/.test(out); i++) await new Promise(r => setTimeout(r, 100));
       ok(re.test(out), 'رسالة الاستعادة بلغة ' + lg);
     }
+    // نموذج «نسيت كلمة المرور» من الصفحة نفسها (كان يُظهر L is not defined)
+    const fp = await b.newPage({ locale: 'fr-FR' }), ferr = []; fp.on('pageerror', e => ferr.push(e.message)); out = '';
+    await fp.goto(BASE + '/forgot?lang=fr'); await fp.fill('#f-id', 'u@t.dz'); await fp.click('#f-forgot button[type=submit]');
+    await fp.waitForFunction(() => /Vérifiez|e-mail/i.test(document.getElementById('ttl').textContent)); for (let i = 0; i < 20 && !/MAIL/.test(out); i++) await new Promise(r => setTimeout(r, 100));
+    ok(!ferr.length && !/is not defined/.test(await fp.innerText('#msg')) && /R=C3=A9initialisation|Réinitialisation/.test(out), 'نموذج «نسيت كلمة المرور» يعمل ويرسل البريد بلغة الصفحة');
+    const mt = await (await a.post(BASE + '/api/admin/mail-test', { data: {} })).json(); ok(mt.ok === 1 && mt.to === 'a@t.dz', 'زر «إرسال بريد تجريبي» للمدير');
     console.log(`PASS ${pass} pay/gap/mail checks`);
   } catch (e) { console.error('FAIL', e.message); process.exitCode = 1; }
   finally { await b.close(); srv.kill(); }

@@ -1883,4 +1883,12 @@ window.I18N_DICT=[["⏹️ توقف بعد نجاح","⏹️ Stopped after succe
 ["انتهت المهلة، سجّل الدخول من جديد","Timed out, please log in again","Délai expiré, reconnectez-vous"],
 ["الرمز غير صحيح","The code is incorrect","Code incorrect"],
 ["التحقق بخطوتين مفعّل مسبقاً","Two-step verification is already on","La vérification en deux étapes est déjà activée"],
-["الرمز غير صحيح. تأكد من وقت هاتفك ثم أعد المحاولة.","The code is incorrect. Check your phone’s time and try again.","Code incorrect. Vérifiez l’heure de votre téléphone et réessayez."]];
+["الرمز غير صحيح. تأكد من وقت هاتفك ثم أعد المحاولة.","The code is incorrect. Check your phone’s time and try again.","Code incorrect. Vérifiez l’heure de votre téléphone et réessayez."],
+["البريد (SMTP)","Email (SMTP)","E-mail (SMTP)"],
+["يرسل رسائل استعادة كلمة المرور والتنبيهات بالبريد. يُضبط في ملف","Sends password-reset emails and email alerts. Configured in the","Envoie les e-mails de réinitialisation et les alertes. Se configure dans le fichier"],
+["على الخادم: SMTP_HOST، SMTP_PORT، SMTP_USER، SMTP_PASS، MAIL_FROM.","file on the server: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM.","sur le serveur : SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM."],
+["إرسال بريد تجريبي إلى بريدك","Send a test email to yourself","Envoyer un e-mail de test à votre adresse"],
+["✅ أُرسل إلى {} من {}. افحص صندوق الوارد (والرسائل غير المرغوبة).","✅ Sent to {} from {}. Check your inbox (and spam).","✅ Envoyé à {} depuis {}. Vérifiez votre boîte de réception (et les spams)."],
+["استعادة كلمة المرور: تعذّر إرسال البريد:","Password reset: could not send the email:","Réinitialisation : impossible d’envoyer l’e-mail :"],
+["البريد غير مضبوط: أضف SMTP_HOST و SMTP_USER و SMTP_PASS في ملف .env ثم أعد تشغيل المنصة","Email isn’t configured: add SMTP_HOST, SMTP_USER and SMTP_PASS to the .env file, then restart the platform","E-mail non configuré : ajoutez SMTP_HOST, SMTP_USER et SMTP_PASS dans le fichier .env puis redémarrez la plateforme"],
+["فشل الإرسال:","Sending failed:","Échec de l’envoi :"]];
