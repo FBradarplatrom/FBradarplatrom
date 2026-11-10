@@ -18,7 +18,7 @@ const open = f => { try { return new (require('better-sqlite3'))(f, { readonly: 
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
     // دليل البداية
     await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
-    ok(/0 من 5/.test(await pg.locator('.onb h2').innerText()) && (await pg.$$('.onb .onr')).length === 5, 'دليل البداية: 5 خطوات، لا شيء منجز');
+    ok(/0 من 5/.test(await pg.locator('.onb h2').innerText()) && /دليل البداية/.test(await pg.locator('.onb .ontag').innerText()) && (await pg.$$('.onb .onr')).length === 5, 'دليل البداية: 5 خطوات، لا شيء منجز');
     await pg.request.put(BASE + '/api/saved', { data: { k: 'k1', snap: { name: 'منتج', cat: 'gem' } } });
     await pg.request.put(BASE + '/api/notify', { data: { email: true } });
     await pg.reload(); await pg.waitForSelector('.onb');
@@ -36,6 +36,28 @@ const open = f => { try { return new (require('better-sqlite3'))(f, { readonly: 
     ok(lh.includes('gtag/js?id=G-AB12CD34EF') && lh.includes("fbq('init','123456789012')") && th.includes('G-AB12CD34EF'), 'أدوات القياس في الصفحات العامة');
     const hj = await (await fetch(BASE + '/api/health')).json();
     ok(hj.ok === true && !!hj.version && !JSON.stringify(hj).includes('@'), 'فحص صحة الخادم /api/health');
+    // نموذج «اتصل بنا» ورسائل المدير
+    ok((await fetch(BASE + '/api/contact', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'bad', message: 'hello there friend' }) })).status === 400, 'اتصل بنا: بريد خاطئ يُرفض');
+    ok((await fetch(BASE + '/api/contact', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'bot@x.io', message: 'spam spam spam', website: 'x' }) })).ok, 'فخ الروبوتات: يُقبل ظاهرياً ولا يُحفظ');
+    const vis = await b.newPage(); await vis.goto(BASE + '/contact?lang=en'); await vis.waitForSelector('#cform');
+    ok(await vis.isVisible('#wa') && /wa\.me\/213555123456/.test(await vis.getAttribute('#wa', 'href')), 'زر واتساب عائم في الصفحات العامة');
+    await vis.fill('#cform [name=name]', 'Karim'); await vis.fill('#cform [name=email]', 'visitor@mail.com'); await vis.fill('#cform [name=subject]', 'Question about plans'); await vis.fill('#cform [name=message]', 'Do you support the Moroccan market?');
+    await vis.click('#cform button'); await vis.waitForSelector('#cmsg.ok');
+    await pg.goto(BASE + '/help'); await pg.waitForSelector('#hf-m'); await pg.fill('#hf-s', 'مشكلة في الجمع'); await pg.fill('#hf-m', 'الإضافة لا تتصل بالمنصة عندي'); await pg.click('[data-a="hsend"]'); await pg.waitForTimeout(500);
+    const M = await (await A.request.get(BASE + '/api/admin/messages')).json();
+    ok(M.list.length === 2 && M.unread === 2 && M.list.some(m => m.email === 'visitor@mail.com' && !m.user_id) && M.list.some(m => m.email === 'u@t.dz' && m.user_id && m.subject === 'مشكلة في الجمع'), 'الرسائل تصل للمدير (زائر + مشترك ببريد حسابه)');
+    await A.request.post(BASE + '/api/admin/messages/' + M.list[0].id + '/done', { data: {} });
+    ok((await (await A.request.get(BASE + '/api/admin/messages')).json()).unread === 1, 'تعليم رسالة كمعالجة');
+    ok((await pg.request.get(BASE + '/api/admin/messages')).status() === 403, 'المشترك لا يرى الرسائل');
+    // تعديل الصفحات القانونية
+    ok((await A.request.put(BASE + '/api/admin/legal', { data: { lang: 'en', doc: 'terms', body: 'no title' } })).status() === 400, 'النص بلا عنوان # يُرفض');
+    ok((await A.request.put(BASE + '/api/admin/legal', { data: { lang: 'en', doc: 'terms', body: '# My Terms\n\n## Rule one\nBe nice to {name}.\nSecond line.' } })).ok, 'حفظ نص معدّل');
+    ok((await pg.request.put(BASE + '/api/admin/legal', { data: { lang: 'en', doc: 'terms', body: '# x' } })).status() === 403, 'المشترك لا يعدّل الصفحات');
+    await vis.goto(BASE + '/terms?lang=en'); await vis.waitForFunction(() => document.querySelector('#doc h1').textContent === 'My Terms');
+    ok((await vis.innerText('#doc')).includes('Rule one') && (await vis.innerHTML('#doc')).includes('Second line') && !(await vis.innerText('#doc')).includes('Acceptable use'), 'الصفحة تعرض النص المعدّل');
+    await A.request.put(BASE + '/api/admin/legal', { data: { lang: 'en', doc: 'terms', body: '' } });
+    await vis.reload(); await vis.waitForTimeout(500); ok((await vis.innerText('#doc h1')) === 'Terms of Service', 'استرجاع النص الأصلي');
+    await vis.close();
     // تصدير البيانات
     const ex = await pg.request.get(BASE + '/api/me/export'), J = await ex.json();
     ok(/attachment; filename="radar-my-data.json"/.test(ex.headers()['content-disposition']) && J.account.email === 'u@t.dz' && J.saved_products.length === 1 && J.settings.notify && Array.isArray(J.login_activity), 'تصدير البيانات: ملف JSON بالحساب والمحفوظات والإعدادات والنشاط');

@@ -82,7 +82,9 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
 
   /* ================= لوحة المدير ================= */
   let ATAB = 'users';
-  const TABS = [['users', '👥 المشتركون'], ['stats', '📊 الإحصائيات'], ['pay', '💳 المدفوعات'], ['plans', '📦 الباقات'], ['err', '⚠️ الأخطاء'], ['backup', '💾 النسخ الاحتياطي']];
+  const TABS = [['users', '👥 المشتركون'], ['stats', '📊 الإحصائيات'], ['pay', '💳 المدفوعات'], ['plans', '📦 الباقات'], ['msgs', '✉️ الرسائل'], ['legal', '📄 الصفحات القانونية'], ['err', '⚠️ الأخطاء'], ['backup', '💾 النسخ الاحتياطي']];
+  let LG = { lang: 'ar', doc: 'terms' };
+  const loadLegal = () => W.LEGAL_D ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/legal-texts.js'; s.onload = ok; s.onerror = () => no(new Error('تعذّر تحميل النصوص')); document.head.appendChild(s); });
   function adminTabs() {
     const v = $('#v-admin'); if (!v) return;
     let bar = $('#adm-tabs'); if (!bar) { bar = document.createElement('div'); bar.id = 'adm-tabs'; bar.className = 'adm-t'; v.querySelector('.ph').after(bar); const box = document.createElement('div'); box.id = 'x-adm'; v.appendChild(box); }
@@ -119,6 +121,22 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
 <div class="tbw"><table class="tb" id="pl-t"><tr><th>الاسم</th><th>الأيام</th><th>السعر (دج)</th><th>السعر ($)</th><th>مجانية للتجربة</th>${r.keys.map(k => `<th>${e(r.labels[k])}</th>`).join('')}<th>المميزات المشمولة</th><th>مفعّلة</th><th>ملاحظة</th></tr>${r.plans.map(row).join('')}${row({})}</table></div>
 <p style="margin:10px 0 0"><button class="btn" data-adm="saveplans">حفظ الباقات</button></p></div>`;
     }
+    if (ATAB === 'msgs') {
+      const r = await X.api('GET', '/admin/messages');
+      el.innerHTML = `<div class="card"><h2>✉️ رسائل «اتصل بنا»</h2><p class="sub">تصلك هنا رسائل الزوار (من صفحة <a href="/contact" target="_blank">اتصل بنا</a>) والمشتركين (من «المساعدة والدعم»)، ويصلك تنبيه بالبريد/تيليغرام عند كل رسالة إن فعّلت التنبيهات. اضغط «رد بالبريد» لتجيب من بريدك.</p>
+${r.list.map(m => `<div class="row" style="align-items:flex-start;${m.status === 'new' ? 'border-inline-start:3px solid var(--brand);padding-inline-start:10px' : 'opacity:.75'}"><div class="grow"><b>${m.status === 'new' ? '🆕 ' : ''}${e(m.subject)}</b><div class="muted">${X.fd(m.created_at)} ${new Date(m.created_at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })} · ${e(m.name || '')} &lt;${e(m.email)}&gt; · ${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر'}</div><p style="white-space:pre-wrap;margin:6px 0 0">${e(m.body)}</p></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;flex:none"><a class="btn sm" href="mailto:${e(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}">رد بالبريد</a>${m.status === 'new' ? `<button class="btn ghost sm" data-adm="mdone" data-id="${m.id}">✓ تمت المعالجة</button>` : `<button class="btn ghost sm" data-adm="mnew" data-id="${m.id}">إرجاع كجديدة</button>`}<button class="btn danger sm" data-adm="mdel" data-id="${m.id}">حذف</button></div></div>`).join('') || '<p class="sub">لا رسائل بعد.</p>'}</div>`;
+    }
+    if (ATAB === 'legal') {
+      const [r] = await Promise.all([X.api('GET', '/admin/legal'), loadLegal()]), k = LG.lang + ':' + LG.doc, cu = r.docs[k], T = { terms: 'شروط الاستخدام', privacy: 'سياسة الخصوصية', refund: 'الاسترداد والإلغاء', contact: 'اتصل بنا' };
+      el.innerHTML = `<div class="card"><h2>📄 تعديل الصفحات القانونية</h2><p class="sub">اختر الصفحة واللغة، عدّل النص ثم احفظ. السطر الذي يبدأ بـ <code>#</code> هو عنوان الصفحة، والذي يبدأ بـ <code>##</code> عنوان فقرة، وما تحته نصها. هذه الكلمات تُستبدل تلقائياً: <code>{name}</code> اسم النشاط، <code>{email}</code> بريد الدعم، <code>{wa_line}</code> واتساب، <code>{country}</code> البلد، <code>{days}</code> مدة الاسترداد، <code>{address_line}</code> العنوان (من «الربط والتكامل ← معلومات النشاط والدعم»). ننصح بمراجعتها مع مختص قانوني.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0"><select id="lg-doc" style="width:auto">${Object.keys(T).map(d => `<option value="${d}"${d === LG.doc ? ' selected' : ''}>${T[d]}</option>`).join('')}</select><select id="lg-lang" style="width:auto">${[['ar', 'العربية'], ['en', 'English'], ['fr', 'Français']].map(([l, n]) => `<option value="${l}"${l === LG.lang ? ' selected' : ''}>${n}</option>`).join('')}</select>
+<span class="pill ${cu ? 'warn' : 'ok'}">${cu ? 'نص معدّل' : 'النص الأصلي'}</span><a class="btn ghost sm" href="/${LG.doc}?lang=${LG.lang}" target="_blank">معاينة الصفحة ↗</a></div>
+<textarea id="lg-body" rows="22" dir="${LG.lang === 'ar' ? 'rtl' : 'ltr'}" style="width:100%;font:inherit;font-size:14px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink)">${e(cu || W.LEGAL_TEXT(W.LEGAL_D[LG.lang][LG.doc]))}</textarea>
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0"><button class="btn" data-adm="lgsave">حفظ الصفحة</button>${cu ? '<button class="btn ghost" data-adm="lgreset">استرجاع النص الأصلي</button>' : ''}</p></div>`;
+      const ch = () => { LG = { doc: $('#lg-doc').value, lang: $('#lg-lang').value }; drawAdmin(); };
+      $('#lg-doc').onchange = ch; $('#lg-lang').onchange = ch;
+    }
     if (ATAB === 'backup') {
       const r = await X.api('GET', '/admin/backups'), kb = n => num(Math.round(n / 1024)) + ' KB';
       el.innerHTML = `<div class="card"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">💾 النسخ الاحتياطي لقاعدة البيانات</h2><button class="btn sm" data-adm="bknow">إنشاء نسخة الآن</button></div>
@@ -138,6 +156,9 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
     if (TABS.some(t => t[0] === a)) { ATAB = a; return adminTabs(); }
     if (a === 'approve') { await X.api('POST', '/admin/payments/' + b.dataset.id + '/approve', {}); X.toast('قُبل الدفع وفُعّل الاشتراك'); return drawAdmin(); }
     if (a === 'reject') { const note = prompt('سبب الرفض (يظهر للمشترك):') || ''; await X.api('POST', '/admin/payments/' + b.dataset.id + '/reject', { note }); return drawAdmin(); }
+    if (a === 'mdone' || a === 'mnew' || a === 'mdel') { if (a === 'mdel' && !confirm('حذف الرسالة؟')) return; await X.api('POST', '/admin/messages/' + b.dataset.id + '/' + ({ mdone: 'done', mnew: 'new', mdel: 'delete' })[a], {}); return drawAdmin(); }
+    if (a === 'lgsave') { await X.api('PUT', '/admin/legal', Object.assign({ body: $('#lg-body').value }, LG)); X.toast('حُفظت الصفحة، وتظهر الآن للزوار'); return drawAdmin(); }
+    if (a === 'lgreset') { if (!confirm('استرجاع النص الأصلي لهذه الصفحة؟ سيُحذف تعديلك.')) return; await X.api('PUT', '/admin/legal', Object.assign({ body: '' }, LG)); X.toast('عاد النص الأصلي'); return drawAdmin(); }
     if (a === 'clearerr') { await X.api('DELETE', '/admin/errors'); return drawAdmin(); }
     if (a === 'bknow') { await X.api('POST', '/admin/backups', {}); X.toast('أُنشئت نسخة احتياطية'); return drawAdmin(); }
     if (a === 'fdel') { b.closest('tr').remove(); return; }

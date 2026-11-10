@@ -12,7 +12,9 @@ function init(d, e, x) {
   db.exec('create table if not exists settings(k text primary key, v text)');
 }
 const load = () => { if (!cache) { cache = new Map(); if (db) for (const r of db.prepare('select k,v from settings').all()) cache.set(r.k, SECRET.has(r.k) && dec ? dec(r.v) || '' : r.v); } return cache; };
-function get(k) { const v = load().get(k); if (v) return v; const e = ENV[k]; return e && process.env[e] ? process.env[e] : ''; }
+// قيم افتراضية للمنصة (تُغيَّر من «الربط والتكامل»)
+const DEF = { support_whatsapp: '+213664442637', app_url: 'https://winningproductradar.com', legal_updated: '2026-11-10' };
+function get(k) { const v = load().get(k); if (v) return v; const e = ENV[k]; return e && process.env[e] ? process.env[e] : (DEF[k] || ''); }
 function set(k, v) {
   if (!db) throw new Error('config');
   v = String(v == null ? '' : v).trim();

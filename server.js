@@ -232,7 +232,7 @@ app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
   db.prepare('update users set email=?, role=? where id=?').run(em, role, id); act(q.u.id, 'admin_update', q, '#' + id + ' ' + em + ' ' + role); s.json({ ok: 1 });
 }));
 // حذف حساب وكل بياناته (يُستعمل من المدير ومن المشترك نفسه). سجلات الدفع تبقى لأن القانون قد يفرض الاحتفاظ بها
-const USER_TABLES = ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log', 'lib_bstats', 'lib_bfilt', 'activity'];
+const USER_TABLES = ['runs', 'saved', 'resets', 'lib_user', 'lib_usage', 'lib_batch', 'gap_products', 'gap_scans', 'gap_matches', 'user_kv', 'sup_results', 'ai_cache', 'watch_pages', 'tt_runs', 'lib_excluded', 'ad_track', 'ai_usage', 'notify_log', 'lib_bstats', 'lib_bfilt', 'activity', 'contact_msgs'];
 function deleteUser(id) {
   USER_TABLES.forEach(t => { try { db.prepare(`delete from ${t} where user_id=?`).run(id); } catch (e) {} });
   db.prepare('delete from lib_rows where run_id not in (select id from runs)').run();
@@ -325,10 +325,12 @@ const imgData = async u => { if (!/^https?:\/\//.test(u || '')) return ''; const
   if (fs.existsSync(f + '.bin')) { buf = fs.readFileSync(f + '.bin'); type = fs.readFileSync(f + '.type', 'utf8'); } else { const r = await fetchImg(u); buf = r.buf; type = r.type; }
   return buf.length > 3.5e6 ? '' : 'data:' + type + ';base64,' + buf.toString('base64'); };
 require('./adlib/tools.js')(app, { db, auth, active, wrap, now, imgData });
-const BX = { db, auth, active, admin, wrap, now, act, DATA_DIR: path.dirname(path.resolve(DBF)) };
+const optUser = q => { try { const t = jwt.verify(q.cookies.t, SECRET), u = db.prepare('select id, email, name, tv from users where id=?').get(t.id); return u && (t.v || 0) === (u.tv || 0) ? u : null; } catch (e) { return null; } };
+const BX = { db, auth, active, admin, wrap, now, act, blocked, fail, optUser, DATA_DIR: path.dirname(path.resolve(DBF)) };
 Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport() }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
 require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
 require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يومية لقاعدة البيانات
+require('./adlib/support.js')(app, BX);  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
 // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
 // ---------- الصفحات ----------
@@ -359,7 +361,7 @@ const BOOT = Date.now();
 app.get('/api/health', (q, s) => { let okDb = false; try { okDb = db.prepare('select 1 x').get().x === 1; } catch (e) {}
   s.set('Cache-Control', 'no-store').status(okDb ? 200 : 503).json({ ok: okDb, version: require('./package.json').version, build: VER, uptime: Math.round((Date.now() - BOOT) / 1000) }); });
 app.get('/api/legal/info', (q, s) => { const C = require('./adlib/config.js');
-  s.json({ name: C.get('biz_name'), country: C.get('biz_country'), address: C.get('biz_address'), email: C.get('support_email') || process.env.ADMIN_EMAIL || '', whatsapp: C.get('support_whatsapp'), refund_days: +C.get('refund_days') || 7, updated: C.get('legal_updated') || '' }); });
+  s.json({ name: C.get('biz_name'), country: C.get('biz_country'), address: C.get('biz_address'), email: C.get('support_email') || process.env.ADMIN_EMAIL || '', whatsapp: C.get('support_whatsapp'), refund_days: +C.get('refund_days') || 7, updated: C.get('legal_updated') || '', docs: BX.legalDocs ? BX.legalDocs() : {} }); });
 app.get(['/login', '/register', '/forgot', '/reset'], (q, s) => (q.path !== '/reset' && signedIn(q)) ? s.redirect('/') : s.set('Cache-Control', 'no-cache').type('html').send(pub(LOGIN_HTML)));
 // الأداء: روابط الملفات تحمل رقم نسختها (?v=…) فيحفظها المتصفح سنة كاملة ولا يسأل الخادم عنها في كل زيارة.
 // يتغير الرقم تلقائياً متى تغيّر أي ملف (بعد إعادة تشغيل الخادم عند النشر).
