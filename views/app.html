@@ -764,7 +764,7 @@ const api=async(m,u,b)=>{if(m!=='GET')AC.clear();else if(ACOK.test(u)){const c=A
  const j=await api0(m,u,b);if(m==='GET'&&ACOK.test(u))AC.set(u,{t:Date.now(),v:structuredClone(j)});return j};
 const api0=async(m,u,b)=>{W.__act(1);let r;try{r=await fetch('/api'+u,{method:m,headers:b?{'content-type':'application/json'}:{},body:b?JSON.stringify(b):void 0})}finally{W.__act(-1)}
  if(r.status===401){location.href='/login?next='+encodeURIComponent(location.pathname);throw new Error('auth')}
- const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||('خطأ '+r.status)),{status:r.status});return j};
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||('خطأ '+r.status)),{status:r.status,data:j});return j};
 const csv=rows=>'\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""').replace(/[\r\n]+/g,' ')+'"').join(',')).join('\r\n');
 W.__dl=(n,t)=>{const b=new Blob([t],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600)};
 const guard=f=>(...a)=>W.__btnBusy(a[0],f(...a)).catch(x=>{if(x.message!=='auth')toast(x.message||'حدث خطأ','err')});

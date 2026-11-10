@@ -24,6 +24,8 @@ create table if not exists watch_ads(watch_id integer, ad_id text, row text, fir
 create table if not exists watch_scans(id integer primary key, watch_id integer, user_id integer, started_at integer, finished_at integer, seen text, new_count integer default 0);
 create table if not exists tt_runs(id integer primary key, user_id integer, label text, phrases text, created_at integer, count integer default 0);
 create table if not exists tt_items(run_id integer, vid text, q text, row text, primary key(run_id, vid));`);
+  // سجل كل فحص: الإعلانات التي ظهرت لأول مرة فيه، والتي توقفت، وأرقامه (لعرض الفحص الأول والذي بعده بوضوح)
+  ['added text', 'gone text', 'stats text'].forEach(c => { try { db.exec('alter table watch_scans add column ' + c); } catch (e) {} });
   const kvGet = (u, k, d) => { const r = db.prepare('select v from user_kv where user_id=? and k=?').get(u, k); return r ? J(r.v, d) : d; };
   const kvSet = (u, k, v) => db.prepare('insert into user_kv(user_id,k,v) values(?,?,?) on conflict(user_id,k) do update set v=excluded.v').run(u, k, JSON.stringify(v));
 
@@ -135,27 +137,37 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
   }));
   app.delete('/api/watch/:id', auth, active, wrap((q, s) => { const w = wOwn(q.u.id, q.params.id); ['watch_ads', 'watch_scans'].forEach(t => db.prepare(`delete from ${t} where watch_id=?`).run(w.id)); db.prepare('delete from watch_pages where id=?').run(w.id); s.json({ ok: 1 }); }));
   app.get('/api/watch/:id', auth, active, wrap((q, s) => {
-    const w = wOwn(q.u.id, q.params.id), scans = db.prepare('select started_at from watch_scans where watch_id=? and finished_at is not null order by id desc limit 2').all(w.id);
-    // «جديد» = ظهر أول مرة في آخر فحص، بشرط وجود فحص قبله (الفحص الأول يملأ القائمة فقط)
-    const since = scans.length > 1 ? scans[0].started_at : Infinity;
+    const w = wOwn(q.u.id, q.params.id);
+    // سجل الفحوص المكتملة (الأقدم أولاً): رقم الفحص، تاريخه، ما ظهر فيه لأول مرة وما توقف
+    const sc = db.prepare('select id,started_at,finished_at,new_count,added,gone,stats,seen from watch_scans where watch_id=? and finished_at is not null order by id').all(w.id);
+    const firstIn = new Map(), goneIn = new Map();
+    const scans = sc.map((x, i) => {
+      const st = J(x.stats, null), add = J(x.added, null), gn = J(x.gone, []), n = i + 1;
+      (add || []).forEach(id => { if (!firstIn.has(id)) firstIn.set(id, n); }); gn.forEach(id => goneIn.set(id, n));
+      return { n, id: x.id, at: x.finished_at, started: x.started_at, first: i === 0, scanned: st ? st.scanned : J(x.seen, []).length, new: i === 0 ? 0 : (st ? st.new : x.new_count), found: i === 0 ? (add ? add.length : x.new_count) : undefined,
+        stopped: st ? st.stopped : 0, active: st ? st.active : null, total: st ? st.total : null, complete: st ? st.complete !== false : true, _add: !add };
+    });
+    // فحوص قديمة بلا قائمة «added»: الفحص الذي ظهر فيه الإعلان أول مرة يُستنتج من تاريخه
+    const scanOf = t => { for (const x of sc) if (t <= x.finished_at) return sc.indexOf(x) + 1; return sc.length || 1; };
+    const last = scans.length ? scans[scans.length - 1].n : 0;
     const ads = db.prepare('select ad_id,row,first_seen,last_seen,active from watch_ads where watch_id=? order by first_seen desc, ad_id desc limit 2000').all(w.id)
-      .map(a => Object.assign(J(a.row, {}), { _first: a.first_seen, _last: a.last_seen, _active: !!a.active, _new: a.first_seen >= since }));
+      .map(a => { const f = firstIn.get(a.ad_id) || scanOf(a.first_seen); return Object.assign(J(a.row, {}), { _first: a.first_seen, _last: a.last_seen, _active: !!a.active, _scan: f, _gone: goneIn.get(a.ad_id) || 0, _new: last > 1 && f === last }); });
     db.prepare('update watch_pages set seen_new=0 where id=?').run(w.id);
-    s.json(Object.assign(wView(w), { ads }));
+    s.json(Object.assign(wView(w), { ads, scans: scans.map(x => { delete x._add; return x; }) }));
   }));
   app.post('/api/watch/:id/scan', auth, active, wrap((q, s) => { const w = wOwn(q.u.id, q.params.id); const id = db.prepare('insert into watch_scans(watch_id,user_id,started_at,seen) values(?,?,?,?)').run(w.id, q.u.id, now(), '[]').lastInsertRowid; s.json({ scan: Number(id) }); }));
   app.post('/api/watch/:id/ingest', auth, active, wrap((q, s) => {
     const w = wOwn(q.u.id, q.params.id), b = q.body || {}, sc = db.prepare('select * from watch_scans where id=? and watch_id=?').get(+b.scan, w.id); if (!sc) throw bad('scan', 404);
-    const seen = new Set(J(sc.seen, [])), t = now(); let n = 0, name = '';
+    const seen = new Set(J(sc.seen, [])), added = J(sc.added, []), t = now(); let n = 0, name = '';
     const get = db.prepare('select first_seen from watch_ads where watch_id=? and ad_id=?'), put = db.prepare('insert into watch_ads(watch_id,ad_id,row,first_seen,last_seen,active) values(?,?,?,?,?,?) on conflict(watch_id,ad_id) do update set row=excluded.row, last_seen=excluded.last_seen, active=excluded.active');
     for (const raw of (Array.isArray(b.ads) ? b.ads : []).slice(0, 400)) {
       let r = null; try { r = C.rowFromRaw(raw, { query: 'page:' + w.page_id, niche: '', country: '', src: 'net' }, t); } catch (e) {} if (!r) continue;
       if (r.page_id && r.page_id !== w.page_id) continue;                    // إعلانات صفحة أخرى ظهرت في الصفحة: لا تُحسب
       name = name || r.page_name; seen.add(r.ad_id);
-      const old = get.get(w.id, r.ad_id); if (!old) n++;
+      const old = get.get(w.id, r.ad_id); if (!old) { n++; added.push(r.ad_id); }
       put.run(w.id, r.ad_id, JSON.stringify(r), old ? old.first_seen : t, t, r.status === 'inactive' ? 0 : 1);
     }
-    db.prepare('update watch_scans set seen=?, new_count=new_count+? where id=?').run(JSON.stringify([...seen]), n, sc.id);
+    db.prepare('update watch_scans set seen=?, added=?, new_count=new_count+? where id=?').run(JSON.stringify([...seen]), JSON.stringify(added.slice(0, 2000)), n, sc.id);
     if (name && /^صفحة \d+$/.test(w.name)) db.prepare('update watch_pages set name=? where id=?').run(str(name, 120), w.id);
     s.json({ scanned: seen.size, added: n });
   }));
@@ -163,10 +175,10 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
     const w = wOwn(q.u.id, q.params.id), b = q.body || {}, sc = db.prepare('select * from watch_scans where id=? and watch_id=?').get(+b.scan, w.id); if (!sc) throw bad('scan', 404);
     const first = !w.last_scan_at, seen = new Set(J(sc.seen, [])), t = now();
     // إعلان كان نشطاً ولم يعد يظهر = متوقف
-    let stopped = 0; if (b.complete) for (const a of db.prepare('select ad_id from watch_ads where watch_id=? and active=1').all(w.id)) if (!seen.has(a.ad_id) && seen.size) { db.prepare('update watch_ads set active=0 where watch_id=? and ad_id=?').run(w.id, a.ad_id); stopped++; }
+    let stopped = 0; const gone = []; if (b.complete) for (const a of db.prepare('select ad_id from watch_ads where watch_id=? and active=1').all(w.id)) if (!seen.has(a.ad_id) && seen.size) { db.prepare('update watch_ads set active=0 where watch_id=? and ad_id=?').run(w.id, a.ad_id); stopped++; gone.push(a.ad_id); }
     const tot = db.prepare('select count(*) n, sum(active) a from watch_ads where watch_id=?').get(w.id);
     const stats = { scanned: seen.size, total: tot.n, active: tot.a || 0, new: first ? 0 : sc.new_count, stopped, first };
-    db.prepare('update watch_scans set finished_at=? where id=?').run(t, sc.id);
+    db.prepare('update watch_scans set finished_at=?, gone=?, stats=? where id=?').run(t, JSON.stringify(gone), JSON.stringify(Object.assign({ complete: !!b.complete }, stats)), sc.id);
     db.prepare('update watch_pages set last_scan_at=?, next_check_at=?, stats=?, seen_new=seen_new+? where id=?').run(t, t + WEEK, JSON.stringify(stats), first ? 0 : sc.new_count, w.id);
     if (!first && sc.new_count > 0) NT.fire(q.u.id, 'watch', '👁 ' + sc.new_count + ' إعلان جديد لصفحة «' + (w.name || w.page_id) + '»: منتجات يختبرونها الآن.', '/watch/' + w.id);
     s.json(Object.assign(wView(wOwn(q.u.id, w.id)), { stats }));

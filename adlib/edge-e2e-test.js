@@ -74,7 +74,11 @@ const RESULT = { product: { what: 'مصباح ليلي يسقط النجوم', j
     const ms = await (await pg.request.get(BASE + '/api/admin/mail-status')).json();
     ok(mt.ok === 1 && mt.to === 'someone@gmail.com' && ms.last && ms.last.ok && ms.last.to === 's***@gmail.com' && ms.from === 'Radar <contact@example.com>', 'بريد تجريبي إلى أي عنوان + آخر حالة إرسال');
     const dn = await (await pg.request.post(BASE + '/api/admin/mail-dns', { data: {} })).json(); ok(dn.domain === 'example.com' && dn.checks.some(c => c.k === 'SPF') && dn.checks.some(c => c.k === 'DKIM'), 'فحص SPF/DKIM/DMARC للدومين');
-    await pg.goto(BASE + '/platform/tg'); await pg.waitForSelector('#mail-st .alert.ok'); ok(/قَبِله الخادم/.test(await pg.innerText('#mail-st')), 'بطاقة البريد تعرض آخر إرسال');
+    const ML = require('./mail.js'), cm = "Hostname/IP does not match certificate's altnames: Host: mail.example.com. is not in the cert's altnames: DNS:*.web-hosting.com, DNS:web-hosting.com";
+    ok(ML.certName(cm) === 'web-hosting.com' && /اعتمد اسم الشهادة/.test(ML.hint(cm)), 'خطأ شهادة الاستضافة المشتركة: يُقترح اسمها');
+    const mc = await (await pg.request.post(BASE + '/api/admin/mail-cert', { data: { name: 'web-hosting.com' } })).json(), ms2 = await (await pg.request.get(BASE + '/api/admin/mail-status')).json();
+    ok(mc.ok === 1 && ms2.cert === 'web-hosting.com' && (await pg.request.post(BASE + '/api/admin/mail-cert', { data: { name: 'bad name;' } })).status() === 400, '«اعتمد اسم الشهادة» يُحفظ من الواجهة بلا تعديل .env');
+    await pg.goto(BASE + '/platform/tg'); await pg.waitForSelector('#mail-st .alert.ok'); ok(/قَبِله الخادم/.test(await pg.innerText('#mail-st')) && /web-hosting.com/.test(await pg.innerText('#mail-st')), 'بطاقة البريد تعرض آخر إرسال واسم الشهادة المعتمد');
     // أيقونة الموقع
     const fi = await pg.request.get(BASE + '/favicon.ico'), fs2 = await (await pg.request.get(BASE + '/favicon.svg')).text();
     ok(fi.ok() && (await fi.body()).readUInt16LE(2) === 1 && /M4.9 19.1/.test(fs2) && /href="\/favicon.svg"/.test(await (await pg.request.get(BASE + '/')).text()), 'أيقونة المتصفح = شعار الرادار');

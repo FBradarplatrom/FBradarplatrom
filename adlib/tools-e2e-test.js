@@ -106,8 +106,14 @@ const NOW = Math.floor(Date.now() / 1000);
     await pg.waitForFunction(() => /(1|١) إعلان جديد/.test(document.querySelector('#toasts').textContent), null, { timeout: 15000 });
     const wl = (await (await pg.request.get(BASE + '/api/watch')).json()).pages[0];
     ok(wl.stats.new === 1 && wl.stats.stopped === 1 && wl.stats.active === 2, 'second scan finds 1 new ad and 1 stopped ad');
+    await pg.waitForSelector('.wt-c'); ok(/\+(1|١)/.test(await pg.innerText('.wt-c .wt-n .up')) && /(1|١)/.test(await pg.innerText('.wt-c .wt-n .dn')) && /(1|١) جديد، (1|١) توقف/.test(await pg.innerText('.wt-c .wt-s')), 'page card: active / +new / stopped of the last scan, clearly');
     await pg.click('[data-w="open"]'); await pg.waitForSelector('#x-watch .g-m');
-    ok(/Posture corrector/.test(await pg.textContent('#x-watch')) && /🆕 جديد/.test(await pg.textContent('#x-watch')), 'the new ad is highlighted on the page view');
+    const tl = await pg.$$eval('.wt-r', r => r.map(x => x.innerText));
+    ok(tl.length === 2 && /الفحص (2|٢)/.test(tl[0]) && /\+(1|١) جديد/.test(tl[0]) && /(1|١) توقف/.test(tl[0]) && /نقطة البداية/.test(tl[1]) && /(2|٢) إعلاناً/.test(tl[1]), 'scan history: first scan = baseline (2 ads), second = +1 new, 1 stopped');
+    ok(/Posture corrector/.test(await pg.innerText('#x-watch .g-m')) && (await pg.$$('#x-watch .g-m')).length === 1 && /جديد في آخر فحص/.test(await pg.innerText('#x-watch .g-m')), 'the new ad is shown first and highlighted');
+    await pg.click('.wt-r [data-f="s2g"]'); await pg.waitForFunction(() => /Lint roller/.test(document.querySelector('#x-watch').innerText) && document.querySelectorAll('#x-watch .g-m').length === 1);
+    ok(/توقف في الفحص (2|٢)/.test(await pg.innerText('#x-watch .g-m')), 'history: show what stopped in scan 2');
+    await pg.click('.wt-r [data-f="s1n"]'); await pg.waitForFunction(() => document.querySelectorAll('#x-watch .g-m').length === 2); ok(true, 'history: show the ads of the first scan');
     // ---- 🎵 TikTok
     await pg.click('.nv[data-v="tiktok"]'); await pg.waitForSelector('[data-tq]');
     ok((await pg.$$eval('[data-tq]', x => x.map(y => y.dataset.tq))).includes('tiktok made me buy it'), 'popular phrases are offered');

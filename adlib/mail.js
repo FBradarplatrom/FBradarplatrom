@@ -2,7 +2,7 @@
 // البريد (SMTP): الاتصال، آخر نتيجة إرسال، وفحص إعدادات الدومين (SPF / DKIM / DMARC / MX).
 // لماذا «أُرسل» ولا يصل؟ غالباً: (1) الخادم رفض الاتصال وكان الخطأ مخفياً، أو (2) Gmail/Outlook يرفضان بريداً
 // بلا SPF/DKIM فيرجع إشعار الرفض إلى صندوق contact@ نفسه. هذه الأداة تُظهر السبب للمدير.
-const dns = require('dns').promises;
+const dns = require('dns').promises, CFG = require('./config.js');
 const env = k => process.env[k] || '';
 
 function transport() {
@@ -11,7 +11,7 @@ function transport() {
   if (env('SMTP_HOST') === 'json') return nm.createTransport({ jsonTransport: true });
   return nm.createTransport({ host: env('SMTP_HOST'), port: p, secure: p === 465, requireTLS: p === 587, auth: { user: env('SMTP_USER'), pass: env('SMTP_PASS') },
     // استضافة مشتركة: شهادة خادم البريد قد تحمل اسم الخادم لا اسم الدومين. SMTP_TLS_SERVERNAME يحدد الاسم الصحيح، و SMTP_TLS_INSECURE=1 حل أخير
-    tls: Object.assign({}, env('SMTP_TLS_SERVERNAME') ? { servername: env('SMTP_TLS_SERVERNAME') } : {}, env('SMTP_TLS_INSECURE') === '1' ? { rejectUnauthorized: false } : {}),
+    tls: Object.assign({}, CFG.get('smtp_servername') ? { servername: CFG.get('smtp_servername') } : {}, env('SMTP_TLS_INSECURE') === '1' ? { rejectUnauthorized: false } : {}),
     connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 30000 });
 }
 const FROM = () => env('SMTP_FROM') || env('MAIL_FROM') || env('SMTP_USER');
@@ -19,10 +19,18 @@ const fromAddr = () => { const f = FROM(), m = /<([^>]+)>/.exec(f); return (m ? 
 const domainOf = a => String(a || '').split('@')[1] || '';
 const mask = a => String(a || '').replace(/^(.)[^@]*(@.*)$/, '$1***$2');
 
+// استضافة مشتركة (Namecheap…): شهادة خادم البريد باسم الاستضافة (web-hosting.com) لا باسم الدومين.
+// نقرأ الأسماء من رسالة الخطأ ونقترح الاسم الذي تُفحص به الشهادة (السلسلة تبقى موثّقة؛ يتغير الاسم فقط)
+function certName(m) {
+  const a = /altnames:\s*(.+?)(?:\s+—|$)/.exec(String(m || '')); if (!a) return '';
+  const names = a[1].split(',').map(x => x.trim().replace(/^DNS:/i, '')).filter(x => /^[\w*.-]+$/.test(x));
+  const plain = names.find(x => !x.startsWith('*.')); if (plain) return plain;
+  const w = names.find(x => x.startsWith('*.')); return w ? 'mail.' + w.slice(2) : '';
+}
 // آخر محاولة إرسال (تُعرض للمدير في «إعدادات المنصة ← البريد»)
 let last = null;
 function hint(m) {
-  return /altnames|certificate|self.signed|CERT/i.test(m) ? 'شهادة خادم البريد تحمل اسماً آخر: ضع SMTP_TLS_SERVERNAME باسم الخادم (cPanel ← Email Accounts ← Connect Devices ← Outgoing Server)، أو SMTP_HOST=mail.' + (domainOf(fromAddr()) || 'domain') + ' ، أو SMTP_TLS_INSECURE=1 كحل أخير'
+  return /altnames|certificate|self.signed|CERT/i.test(m) ? (certName(m) ? 'شهادة خادم البريد باسم الاستضافة «' + certName(m) + '» لا باسم دومينك (عادي في الاستضافة المشتركة): اضغط «اعتمد اسم الشهادة» وأعد التجربة' : 'شهادة خادم البريد تحمل اسماً آخر: ضع SMTP_TLS_SERVERNAME باسم الخادم (cPanel ← Email Accounts ← Connect Devices ← Outgoing Server)')
     : /auth|535|534|credentials|Invalid login/i.test(m) ? 'اسم المستخدم أو كلمة المرور غير صحيحين: SMTP_USER هو البريد كاملاً، وتأكد من كلمة المرور (إن كانت فيها # أو مسافة ضعها بين علامتي تنصيص "…")'
     : /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ECONNRESET|Greeting|timeout/i.test(m) ? 'تعذّر الاتصال بخادم البريد: جرّب SMTP_HOST=mail.' + (domainOf(fromAddr()) || 'domain') + ' أو localhost (إن كانت المنصة على نفس استضافة البريد)، والمنفذ 465 أو 587'
     : /550|553|554|relay|not permitted|sender/i.test(m) ? 'الخادم رفض المرسِل: يجب أن يكون MAIL_FROM نفس البريد الذي تسجّل الدخول به (SMTP_USER)'
@@ -63,7 +71,13 @@ async function checkDomain() {
 }
 
 function routes(app, { auth, admin }) {
-  app.get('/api/admin/mail-status', auth, admin, (q, s) => s.json({ configured: !!transport(), host: env('SMTP_HOST'), port: +env('SMTP_PORT') || 465, user: env('SMTP_USER'), from: FROM(), last }));
+  app.get('/api/admin/mail-status', auth, admin, (q, s) => s.json({ configured: !!transport(), host: env('SMTP_HOST'), port: +env('SMTP_PORT') || 465, user: env('SMTP_USER'), from: FROM(), cert: CFG.get('smtp_servername'), last }));
+  // «اعتمد اسم الشهادة»: يُحفظ في إعدادات المنصة (بدل تعديل .env)، وفارغ = إلغاء
+  app.post('/api/admin/mail-cert', auth, admin, (q, s) => {
+    const v = String((q.body || {}).name || '').trim().toLowerCase();
+    if (v && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(v)) return s.status(400).json({ error: 'اسم غير صحيح' });
+    CFG.set('smtp_servername', v); s.json({ ok: 1, name: v });
+  });
   app.post('/api/admin/mail-dns', auth, admin, async (q, s) => s.json(await checkDomain()));
   // بريد تجريبي إلى أي عنوان (مثلاً Gmail) لمعرفة هل يصل إلى خارج الدومين
   app.post('/api/admin/mail-test', auth, admin, async (q, s) => {
@@ -77,8 +91,8 @@ function routes(app, { auth, admin }) {
     } catch (e) {
       const m = String(e.message || e), h = e.hint || hint(m);
       if (!last || last.tag !== 'test' || Date.now() - last.at > 2000) last = { at: Date.now(), ok: false, tag: 'test', to: mask(to), error: m.slice(0, 300), hint: h };
-      s.status(400).json({ error: 'فشل الإرسال: ' + m + (h ? ' — ' + h : '') });
+      s.status(400).json({ error: 'فشل الإرسال: ' + m + (h ? ' — ' + h : ''), certName: /altnames/i.test(m) ? certName(m) : '' });
     }
   });
 }
-module.exports = { transport, FROM, send, routes, checkDomain, hint, lastSend: () => last };
+module.exports = { transport, FROM, send, routes, checkDomain, hint, certName, lastSend: () => last };
