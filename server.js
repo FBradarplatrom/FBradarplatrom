@@ -48,6 +48,7 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
 create table if not exists activity(id integer primary key, user_id integer, kind text, ip text, ua text, detail text, at integer);
 create index if not exists activity_u on activity(user_id, at);`);
 try { db.exec('alter table users add column tv integer default 0'); } catch (e) {}
+['totp_secret text', 'totp_on integer default 0', 'totp_recovery text'].forEach(c => { try { db.exec('alter table users add column ' + c); } catch (e) {} });   // التحقق بخطوتين
 try { db.exec('alter table runs add column batch text'); } catch (e) {}   // دفعة الجمع (لأرقام صفحة التحليل)
 // إعدادات المنصة المشفّرة (المفاتيح) وحدود الباقات
 require('./adlib/config.js').init(db, t => enc(t), t => dec(t));
@@ -115,13 +116,52 @@ app.post('/api/login', wrap((q, s) => {
   if (blocked(q.ip) || blocked('a:' + l, 8)) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
   const u = db.prepare('select * from users where email=? or username=?').get(l, l);
   if (!u || !bcrypt.compareSync(String(password), u.hash)) { fail(q.ip); fail('a:' + l); if (u) act(u.id, 'login_fail', q); return s.status(401).json({ error: 'بيانات الدخول غير صحيحة' }); }
-  fails.delete(q.ip); fails.delete('a:' + l); act(u.id, 'login', q); login(s, u.id); s.json({ ok: 1 });
+  fails.delete(q.ip); fails.delete('a:' + l);
+  if (u.totp_on) { act(u.id, 'login_pw', q); return s.json({ need2fa: true, t: jwt.sign({ id: u.id, p: '2fa', v: u.tv || 0 }, SECRET, { expiresIn: '5m' }) }); }   // كلمة المرور صحيحة، بقي رمز التطبيق
+  act(u.id, 'login', q); login(s, u.id); s.json({ ok: 1 });
+}));
+// الخطوة الثانية: رمز تطبيق المصادقة أو رمز استرجاع (لمرة واحدة)
+app.post('/api/login/2fa', wrap((q, s) => {
+  if (blocked('2fa:' + q.ip, 8)) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
+  let t; try { t = jwt.verify(String((q.body || {}).t || ''), SECRET); } catch (e) { return s.status(401).json({ error: 'انتهت المهلة، سجّل الدخول من جديد' }); }
+  const u = t && t.p === '2fa' && db.prepare('select * from users where id=?').get(t.id);
+  if (!u || !u.totp_on || (t.v || 0) !== (u.tv || 0)) return s.status(401).json({ error: 'انتهت المهلة، سجّل الدخول من جديد' });
+  const code = String((q.body || {}).code || '').trim().toLowerCase(), TOTP = require('./adlib/totp.js');
+  let ok = TOTP.verify(u.totp_secret, code);
+  if (!ok && /^[0-9a-f]{5}-[0-9a-f]{5}$/.test(code)) {                          // رمز استرجاع: يُستهلك
+    const L = JSON.parse(u.totp_recovery || '[]'), h = TOTP.sha(code), i = L.indexOf(h);
+    if (i >= 0) { L.splice(i, 1); db.prepare('update users set totp_recovery=? where id=?').run(JSON.stringify(L), u.id); ok = true; act(u.id, '2fa_recovery', q); }
+  }
+  if (!ok) { fail('2fa:' + q.ip); act(u.id, 'login_fail', q, '2fa'); return s.status(400).json({ error: 'الرمز غير صحيح' }); }
+  fails.delete('2fa:' + q.ip); act(u.id, 'login', q, '2fa'); login(s, u.id); s.json({ ok: 1 });
+}));
+// إعداد التحقق بخطوتين من «أمان الحساب»
+app.post('/api/2fa/setup', auth, wrap((q, s) => {
+  if (q.u.totp_on) return s.status(400).json({ error: 'التحقق بخطوتين مفعّل مسبقاً' });
+  const T = require('./adlib/totp.js'), sec = T.secret();
+  db.prepare('update users set totp_secret=? where id=?').run(sec, q.u.id);
+  s.json({ secret: sec, uri: T.uri(sec, q.u.email, 'Winning Product Radar') });
+}));
+app.post('/api/2fa/enable', auth, wrap((q, s) => {
+  const T = require('./adlib/totp.js');
+  if (q.u.totp_on) return s.status(400).json({ error: 'التحقق بخطوتين مفعّل مسبقاً' });
+  if (!T.verify(q.u.totp_secret, (q.body || {}).code)) return s.status(400).json({ error: 'الرمز غير صحيح. تأكد من وقت هاتفك ثم أعد المحاولة.' });
+  const codes = T.recovery();
+  db.prepare('update users set totp_on=1, totp_recovery=?, tv=coalesce(tv,0)+1 where id=?').run(JSON.stringify(codes.map(T.sha)), q.u.id);   // يُخرج الأجهزة الأخرى
+  act(q.u.id, '2fa_on', q); login(s, q.u.id); s.json({ ok: 1, recovery: codes });
+}));
+app.post('/api/2fa/disable', auth, wrap((q, s) => {
+  const b = q.body || {}, T = require('./adlib/totp.js');
+  if (!bcrypt.compareSync(String(b.password || ''), q.u.hash)) return s.status(400).json({ error: 'كلمة المرور غير صحيحة' });
+  if (q.u.totp_on && !T.verify(q.u.totp_secret, b.code)) return s.status(400).json({ error: 'الرمز غير صحيح' });
+  db.prepare('update users set totp_on=0, totp_secret=null, totp_recovery=null where id=?').run(q.u.id);
+  act(q.u.id, '2fa_off', q); s.json({ ok: 1 });
 }));
 app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
 // تسجيل الخروج من كل الأجهزة
 app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
 app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
-app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: process.env.CONTACT_URL || '', gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
+app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: process.env.CONTACT_URL || '', totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
@@ -356,7 +396,7 @@ const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.jo
 const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(pub(LANDING)));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/help', '/guide', '/subscribers', '/admin', '/payments', '/payments/:tab', '/support-inbox', '/platform', '/platform/:tab'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscription', '/security', '/help', '/guide', '/subscribers', '/admin', '/payments', '/payments/:tab', '/support-inbox', '/platform', '/platform/:tab'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 // الصفحات القانونية: شروط الاستخدام، الخصوصية، الاسترداد، الاتصال (بثلاث لغات، ومعلومات النشاط من «الربط والتكامل»)

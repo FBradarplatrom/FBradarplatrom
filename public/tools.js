@@ -132,6 +132,10 @@ ${items.length ? supCards(items) : '<p class="sub" style="margin-top:12px">لا 
 
   /* ================= 🧠 تحليل الإعلان ================= */
   const li = a => (Array.isArray(a) && a.length ? '<ul>' + a.map(x => `<li>${e(x)}</li>`).join('') + '</ul>' : '<p class="sub">—</p>');
+  // سوق التحليل (سوق المشترك المستهدف) واسم اللغة لكل نص إعلان
+  const mkName = c => { const M = W.RadarMarkets; c = c || 'DZ'; return M && M.COUNTRIES[c] ? M.COUNTRIES[c].name : c; };
+  const mkFlag = c => /^[A-Z]{2}$/.test(c || 'DZ') ? String.fromCodePoint(...[...(c || 'DZ')].map(x => 127397 + x.charCodeAt())) : '';
+  const langName = k => { const M = W.RadarMarkets; return M && M.LANGS[k] ? M.LANGS[k].name : ({ ar: 'بالعربية', dz: 'بالدارجة', fr: 'بالفرنسية' })[k] || k; };
   function aiHtml(d) {
     if (!d) return '';
     const c = d.ad_copy || {};
@@ -140,15 +144,15 @@ ${items.length ? supCards(items) : '<p class="sub" style="margin-top:12px">لا 
 <h4>👥 الجمهور المستهدف</h4><p>${e(d.audience || '')}</p>
 <h4>😣 المشكلة التي يحلها</h4>${li(d.pains)}<h4>💪 نقاط القوة</h4>${li(d.strengths)}<h4>⚠️ نقاط الضعف والمخاطر</h4>${li(d.weaknesses)}
 <h4>🎬 افتتاحيات فيديو (أول 3 ثوانٍ)</h4>${li(d.hooks)}
-<h4>🎁 عرض مقترح للجزائر</h4><p>${e(d.offer || '')}</p>${d.price_hint ? `<p class="sub">${e(d.price_hint)}</p>` : ''}
-<h4>🇩🇿 ملاءمته للسوق الجزائري</h4><p>${e(d.algeria_fit || '')}</p>
-<h4>✍️ نصوص إعلان مقترحة</h4>${[['ar', 'بالعربية'], ['dz', 'بالدارجة'], ['fr', 'بالفرنسية']].filter(([k]) => c[k]).map(([k, l]) => `<div style="margin:8px 0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b>${l}</b><button class="btn ghost sm" data-tm="copy" data-t="${e(c[k])}">نسخ</button></div><div class="ai-copy" dir="auto">${e(c[k])}</div></div>`).join('')}</div>`;
+<h4>🎁 عرض مقترح لـ ${e(mkName(d.market))}</h4><p>${e(d.offer || '')}</p>${d.price_hint ? `<p class="sub">${e(d.price_hint)}</p>` : ''}
+<h4>${mkFlag(d.market)} ملاءمته لسوق ${e(mkName(d.market))}</h4><p>${e(d.algeria_fit || '')}</p>
+<h4>✍️ نصوص إعلان مقترحة</h4>${Object.keys(c).filter(k => c[k]).map(k => [k, langName(k)]).map(([k, l]) => `<div style="margin:8px 0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b>${l}</b><button class="btn ghost sm" data-tm="copy" data-t="${e(c[k])}">نسخ</button></div><div class="ai-copy" dir="auto">${e(c[k])}</div></div>`).join('')}</div>`;
   }
   async function openAI(k, saved) {
     const p = productOf(k, saved); if (!p) return X.toast('المنتج غير موجود', 'err');
     const b = open('🧠 تحليل الإعلان: ' + p.name, '<p class="sub">جارٍ التحميل…</p>');
     const r = await X.api('GET', '/ai/ad?k=' + encodeURIComponent(k));
-    const draw = (d, at) => { const el = body(); if (!el) return; el.innerHTML = (d ? aiHtml(d) + `<p class="sub" style="margin-top:12px">حُلّل ${X.ago(at)}.</p>` : '<p class="sub">يحلّل الذكاء الاصطناعي نص الإعلان: لماذا يبيع، ولمن، وكيف تبيعه في الجزائر، مع نصوص إعلان جاهزة. لا يخترع مواصفات غير مذكورة.</p>')
+    const draw = (d, at) => { const el = body(); if (!el) return; el.innerHTML = (d ? aiHtml(d) + `<p class="sub" style="margin-top:12px">حُلّل ${X.ago(at)}.</p>` : '<p class="sub">يحلّل الذكاء الاصطناعي نص الإعلان: لماذا يبيع، ولمن، وكيف تبيعه في سوقك، مع نصوص إعلان جاهزة بلغاته. لا يخترع مواصفات غير مذكورة.</p>')
       + `<p><button class="btn" data-tm="ai-go">${d ? '🔄 أعد التحليل' : '🧠 حلّل الآن'}</button></p>`; };
     if (r.ai === false && !r.data) { b.innerHTML = '<div class="alert">الذكاء الاصطناعي غير مفعّل. أضف <code>OPENAI_API_KEY</code> في إعدادات الخادم (cPanel ← Setup Node.js App ← Environment variables) ثم أعد التشغيل.</div>'; return; }
     draw(r.data, r.created_at);

@@ -100,7 +100,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
         if (!(usd(p) > 0)) throw bad('لا سعر بالدولار لهذه الباقة');
         const pid = newPay(q.u, p, 'stripe', usd(p), 'USD');
         const f = new URLSearchParams({ mode: 'payment', 'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'usd', 'line_items[0][price_data][unit_amount]': String(Math.round(usd(p) * 100)),
-          'line_items[0][price_data][product_data][name]': p.name + ' · ' + p.days + ' days', success_url: base + '/settings?paid=' + pid, cancel_url: base + '/settings?failed=' + pid,
+          'line_items[0][price_data][product_data][name]': p.name + ' · ' + p.days + ' days', success_url: base + '/subscription?paid=' + pid, cancel_url: base + '/subscription?failed=' + pid,
           client_reference_id: String(pid), 'metadata[payment_id]': String(pid), customer_email: q.u.email });
         const r = await fetch(STRIPE() + '/v1/checkout/sessions', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Bearer ' + CFG.get('stripe_secret'), 'content-type': 'application/x-www-form-urlencoded' }, body: f.toString() });
         const j = await r.json().catch(() => ({}));
@@ -113,7 +113,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
         const pid = newPay(q.u, p, 'paypal', usd(p), 'USD'), tok = await paypalToken();
         const r = await fetch(PAYPAL() + '/v2/checkout/orders', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Bearer ' + tok, 'content-type': 'application/json' },
           body: JSON.stringify({ intent: 'CAPTURE', purchase_units: [{ reference_id: String(pid), custom_id: String(pid), description: p.name, amount: { currency_code: 'USD', value: usd(p).toFixed(2) } }],
-            application_context: { return_url: base + '/api/billing/return/paypal?pid=' + pid, cancel_url: base + '/settings?failed=' + pid, user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING' } }) });
+            application_context: { return_url: base + '/api/billing/return/paypal?pid=' + pid, cancel_url: base + '/subscription?failed=' + pid, user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING' } }) });
         const j = await r.json().catch(() => ({})), ap = (j.links || []).find(l => l.rel === 'approve' || l.rel === 'payer-action');
         if (!j.id || !ap) { failPay(pid, j.message); throw bad('PayPal: ' + (j.message || 'تعذّر إنشاء الطلب'), 502); }
         db.prepare('update payments set checkout_id=? where id=?').run(str(j.id, 80), pid); return s.json({ url: ap.href, id: pid });
@@ -124,28 +124,28 @@ create table if not exists error_logs(id integer primary key, at integer, method
   const own = (q) => { const p = db.prepare('select * from payments where id=? and user_id=?').get(+q.query.pid, q.u.id); return p; };
   // العودة من SATIM: نؤكد الطلب من البوابة نفسها (لا نثق في رابط العودة وحده)
   app.get('/api/billing/return/satim', auth, async (q, s) => {
-    const p = own(q); if (!p) return s.redirect('/settings');
-    if (p.status === 'paid') return s.redirect('/settings?paid=' + p.id);
+    const p = own(q); if (!p) return s.redirect('/subscription');
+    if (p.status === 'paid') return s.redirect('/subscription?paid=' + p.id);
     try {
       const qs = new URLSearchParams({ userName: CFG.get('satim_user'), password: CFG.get('satim_pass'), orderId: p.checkout_id || String(q.query.orderId || ''), language: lang(q) });
       const j = await (await fetch(SATIM() + '/confirmOrder.do?' + qs, { signal: AbortSignal.timeout(20000) })).json();
       db.prepare('update payments set ext=? where id=?').run(JSON.stringify({ ErrorCode: j.ErrorCode, OrderStatus: j.OrderStatus, actionCode: j.actionCode, approvalCode: j.approvalCode, OrderNumber: j.OrderNumber }).slice(0, 500), p.id);
-      if (String(j.ErrorCode) === '0' && +j.OrderStatus === 2 && (!j.Amount || +j.Amount >= Math.round(p.amount * 100))) { markPaid(p); return s.redirect('/settings?paid=' + p.id); }
+      if (String(j.ErrorCode) === '0' && +j.OrderStatus === 2 && (!j.Amount || +j.Amount >= Math.round(p.amount * 100))) { markPaid(p); return s.redirect('/subscription?paid=' + p.id); }
       failPay(p.id, (j.params && j.params.respCode_desc) || j.actionCodeDescription || j.ErrorMessage || 'رُفض الدفع');
     } catch (e) { failPay(p.id, 'تعذّر التحقق من الدفع'); }
-    s.redirect('/settings?failed=' + p.id);
+    s.redirect('/subscription?failed=' + p.id);
   });
   // العودة من PayPal: capture
   app.get('/api/billing/return/paypal', auth, async (q, s) => {
-    const p = own(q); if (!p) return s.redirect('/settings');
-    if (p.status === 'paid') return s.redirect('/settings?paid=' + p.id);
+    const p = own(q); if (!p) return s.redirect('/subscription');
+    if (p.status === 'paid') return s.redirect('/subscription?paid=' + p.id);
     try {
       const tok = await paypalToken(), r = await fetch(PAYPAL() + '/v2/checkout/orders/' + encodeURIComponent(p.checkout_id) + '/capture', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Bearer ' + tok, 'content-type': 'application/json' }, body: '{}' });
       const j = await r.json().catch(() => ({})), cap = ((((j.purchase_units || [])[0] || {}).payments || {}).captures || [])[0] || {};
-      if (j.status === 'COMPLETED' && (!cap.amount || +cap.amount.value >= p.amount)) { markPaid(p); return s.redirect('/settings?paid=' + p.id); }
+      if (j.status === 'COMPLETED' && (!cap.amount || +cap.amount.value >= p.amount)) { markPaid(p); return s.redirect('/subscription?paid=' + p.id); }
       failPay(p.id, j.message || j.status || 'لم يكتمل الدفع');
     } catch (e) { failPay(p.id, 'تعذّر تأكيد PayPal'); }
-    s.redirect('/settings?failed=' + p.id);
+    s.redirect('/subscription?failed=' + p.id);
   });
   // Stripe: إشعار موقّع (Stripe-Signature: t=…,v1=… = HMAC-SHA256 لـ «t.الجسم الخام» بسر الإشعار)
   app.post('/api/billing/webhook/stripe', (q, s) => {

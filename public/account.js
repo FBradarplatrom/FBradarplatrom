@@ -20,6 +20,12 @@
 .btn.wa{background:#25d366;color:#fff;border-color:#25d366;display:inline-flex;gap:8px;align-items:center}.btn.wa:hover{background:#1ebe5b}
 .sup-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.sup-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.sup-f button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .sup-t{margin-bottom:12px}.sup-t.new{border-inline-start:3px solid var(--brand)}.sup-h{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.sup-b{white-space:pre-wrap;margin:10px 0}.sup-r{background:var(--soft);border-radius:12px;padding:10px 12px;margin:0 0 10px}.sup-r p{margin:4px 0 0;white-space:pre-wrap}.sup-a{display:flex;gap:6px;flex-wrap:wrap}.btn.bad{color:var(--bad)}
+.pe-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.pe-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
+.pe{display:flex;flex-direction:column;gap:6px}.pe.pe-new{border-style:dashed;opacity:.85}.pe-h{display:flex;gap:8px;align-items:center}.pe-h input{flex:1;font-size:18px;font-weight:700;padding:8px 10px}
+.pe-sw{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;margin:2px 0 4px}.pe-sw label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.pe-s{font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.3px;margin:10px 0 2px;padding-top:8px;border-top:1px solid var(--line)}
+.pe-r{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:14px}.pe-r span{flex:1}.pe-r input{width:120px;flex:none;padding:6px 8px}.pe-n input{width:150px}
+.pe-f{display:grid;gap:4px}.pe-f label{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}.pe-f label.off{opacity:.55}
 .int-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}.int-s{display:inline-flex;align-items:center;gap:6px;font-size:13px}.int-s i{width:9px;height:9px;border-radius:50%;background:var(--bad)}.int-s i.ok{background:var(--ok)}`;
   document.head.appendChild(st);
 
@@ -34,7 +40,7 @@
 ${adm ? '<span class="sub"> حساب مدير، بلا انتهاء ولا حدود.</span>' : `<span class="sub"> ${me.active ? 'ينتهي في ' + X.fd(BL.expires_at) + ' (باقي ' + num(left) + ' يوم)' : 'منتهٍ'}</span>`}</p>
 ${!adm && me.active && left <= 5 ? '<div class="alert">⏰ اشتراكك ينتهي قريباً. جدّده الآن حتى لا يتوقف عملك.</div>' : ''}
 ${(() => { const U = { searchesPerDay: BL.usage.searchesToday, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth }, hot = adm ? [] : Object.keys(BL.labels).filter(k => { const mx = BL.limits[k]; return Number.isFinite(mx) && mx > 0 && mx < 1e9 && (U[k] || 0) / mx >= .8; }); return hot.length ? `<div class="alert" style="margin:8px 0">⚠️ اقتربت من حد عرضك في: ${hot.map(k => e(BL.labels[k])).join('، ')}. انتقل إلى عرض أعلى قبل أن يتوقف هذا الاستعمال.</div>` : ''; })()}${Object.keys(BL.labels).map(k => meter(BL.labels[k], ({ searchesPerDay: BL.usage.searchesToday, aiMonth: 0, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth })[k] || 0, BL.limits[k])).join('')}
-${adm ? '' : BL.plans.length ? `<p style="margin:10px 0 0"><button class="btn" data-acc="plans">${me.active ? '💳 الدفع أو تغيير العرض' : '💳 اشترك الآن'}</button></p>` : `<p class="sub">الدفع الإلكتروني غير متاح بعد.${me.contact ? ` <a href="${e(me.contact)}" target="_blank" rel="noopener">تواصل مع الإدارة</a>` : ''}</p>`}
+${adm ? '' : BL.plans.length ? `<p style="margin:10px 0 0"><button class="btn" data-acc="plans">${me.active ? '💳 الدفع أو تغيير العرض' : '💳 اشترك الآن'}</button></p>` : `<p class="sub">لا توجد عروض متاحة للشراء بعد.${me.contact ? ` <a href="${e(me.contact)}" target="_blank" rel="noopener">تواصل مع الإدارة</a>` : ''}</p>`}
 ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td></tr>`).join('')}</table></div></details>` : ''}`;
   }
   function plansModal() {
@@ -146,16 +152,26 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     }
     if (ATAB === 'plans') {
       const r = await X.api('GET', '/admin/plans');
-      const row = p => `<tr data-pl="${p.id || ''}"><td><input data-f="name" value="${e(p.name || '')}" style="width:110px"></td><td><input data-f="days" type="number" value="${e(p.days || 30)}" style="width:70px"></td><td><input data-f="price" type="number" value="${e(p.price || 0)}" style="width:90px"></td><td><input data-f="price_usd" type="number" step="0.01" value="${e(p.price_usd || 0)}" style="width:80px"></td><td><input data-f="free" type="checkbox"${p.free ? ' checked' : ''} title="تُمنح تلقائياً عند التسجيل"></td>
-${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? p.limits[k] : '')}" style="width:70px"></td>`).join('')}<td style="min-width:240px">${r.cat.map(f => `<label style="display:inline-flex;gap:4px;align-items:center;margin:2px 8px 2px 0;font-size:12.5px;white-space:nowrap${f.shown ? '' : ';opacity:.5'}" title="${f.shown ? '' : 'مخفية من صفحة الأسعار'}"><input type="checkbox" data-ft="${e(f.k)}"${!p.features || p.features.includes(f.k) ? ' checked' : ''}>${e(f.ar)}</label>`).join('')}</td><td><input data-f="active" type="checkbox"${p.active !== false ? ' checked' : ''}></td><td><input data-f="note" value="${e(p.note || '')}" placeholder="مثلاً: الأكثر طلباً" style="width:130px"></td></tr>`;
+      // كل عرض بطاقة عمودية: الاسم والحالة، السعر والمدة، الحدود، المميزات (أسهل للقراءة والتعديل)
+      const row = p => `<div class="card pe${p.id ? '' : ' pe-new'}" data-pl="${p.id || ''}">
+<div class="pe-h"><input data-f="name" value="${e(p.name || '')}" placeholder="${p.id ? 'اسم العرض' : '+ عرض جديد: اكتب اسمه'}" aria-label="اسم العرض">${p.free ? '<span class="pill ok">تجربة مجانية</span>' : ''}</div>
+<div class="pe-sw"><label><input data-f="active" type="checkbox"${p.active !== false ? ' checked' : ''}> مفعّل (يظهر للشراء)</label><label title="تُمنح تلقائياً عند التسجيل"><input data-f="free" type="checkbox"${p.free ? ' checked' : ''}> مجاني للتجربة</label></div>
+<div class="pe-s">السعر والمدة</div>
+<div class="pe-r"><span>المدة (أيام)</span><input data-f="days" type="number" min="1" value="${e(p.days || 30)}"></div>
+<div class="pe-r"><span>السعر بالدينار (دج)</span><input data-f="price" type="number" min="0" value="${e(p.price || 0)}"></div>
+<div class="pe-r"><span>السعر بالدولار ($)</span><input data-f="price_usd" type="number" min="0" step="0.01" value="${e(p.price_usd || 0)}"></div>
+<div class="pe-s">الحدود</div>
+${r.keys.map(k => `<div class="pe-r"><span>${e(r.labels[k])}</span><input data-l="${k}" type="number" min="0" value="${e(p.limits ? p.limits[k] : '')}" placeholder="بلا حد"></div>`).join('')}
+<div class="pe-s">المميزات المشمولة</div>
+<div class="pe-f">${r.cat.map(f => `<label class="${f.shown ? '' : 'off'}" title="${f.shown ? '' : 'مخفية من صفحة الأسعار'}"><input type="checkbox" data-ft="${e(f.k)}"${!p.features || p.features.includes(f.k) ? ' checked' : ''}> ${e(f.ar)}</label>`).join('')}</div>
+<div class="pe-r pe-n"><span>شارة في صفحة الأسعار</span><input data-f="note" value="${e(p.note || '')}" placeholder="مثلاً: الأكثر طلباً"></div></div>`;
       const frow = f => `<tr data-fk="${e(f.k || '')}"><td><input data-g="ar" value="${e(f.ar || '')}" placeholder="بالعربية" style="width:190px"></td><td><input data-g="en" dir="ltr" value="${e(f.en || '')}" placeholder="English" style="width:170px"></td><td><input data-g="fr" dir="ltr" value="${e(f.fr || '')}" placeholder="Français" style="width:170px"></td>
 <td style="text-align:center"><input type="checkbox" data-g="shown"${f.shown !== false ? ' checked' : ''}></td><td>${f.builtin ? '<small class="muted">ميزة من المنصة</small>' : f.k ? '<button class="btn danger sm" data-adm="fdel">حذف</button>' : '<small class="muted">جديدة</small>'}</td></tr>`;
-      el.innerHTML = `<div class="card" style="margin-bottom:16px"><h2>مميزات الباقات (تظهر للزبائن في صفحة الأسعار)</h2><p class="sub">أضف ميزة جديدة (اكتب اسمها في السطر الفارغ) أو عدّل اسمها أو احذفها. المميزات «من المنصة» تُطبَّق فعلاً على المشترك حسب باقته، ولا تُحذف لكن يمكن إخفاؤها من صفحة الأسعار (فتصبح متاحة لكل الباقات). الميزة الجديدة تُضاف تلقائياً إلى الباقات المدفوعة، وتختار باقاتها من الجدول أدناه.</p>
+      el.innerHTML = `<div class="pe-top"><div class="grow"><h2 style="margin:0">العروض</h2><p class="sub" style="margin:4px 0 0">السعر بالدينار (BaridiMob وCCP والتحويل وCIB/الذهبية) وبالدولار (Stripe وPayPal). العرض «المجاني للتجربة» يُمنح تلقائياً لكل مسجّل جديد. العرض بلا سعر أو غير المفعّل لا يظهر للشراء. الحدود تطبَّق فوراً على كل مشترك في هذا العرض. اترك الحد فارغاً = بلا حد.</p></div><button class="btn" data-adm="saveplans">حفظ العروض</button></div>
+<div class="pe-g" id="pl-t">${r.plans.map(row).join('')}${row({})}</div>
+<div class="card" style="margin-top:16px"><h2>قائمة المميزات (تظهر للزبائن في صفحة الأسعار)</h2><p class="sub">أضف ميزة جديدة (اكتب اسمها في السطر الفارغ) أو عدّل اسمها أو احذفها، ثم فعّلها في بطاقات العروض أعلاه. المميزات «من المنصة» تُطبَّق فعلاً على المشترك حسب عرضه، ولا تُحذف لكن يمكن إخفاؤها من صفحة الأسعار (فتصبح متاحة للجميع).</p>
 <div class="tbw"><table class="tb" id="ft-t"><tr><th>الاسم بالعربية</th><th>English</th><th>Français</th><th>تظهر في الأسعار</th><th></th></tr>${r.cat.map(frow).join('')}${frow({ shown: true })}</table></div>
-<p style="margin:10px 0 0"><button class="btn" data-adm="savefeats">حفظ المميزات</button></p></div>
-<div class="card"><h2>الباقات وحدودها</h2><p class="sub">السعر بالدينار (CIB/الذهبية وBaridiMob) وبالدولار (Stripe وPayPal للعالم). الباقة «المجانية للتجربة» تُمنح تلقائياً لكل مسجّل جديد بمدتها وحدودها ولا تُشترى. الباقة بلا سعر أو غير المفعّلة لا تظهر للشراء. الحدود تطبَّق فوراً على كل مشترك اسم باقته يطابق اسمها (يُكتب الاسم عند الدفع أو عند إضافة الأيام يدوياً).</p>
-<div class="tbw"><table class="tb" id="pl-t"><tr><th>الاسم</th><th>الأيام</th><th>السعر (دج)</th><th>السعر ($)</th><th>مجانية للتجربة</th>${r.keys.map(k => `<th>${e(r.labels[k])}</th>`).join('')}<th>المميزات المشمولة</th><th>مفعّلة</th><th>ملاحظة</th></tr>${r.plans.map(row).join('')}${row({})}</table></div>
-<p style="margin:10px 0 0"><button class="btn" data-adm="saveplans">حفظ الباقات</button></p></div>`;
+<p style="margin:10px 0 0"><button class="btn" data-adm="savefeats">حفظ المميزات</button></p></div>`;
     }
     if (ATAB === 'msgs') {
       const r = await X.api('GET', '/admin/messages'), CAT = { tech: 'مشكلة تقنية', billing: 'الدفع والعروض', usage: 'سؤال عن الاستعمال', idea: 'اقتراح', other: 'أخرى' };

@@ -21,7 +21,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const U = await b.newContext({ locale: 'ar-DZ', viewport: { width: 1200, height: 900 } }), pg = await U.newPage(), errs = [];
     await U.route(/wa\.me|whatsapp\.com/, r => r.fulfill({ contentType: 'text/html', body: 'wa' }));   // لا خروج للإنترنت في الاختبار pg.on('pageerror', e => errs.push(e.message));
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
-    await pg.goto(BASE + '/settings'); await pg.waitForSelector('[data-acc="plans"]');
+    await pg.goto(BASE + '/subscription'); await pg.waitForSelector('[data-acc="plans"]');
     ok((await pg.innerText('[data-acc="plans"]')).includes('الدفع أو تغيير العرض'), 'زر «الدفع أو تغيير العرض»');
     await pg.click('[data-acc="plans"]'); await pg.waitForSelector('.pay-m');
     const tx = await pg.innerText('.pay-m');

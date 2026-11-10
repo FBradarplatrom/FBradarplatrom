@@ -164,6 +164,14 @@ input[dir=ltr]{text-align:left}
     <div class="foot"><span>تذكّرتها؟</span><button type="button" class="lnk" data-go="login">العودة للدخول</button></div>
    </form>
 
+   <!-- التحقق بخطوتين: رمز تطبيق المصادقة -->
+   <form id="f-2fa" data-m="2fa" novalidate hidden>
+    <label class="fl"><span>رمز التحقق (6 أرقام من تطبيق المصادقة)</span><input id="t-code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="11" required placeholder="123456" style="letter-spacing:.3em;text-align:center;font-size:20px"></label>
+    <button class="btn" type="submit">تأكيد الدخول</button>
+    <p class="sub" style="font-size:13px;margin:10px 0 0">ضاع هاتفك؟ اكتب أحد رموز الاسترجاع (مثل a1b2c-3d4e5) مكان الرمز.</p>
+    <div class="foot"><button type="button" class="lnk" data-go="login">العودة للدخول</button></div>
+   </form>
+
    <!-- كلمة مرور جديدة (من رابط الاستعادة) -->
    <form id="f-reset" data-m="reset" novalidate hidden>
     <label class="fl"><span>كلمة المرور الجديدة <small>8 أحرف فأكثر</small></span>
@@ -226,6 +234,10 @@ A('🏭 مورّد بسعر أقل وُجد','🏭 Cheaper supplier found','🏭
 A('بإنشاء حسابك توافق على','By creating an account you agree to the','En créant un compte, vous acceptez les');A('شروط الاستخدام','Terms of Service','Conditions d’utilisation');A('سياسة الخصوصية','Privacy Policy','la Politique de confidentialité');A('و','and','et');
 A('الخصوصية','Privacy','Confidentialité');A('الاسترداد','Refunds','Remboursement');A('اتصل بنا','Contact','Contact');
 A('يتطلب تسجيل الدخول تفعيل JavaScript.','JavaScript is required to log in.','JavaScript est requis pour se connecter.');
+A('رمز التحقق (6 أرقام من تطبيق المصادقة)','Verification code (6 digits from your authenticator app)','Code de vérification (6 chiffres de l’application d’authentification)');A('تأكيد الدخول','Confirm login','Confirmer la connexion');
+A('ضاع هاتفك؟ اكتب أحد رموز الاسترجاع (مثل a1b2c-3d4e5) مكان الرمز.','Lost your phone? Enter one of your recovery codes (like a1b2c-3d4e5) instead.','Téléphone perdu ? Saisissez l’un de vos codes de secours (ex. a1b2c-3d4e5).');
+A('التحقق بخطوتين','Two-step verification','Vérification en deux étapes');A('افتح تطبيق المصادقة في هاتفك واكتب الرمز الظاهر لحساب «Winning Product Radar».','Open your authenticator app and enter the code shown for “Winning Product Radar”.','Ouvrez votre application d’authentification et saisissez le code affiché pour « Winning Product Radar ».');
+A('اكتب الرمز المكوّن من 6 أرقام.','Enter the 6-digit code.','Saisissez le code à 6 chiffres.');A('الرمز غير صحيح','The code is incorrect','Code incorrect');A('انتهت المهلة، سجّل الدخول من جديد','Timed out, please log in again','Délai expiré, reconnectez-vous');A('العودة للدخول','Back to login','Retour à la connexion');
 var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
 var L=new URLSearchParams(location.search).get('lang')||g('wpr_lang')||(navigator.language||'ar').slice(0,2);if(L!=='en'&&L!=='fr')L='ar';
 window.__L=L;window.__tr=function(t){if(L==='ar'||t==null)return t;var s=String(t),d=D[L];if(d[s])return d[s];var k=s.trim();if(d[k])return s.replace(k,d[k]);return s};
@@ -272,7 +284,8 @@ function busy(f,on){const b=f.querySelector('.btn');if(on){b.dataset.t=b.innerHT
 function run(form,fn){form.addEventListener('submit',async ev=>{ev.preventDefault();note('');busy(form,true);try{await fn()}catch(x){note(x.message)}finally{busy(form,false)}})}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 run($('f-login'),async()=>{const id=$('l-id').value.trim(),pw=$('l-pw').value;if(!id||!pw)throw new Error('أدخل بريدك أو اسم المستخدم وكلمة المرور.');
- await post('login',{email:id,password:pw});location.href=NEXT});
+ const j=await post('login',{email:id,password:pw});if(j.need2fa){T2FA=j.t;document.querySelectorAll('form').forEach(f=>f.hidden=f.id!=='f-2fa');$('seg').hidden=true;$('ttl').textContent=tr('التحقق بخطوتين');$('lead').textContent=tr('افتح تطبيق المصادقة في هاتفك واكتب الرمز الظاهر لحساب «Winning Product Radar».');$('lead').hidden=false;setTimeout(()=>$('t-code').focus(),50);return}location.href=NEXT});
+let T2FA='';run($('f-2fa'),async()=>{const c=$('t-code').value.trim();if(c.length<6)throw new Error('اكتب الرمز المكوّن من 6 أرقام.');await post('login/2fa',{t:T2FA,code:c});location.href=NEXT});
 run($('f-register'),async()=>{const nm=$('r-name').value.trim(),un=$('r-un').value.trim().toLowerCase(),em=$('r-em').value.trim(),pw=$('r-pw').value;
  if(!/^\S+@\S+\.\S+$/.test(em))throw new Error('أدخل بريداً إلكترونياً صحيحاً.');
  if(un&&!/^[a-z0-9_.]{3,30}$/.test(un))throw new Error('اسم المستخدم: 3 إلى 30 حرفاً لاتينياً صغيراً أو أرقاماً أو _ .');

@@ -20,9 +20,9 @@ const SKIP = '[translate=no],[dir=auto],.pc-ti,.pc-sub,.l-chips,script,style,tex
       const pg = await ctx.newPage(), errs = []; pg.on('pageerror', e => errs.push(e.message));
       if (first) { await pg.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123', name: 'Admin' } }); first = false; }
       else await pg.request.post(BASE + '/api/login', { data: { email: 'a@t.dz', password: 'password123' } });
-      await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
+      await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum h2');
       ok(await pg.evaluate(() => document.getElementById('wpr-app').dir === 'ltr' && document.documentElement.lang) === L, L + ': الاتجاه من اليسار واللغة ' + L);
-      ok((await pg.innerText('.onb h2')).includes(L === 'en' ? 'Start here' : 'Commencez ici') && (await pg.innerText('.nv[data-v="dash"]')).includes(L === 'en' ? 'Dashboard' : 'Tableau de bord'), L + ': لوحة التحكم مترجمة');
+      ok((await pg.innerText('.dsum h2')).includes(L === 'en' ? 'summary' : 'Résumé') && (await pg.innerText('.nv[data-v="dash"]')).includes(L === 'en' ? 'Dashboard' : 'Tableau de bord'), L + ': لوحة التحكم مترجمة');
       let bad = await leftovers(pg);
       await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' }); await pg.setInputFiles('#file', f); await pg.waitForSelector('#grid .pc');
       ok(/\d/.test(await pg.innerText('.kpis, #sum, #v-analyze')), L + ': نتائج التحليل تظهر');
@@ -36,10 +36,10 @@ const SKIP = '[translate=no],[dir=auto],.pc-ti,.pc-sub,.l-chips,script,style,tex
     }
     const ctx = await b.newContext(); await ctx.addInitScript(() => { try { if (!localStorage.getItem('wpr_lang')) localStorage.setItem('wpr_lang', 'ar'); } catch (e) {} });
     const pg = await ctx.newPage(); await pg.request.post(BASE + '/api/login', { data: { email: 'a@t.dz', password: 'password123' } });
-    await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
-    ok(await pg.evaluate(() => !window.I18N_DICT && document.getElementById('wpr-app').dir === 'rtl') && (await pg.innerText('.onb h2')).includes('ابدأ من هنا'), 'العربية: بلا قاموس، من اليمين');
-    await pg.click('.wd-lang'); await pg.click('[data-lang="en"]'); await pg.waitForLoadState('load'); await pg.waitForSelector('.onb');
-    ok((await pg.innerText('.onb h2')).includes('Start here'), 'تغيير اللغة من القائمة الجانبية');
+    await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum h2');
+    ok(await pg.evaluate(() => !window.I18N_DICT && document.getElementById('wpr-app').dir === 'rtl') && (await pg.innerText('.dsum h2')).includes('ملخص'), 'العربية: بلا قاموس، من اليمين');
+    await pg.click('.wd-lang'); await pg.click('[data-lang="en"]'); await pg.waitForLoadState('load'); await pg.waitForSelector('.dsum h2');
+    ok((await pg.innerText('.dsum h2')).includes('summary'), 'تغيير اللغة من القائمة الجانبية');
     console.log(`PASS ${pass} i18n checks`);
   } catch (e) { console.error('FAIL', e.message); process.exitCode = 1; }
   finally { await b.close(); srv.kill(); }

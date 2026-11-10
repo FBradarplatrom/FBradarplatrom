@@ -59,7 +59,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     // ---- المدير: الباقات (سعر + حدود)
     await A.goto(BASE + '/payments'); await A.waitForSelector('#t-abill [data-adm="plans"]');
     await A.click('[data-adm="plans"]'); await A.waitForSelector('#pl-t');
-    const row = A.locator('#pl-t tr[data-pl]').filter({ has: A.locator('[data-f="name"][value="شهري"]') });
+    const row = A.locator('#pl-t [data-pl]').filter({ has: A.locator('[data-f="name"][value="شهري"]') });
     await row.locator('[data-f="price"]').fill('2500'); await row.locator('[data-f="price_usd"]').fill('19'); await row.locator('[data-l="gapProducts"]').fill('2'); await row.locator('[data-l="searchesPerDay"]').fill('5'); await row.locator('[data-l="aiPerMonth"]').fill('1');
     await A.click('[data-adm="saveplans"]'); await toast(A, /حُفظت الباقات/);
     await A.locator('#ft-t tr[data-fk=""] [data-g="ar"]').fill('تقارير أسبوعية'); await A.locator('#ft-t tr[data-fk=""] [data-g="en"]').fill('Weekly reports');
@@ -73,7 +73,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok((await (await M.request.get(BASE + '/api/me')).json()).plan === 'تجربة مجانية', 'المسجّل الجديد يأخذ الباقة المجانية تلقائياً');
 
     // ---- المشترك: بطاقة الاشتراك والعدادات
-    await M.goto(BASE + '/settings'); await M.waitForSelector('#x-billing .meter');
+    await M.goto(BASE + '/subscription'); await M.waitForSelector('#x-billing .meter');
     ok((await M.locator('#x-billing .meter').count()) === 4, 'عدادات الاستعمال الأربعة');
     await M.click('[data-acc="plans"]'); await M.waitForSelector('.plan-g .plan');
     ok(/2[.,٬]?500|٢٬?٥٠٠/.test(await M.locator('.plan-g').textContent()), 'الباقة بسعرها في نافذة الاختيار');
@@ -110,7 +110,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(bl.limits.gapProducts === 2 && bl.usage.gapProducts === 2, 'الاستعمال والحدود في /api/billing');
 
     const days = async () => (await (await M.request.get(BASE + '/api/me')).json()).expires_at;
-    const openPay = async m => { await M.goto(BASE + '/settings'); await M.waitForSelector('[data-acc="plans"]'); await M.click('[data-acc="plans"]'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
+    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('[data-acc="plans"]'); await M.click('[data-acc="plans"]'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
     // ---- SATIM: CIB / الذهبية مباشرة
     let before = await days();
     await openPay('satim'); await Promise.all([M.waitForURL(/paid=/), M.click('[data-acc="pay"][data-m="satim"]')]);
@@ -212,7 +212,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await E.request.post(BASE + '/api/register', { data: { email: 'x@t.dz', password: 'password123' } });
     const uid = (await (await A.request.get(BASE + '/api/admin/users')).json()).find(u => u.email === 'x@t.dz').id;
     await A.request.post(BASE + '/api/admin/users/' + uid, { data: { days: -10, plan: 'شهري' } });
-    await E.goto(BASE + '/settings'); await E.waitForSelector('[data-acc="plans"]');
+    await E.goto(BASE + '/subscription'); await E.waitForSelector('[data-acc="plans"]');
     ok(/اشترك الآن/.test(await E.locator('[data-acc="plans"]').textContent()), 'منتهي الاشتراك يرى «اشترك الآن»');
 
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));

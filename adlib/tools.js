@@ -5,7 +5,7 @@
 //  • Google Sheets: إرسال مباشر إلى جدولك عبر Google Apps Script (بلا حساب Google في المنصة).
 //  • مراقبة صفحات المنافسين: إعادة جمع إعلانات صفحة ومعرفة الجديد والمتوقف.
 //  • TikTok: نتائج البحث بالعبارات الشائعة (tiktok made me buy it ...) مرتبة بالتفاعل.
-const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js');
+const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js'), MK = require('./lib/markets.js');
 const WEEK = 7 * 864e5;
 
 module.exports = function mountTools(app, X) {
@@ -82,12 +82,16 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
     try { LIM.useAI(q.u); } catch (e) { return n(e); }
     const texts = (Array.isArray(p.texts) ? p.texts : []).map(t => str(t, 900)).slice(0, 5);
     const facts = { name: str(p.name, 200), market: str(p.market, 3), price: str(p.price, 40), category: str(p.cat, 10), score: num(p.score), days_running: num(p.days), sellers: num(p.n), copies: num(p.copies), benefit_tags: (p.tags || []).map(t => str(t, 80)).slice(0, 3) };
-    const sys = 'You are a senior e-commerce ad strategist for the Algerian cash-on-delivery market. You analyse a winning ad seen on Facebook (possibly from another country) and explain WHY it sells and HOW to sell the same product in Algeria. ' +
+    // سوق المشترك المستهدف (نفس اختيار «ثغرات السوق»، الجزائر افتراضياً): العرض ونصوص الإعلان بلغاته
+    let tgt = 'DZ'; try { const c = JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); if (MK.COUNTRIES[c] && c !== 'ALL') tgt = c; } catch (e) {}
+    let country = tgt; try { country = new Intl.DisplayNames(['en'], { type: 'region' }).of(tgt); } catch (e) {}
+    const langs = MK.langsOf(tgt).filter(l => l !== 'arz').slice(0, 3), copyT = {}; langs.forEach(l => { copyT[l] = 'ad text in ' + ((MK.LANGS[l] || {}).native || l); });
+    const sys = 'You are a senior e-commerce ad strategist for the ' + country + ' market. You analyse a winning ad seen on Facebook (possibly from another country) and explain WHY it sells and HOW to sell the same product in ' + country + '. ' +
       'Never invent facts about the product (specs, certifications, reviews) that are not in the ad text; say "غير مذكور" when unknown. Answer in Arabic (Modern Standard), except the ad copies. Return ONLY JSON.';
     const user = 'Facts: ' + JSON.stringify(facts) + '\nAd texts:\n' + texts.join('\n---\n') +
-      '\n\nReturn JSON: {"summary":"جملتان","product":"ما هو المنتج بالضبط","angle":"زاوية البيع الرئيسية","audience":"الجمهور المستهدف (العمر، الجنس، الاهتمامات)","pains":["المشكلة التي يحلها"],"strengths":["نقاط قوة الإعلان"],"weaknesses":["نقاط ضعف أو مخاطر"],"hooks":["3 افتتاحيات (أول 3 ثوانٍ) لفيديو"],"offer":"عرض مقترح للجزائر (كمية/هدية/توصيل)","price_hint":"ملاحظة سعرية إن أمكن","algeria_fit":"مدى ملاءمته للسوق الجزائري ولماذا","ad_copy":{"ar":"نص إعلان بالعربية الفصحى المبسطة","dz":"نص إعلان بالدارجة الجزائرية","fr":"texte d\'annonce en français"}}';
+      '\n\nReturn JSON: {"summary":"جملتان","product":"ما هو المنتج بالضبط","angle":"زاوية البيع الرئيسية","audience":"الجمهور المستهدف (العمر، الجنس، الاهتمامات)","pains":["المشكلة التي يحلها"],"strengths":["نقاط قوة الإعلان"],"weaknesses":["نقاط ضعف أو مخاطر"],"hooks":["3 افتتاحيات (أول 3 ثوانٍ) لفيديو"],"offer":"عرض مقترح لهذا السوق (كمية/هدية/توصيل)","price_hint":"ملاحظة سعرية إن أمكن","algeria_fit":"مدى ملاءمته لهذا السوق ولماذا","ad_copy":' + JSON.stringify(copyT) + '}';
     AI.chatJSON(sys, user, { timeout: 40000 }).then(r => {
-      const d = r.data || {};
+      const d = Object.assign(r.data || {}, { market: tgt });
       db.prepare("insert into ai_cache(user_id,k,kind,data,created_at) values(?,?,'ad',?,?) on conflict(user_id,k,kind) do update set data=excluded.data, created_at=excluded.created_at").run(q.u.id, k, JSON.stringify(d), now());
       s.json({ data: d, created_at: now() });
     }).catch(n);

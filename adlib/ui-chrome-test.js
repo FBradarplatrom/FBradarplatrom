@@ -17,11 +17,11 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
     await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
     // القائمة
     const groups = await pg.$$eval('.nvh', a => a.filter(x => x.offsetParent !== null).map(x => x.textContent.trim()));   // المشترك لا يرى مجموعة «الإدارة»
-    ok(groups.join('|') === 'البحث اليومي|منتجاتي|حسابي', 'مجموعات القائمة: ' + groups.join('، '));
+    ok(groups.join('|') === 'البحث اليومي|منتجاتي|الربط والمساعدة', 'مجموعات القائمة: ' + groups.join('، '));
     ok(await pg.isVisible('.nv[data-v="guide"]') && !(await pg.$('.nv[data-v="settings"]')), 'دليل الاستخدام في الأعلى، والإعدادات انتقلت لقائمة الحساب');
-    await pg.click('#me-btn'); ok(await pg.isVisible('#am [data-v="settings"]') && await pg.isVisible('#am [data-a="billing"]') && await pg.isVisible('#am [data-a="logout"]'), 'قائمة الحساب: الإعدادات، العرض والدفع، الخروج');
-    await pg.click('#am [data-a="billing"]'); await pg.waitForFunction(() => location.pathname === '/settings' && document.querySelector('#x-billing').textContent.length > 30);
-    ok(await pg.isHidden('#am'), 'العرض والدفع يفتح الإعدادات وتُغلق القائمة');
+    await pg.click('#me-btn'); ok(await pg.isVisible('#am [data-v="settings"]') && await pg.isVisible('#am [data-v="sub"]') && await pg.isVisible('#am [data-a="logout"]'), 'قائمة الحساب: الإعدادات، العرض والدفع، الخروج');
+    await pg.click('#am [data-v="sub"]'); await pg.waitForFunction(() => location.pathname === '/subscription' && document.querySelector('#x-billing').textContent.length > 30);
+    ok(await pg.isHidden('#am'), '«اشتراكي» يفتح صفحة الاشتراك وتُغلق القائمة');
     await pg.click('#sbc'); ok((await pg.$eval('#sb', e => e.getBoundingClientRect().width)) < 100, 'طيّ القائمة');
     await pg.reload(); await pg.waitForSelector('#sb'); ok(await pg.$eval('#wpr-app', e => e.classList.contains('sbmini')), 'الطيّ محفوظ بعد التحديث');
     await pg.click('#sbc');
