@@ -52,7 +52,7 @@
     const sel = new Set(P.sel);
     root.innerHTML = `<div id="t-live"></div>
 <div class="card" id="t-login" style="margin-bottom:14px"><p class="sub" style="margin:0">⏳ جارٍ التحقق من تسجيل الدخول في TikTok…</p></div>
-<div class="card"><h2>🎵 ابحث في TikTok بأشهر عبارات المنتجات</h2><p class="sub">اختر العبارات، فتفتح الإضافة بحث TikTok لكل عبارة على تبويب «الأفضل» وتمرّر وتجمع الفيديوهات مع مشاهداتها وإعجاباتها وتاريخها، ثم تُرتَّب هنا وتُستبعد غير المنتجات. يجب أن تكون مسجّلاً في TikTok على Chrome.</p>
+<div class="card"><h2>ابحث في TikTok بأشهر عبارات المنتجات</h2><p class="sub">اختر العبارات، فتفتح الإضافة بحث TikTok لكل عبارة على تبويب «الأفضل» وتمرّر وتجمع الفيديوهات مع مشاهداتها وإعجاباتها وتاريخها، ثم تُرتَّب هنا وتُستبعد غير المنتجات. يجب أن تكون مسجّلاً في TikTok على Chrome.</p>
 <div class="l-chips" style="max-height:none">${PH.map(q => `<button type="button" class="lc${sel.has(q) ? ' on' : ''}" data-tq="${e(q)}" dir="auto">${e(q)}</button>`).join('')}</div>
 <div class="l-add" style="max-width:520px"><input id="t-new" dir="auto" placeholder="أضف عبارة، مثل: amazon gadgets 2026"><button class="btn ghost sm" data-t="add">إضافة</button></div>
 <div class="l-g3" style="margin-top:12px"><label class="fl">فيديوهات لكل عبارة<input type="number" min="20" max="2000" data-tp="per" value="${e(P.per)}"></label><label class="fl">سرعة التمرير<select data-tp="speed"><option value="normal"${P.speed !== 'slow' ? ' selected' : ''}>عادية</option><option value="slow"${P.speed === 'slow' ? ' selected' : ''}>بطيئة (أدق: يترك لـ TikTok وقتاً لتحميل الفيديوهات)</option></select></label></div>

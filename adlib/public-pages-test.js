@@ -45,7 +45,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       ok(!/الجزائري|algérien|Algerian market/i.test(await pg.locator('.hero').innerText()), lg + ': لا عبارة «للسوق الجزائري» في الواجهة');
       ok(!/(أوزان|weights|pondération|الكلمات الذهبية|golden word|mots dorés|عدد البائعين|number of sellers|37|26 نقطة)/i.test(txt), lg + ': لا كشف لطريقة التصنيف والأوزان');
       ok(!/(للجزائر فقط|لكل الأسواق|Every market|Tous les marchés|only for one country|réservé à un seul pays)/i.test(txt) && (await pg.$$('#faqs details')).length >= 8, lg + ': أسئلة مفيدة، وبلا «للجزائر فقط» ولا «لكل الأسواق»');
-      ok(await pg.$eval('#lang', s => s.tagName) === 'SELECT', lg + ': اختيار اللغة قائمة منسدلة');
+      await pg.waitForSelector('.wd-lang'); ok(await pg.isVisible('.wd-lang') && !(await pg.isVisible('#lang')), lg + ': اختيار اللغة من الزر العائم (بلا قائمة مكررة)');
       const free = pg.locator('#plans .plan').first(), offs = await free.locator('li.off').allTextContents(), ons = await pg.locator('#plans .plan').nth(1).locator('li.off').count();
       ok(offs.length === 2 && offs.some(x => /TikTok/.test(x)) && offs.some(x => /واتساب|WhatsApp/.test(x)) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (✕ لغير المشمول): ' + offs.join(' | '));
       if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/landing-' + lg + '.png', fullPage: true });
@@ -58,7 +58,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(/Create your account/.test(await pg.locator('#ttl').innerText()) && /Email/.test(await pg.locator('#f-register').innerText()), 'التسجيل بالإنجليزية بعد اختيارها في الصفحة الرئيسية');
     await pg.fill('#r-em', 'bad'); await pg.click('#f-register .btn'); await pg.waitForSelector('#msg .msg');
     ok(/Enter a valid email/.test(await pg.locator('#msg').innerText()), 'رسائل الخطأ مترجمة');
-    await pg.selectOption('#lang', 'fr'); await pg.waitForURL(/lang=fr/); await pg.waitForSelector('#ttl');
+    await pg.waitForSelector('.wd-lang'); await pg.click('.wd-lang'); await pg.click('[data-lang="fr"]'); await pg.waitForURL(/lang=fr/); await pg.waitForSelector('#ttl');
     ok(/Créez votre compte/.test(await pg.locator('#ttl').innerText()), 'تبديل اللغة إلى الفرنسية');
     if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/login-fr.png' });
     await pg.fill('#r-em', 'n@t.dz'); await pg.fill('#r-pw', 'password123'); await pg.fill('#r-pw2', 'password123'); await pg.click('#f-register .btn'); await pg.waitForURL(BASE + '/');

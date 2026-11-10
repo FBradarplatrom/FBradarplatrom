@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#4f46e5">
+<meta name="theme-color" content="#118553">
 <title>Winning Product Radar · رادار المنتجات الرابحة</title>
 <meta name="description" content="Find winning e-commerce products before the market gets crowded: ad intelligence for 40+ countries, market gaps, suppliers, competitor tracking and TikTok trends.">
 <meta property="og:title" content="Winning Product Radar">
 <meta property="og:description" content="Find winning products before the market gets crowded.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23118553'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--card2:#f8fafc;--ink:#0f172a;--mut:#5b6884;--line:#e3e8f2;--brand:#4f46e5;--brand2:#7c3aed;--soft:#eef2ff;--ok:#059669;--sh:0 1px 2px rgba(15,23,42,.05),0 18px 44px -24px rgba(15,23,42,.28);--glass:rgba(246,247,251,.8)}
-@media(prefers-color-scheme:dark){:root{--bg:#0a0f1e;--card:#121a2f;--card2:#172038;--ink:#e9edf8;--mut:#97a3c0;--line:#25304d;--brand:#818cf8;--brand2:#a78bfa;--soft:#1b2347;--sh:0 1px 2px rgba(0,0,0,.4),0 18px 44px -24px rgba(0,0,0,.75);--glass:rgba(10,15,30,.8)}}
+:root{--bg:#e4e9e6;--card:#f3f8f6;--card2:#ebf0ed;--ink:#121916;--mut:#5d6661;--line:#d3d8d6;--brand:#118553;--brand2:#0a7040;--soft:#dcefe4;--ok:#0a7040;--sh:0 1px 2px rgba(18,25,22,.05),0 8px 24px -16px rgba(18,25,22,.18);--glass:rgba(228,233,230,.85)}
+@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--card2:#202825;--ink:#dbe1de;--mut:#9ca4a0;--line:#2e3632;--brand:#35ac74;--brand2:#6bc79a;--soft:#173126;--sh:0 1px 2px rgba(0,0,0,.35),0 8px 24px -16px rgba(0,0,0,.6);--glass:rgba(18,25,22,.85)}}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.75 "IBM Plex Sans Arabic",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-html[dir=ltr] body{font-family:Inter,"IBM Plex Sans Arabic",system-ui,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.75 "Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html[dir=ltr] body{font-family:"Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
 a{color:inherit;text-decoration:none}
 .w{max-width:1140px;margin:0 auto;padding:0 clamp(16px,3vw,28px)}
 header{position:sticky;top:0;z-index:20;background:var(--glass);backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
@@ -25,7 +25,7 @@ header{position:sticky;top:0;z-index:20;background:var(--glass);backdrop-filter:
 .links{display:flex;gap:22px;margin-inline-start:auto;font-size:15px;color:var(--mut)}.links a:hover{color:var(--ink)}
 .lang{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--mut)}.lang select{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card);color:var(--ink);font:inherit;font-size:13.5px;cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:11px 20px;font-weight:600;font-size:15px;border:1px solid transparent;cursor:pointer;transition:.15s;white-space:nowrap}
-.btn.p{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 10px 24px -12px rgba(79,70,229,.8)}.btn.p:hover{transform:translateY(-1px)}
+.btn.p{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 10px 24px -12px rgba(17,133,83,.8)}.btn.p:hover{transform:translateY(-1px)}
 .btn.g{border-color:var(--line);background:var(--card)}.btn.sm{padding:8px 14px;font-size:14px}
 .hero{padding:clamp(48px,8vw,96px) 0 40px}.hg{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
 .tag{display:inline-flex;gap:8px;align-items:center;background:var(--soft);color:var(--brand);border-radius:99px;padding:6px 14px;font-size:14px;font-weight:600}
@@ -59,13 +59,13 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-siz
 .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.chips span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:14px}
 @media(max-width:900px){.hg,.g3,.g2,.steps,.band{grid-template-columns:1fr}.links{display:none}.f1,.f2{display:none}.mock{margin-top:8px}}
 @media(max-width:420px){.nav .btn.g{display:none}.lg span{display:none}}
-</style>
+[hidden]{display:none!important}</style>
 <script data-fab src="/theme.js"></script></head>
 <body>
 <header><div class="w nav">
  <a class="lg" href="/"><i>📡</i><span data-t="brand"></span></a>
  <nav class="links"><a href="#features" data-t="nav_features"></a><a href="#how" data-t="nav_how"></a><a href="#pricing" data-t="nav_pricing"></a><a href="#faq" data-t="nav_faq"></a></nav>
- <label class="lang">🌐 <select id="lang" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></label>
+ <label class="lang" hidden>🌐 <select id="lang" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></label>
  <a class="btn g sm" href="/login" data-href="/login" data-t="login"></a>
  <a class="btn p sm" href="/register" data-href="/register" data-t="cta_short"></a>
 </div></header>
@@ -80,7 +80,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-siz
   <p class="note" data-t="hero_note"></p>
  </div>
  <div class="mock" aria-hidden="true">
-  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#c7d2fe,#a78bfa)"></div><div class="mt"><b data-t="m1"></b><span data-t="m1s"></span><div class="bar"><i style="width:86%"></i></div></div><span class="pill" style="background:#8b5cf6" data-t="m_gem"></span></div>
+  <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#a2ddbf,#6bc79a)"></div><div class="mt"><b data-t="m1"></b><span data-t="m1s"></span><div class="bar"><i style="width:86%"></i></div></div><span class="pill" style="background:#35ac74" data-t="m_gem"></span></div>
   <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"></div><div class="mt"><b data-t="m2"></b><span data-t="m2s"></span><div class="bar"><i style="width:64%"></i></div></div><span class="pill" style="background:#16a34a" data-t="m_prom"></span></div>
   <div class="mrow"><div class="mimg" style="background:linear-gradient(135deg,#fed7aa,#f97316)"></div><div class="mt"><b data-t="m3"></b><span data-t="m3s"></span><div class="bar"><i style="width:72%"></i></div></div><span class="pill" style="background:#f97316" data-t="m_fire"></span></div>
   <div class="float f1">🎯 <span data-t="f1"></span></div>

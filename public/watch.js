@@ -68,7 +68,7 @@ ${due.length ? `<div class="alert info" style="display:flex;gap:10px;align-items
 <div class="g-nums"><div><b>${num(nw.length)}</b><span>جديد منذ الفحص السابق</span></div><div><b>${num(w.ads.filter(a => a._active).length)}</b><span>نشط الآن</span></div><div><b>${num(off.length)}</b><span>متوقف</span></div><div><b>${num(w.ads.length)}</b><span>كل ما رأيناه</span></div></div>
 <p class="sub">${w.last_scan_at ? 'آخر فحص ' + X.ago(w.last_scan_at) + ' · الفحص القادم ' + X.fd(w.next_check_at) : 'لم تُفحص بعد'}. «جديد» = إعلان ظهر أول مرة في آخر فحص: غالباً منتج جديد يختبره المنافس.</p></div>
 ${nw.length ? `<div class="card" style="margin-top:14px"><h2>🆕 إعلانات جديدة</h2>${nw.map(adCard).join('')}</div>` : ''}
-<div class="card" style="margin-top:14px"><h2>✅ النشط الآن <small>(${num(act.length)})</small></h2>${act.slice(0, 200).map(adCard).join('') || '<p class="sub">—</p>'}</div>
+<div class="card" style="margin-top:14px"><h2>النشط الآن <small>(${num(act.length)})</small></h2>${act.slice(0, 200).map(adCard).join('') || '<p class="sub">—</p>'}</div>
 ${off.length ? `<details class="fx" style="margin-top:14px"><summary>متوقف (${num(off.length)})</summary>${off.slice(0, 200).map(adCard).join('')}</details>` : ''}`;
     drawLive();
   }

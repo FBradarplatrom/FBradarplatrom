@@ -21,7 +21,7 @@
   function apply() {
     var t = get(); D.documentElement.setAttribute('data-theme', t || 'auto');
     for (var i = 0; i < D.styleSheets.length; i++) { var rs = null; try { rs = D.styleSheets[i].cssRules; } catch (e) {} if (rs) walk(rs, t); }
-    var mc = D.querySelector('meta[name=theme-color]'); if (mc) mc.content = isDark() ? '#0b1020' : '#4f46e5';
+    var mc = D.querySelector('meta[name=theme-color]'); if (mc) mc.content = isDark() ? '#121916' : '#118553';
     var tb = D.querySelector('.wd-th'); if (tb) tb.innerHTML = isDark() ? SUN : MOON;
   }
   function set(t) { try { if (t) localStorage.setItem(K, t); else localStorage.removeItem(K); } catch (e) {} apply(); }
@@ -41,10 +41,10 @@
   var GLOBE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
   var WA = '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg>';
   var css = '.wpr-dock{position:fixed;bottom:16px;inset-inline-end:16px;z-index:30;display:flex;gap:8px;align-items:center;font:14px/1.4 system-ui,sans-serif}' +
-    '.wd-b{height:44px;min-width:44px;border-radius:99px;border:1px solid var(--line,#e5e7eb);background:var(--card,#fff);color:var(--ink,#0f172a);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;cursor:pointer;box-shadow:0 6px 18px -8px rgba(15,23,42,.35);font:inherit;font-weight:600;text-decoration:none}' +
-    '.wd-b:hover{border-color:var(--brand,#4f46e5);color:var(--brand,#4f46e5)}.wd-wa{background:#25d366;border-color:#25d366;padding:0}.wd-wa:hover{background:#1ebe5b;border-color:#1ebe5b}.wd-th,.wd-wa{width:44px;padding:0}' +
-    '.wd-l{position:relative}.wd-m{position:absolute;bottom:52px;inset-inline-end:0;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:14px;padding:6px;min-width:150px;box-shadow:0 14px 34px -12px rgba(15,23,42,.4)}' +
-    '.wd-m button{display:flex;width:100%;justify-content:space-between;gap:10px;border:0;background:none;color:var(--ink,#0f172a);padding:9px 12px;border-radius:10px;cursor:pointer;font:inherit}.wd-m button:hover{background:var(--soft,#eef2ff)}.wd-m button.on{color:var(--brand,#4f46e5);font-weight:700}' +
+    '.wd-b{height:44px;min-width:44px;border-radius:99px;border:1px solid var(--line,#e5e7eb);background:var(--card,#fff);color:var(--ink,#121916);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;cursor:pointer;box-shadow:0 6px 18px -8px rgba(18,25,22,.35);font:inherit;font-weight:600;text-decoration:none}' +
+    '.wd-b:hover{border-color:var(--brand,#118553);color:var(--brand,#118553)}.wd-wa{background:#25d366;border-color:#25d366;padding:0}.wd-wa:hover{background:#1ebe5b;border-color:#1ebe5b}.wd-th,.wd-wa{width:44px;padding:0}' +
+    '.wd-l{position:relative}.wd-m{position:absolute;bottom:52px;inset-inline-end:0;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:14px;padding:6px;min-width:150px;box-shadow:0 14px 34px -12px rgba(18,25,22,.4)}' +
+    '.wd-m button{display:flex;width:100%;justify-content:space-between;gap:10px;border:0;background:none;color:var(--ink,#121916);padding:9px 12px;border-radius:10px;cursor:pointer;font:inherit}.wd-m button:hover{background:var(--soft,#e0f1e7)}.wd-m button.on{color:var(--brand,#118553);font-weight:700}' +
     '.wpr-dock [hidden]{display:none!important}@media print{.wpr-dock{display:none}}';
   function build() {
     if (D.querySelector('.wpr-dock')) return;

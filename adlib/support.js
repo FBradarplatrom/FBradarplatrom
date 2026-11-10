@@ -5,6 +5,8 @@ module.exports = function mountSupport(app, X) {
   const { db, auth, admin, wrap, now, blocked, fail, optUser } = X, CFG = require('./config.js');
   db.exec(`create table if not exists contact_msgs(id integer primary key, user_id integer, name text, email text, subject text, body text, ip text, status text default 'new', created_at integer);
 create table if not exists legal_docs(lang text, doc text, body text, updated_at integer, primary key(lang, doc));`);
+  ['category text', 'reply text', 'replied_at integer'].forEach(c => { try { db.exec('alter table contact_msgs add column ' + c); } catch (e) {} });
+  const CATS = ['tech', 'billing', 'usage', 'idea', 'other'];
   const bad = (m, st) => Object.assign(new Error(m), { status: st || 400 }), str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
   const LANGS = ['ar', 'en', 'fr'], DOCS = ['terms', 'privacy', 'refund', 'contact'];
 
@@ -14,10 +16,21 @@ create table if not exists legal_docs(lang text, doc text, body text, updated_at
     const u = optUser(q), email = u ? u.email : str(b.email, 120).toLowerCase(), msg = str(b.message, 4000);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw bad('email');
     if (msg.length < 10) throw bad('message');
-    const subject = str(b.subject, 150) || '—', name = str(b.name, 80) || (u && u.name) || '';
+    const subject = str(b.subject, 150) || '—', name = str(b.name, 80) || (u && u.name) || '', category = CATS.includes(b.category) ? b.category : 'other';
     fail('c:' + q.ip, 36e5);
-    db.prepare('insert into contact_msgs(user_id,name,email,subject,body,ip,created_at) values(?,?,?,?,?,?,?)').run(u ? u.id : null, name, email, subject, msg, q.ip || '', now());
-    try { X.notifyAdmins && X.notifyAdmins('✉️ رسالة جديدة من ' + (name ? name + ' · ' : '') + email + '\n' + subject + '\n\n' + msg.slice(0, 500)); } catch (e) {}
+    const id = db.prepare('insert into contact_msgs(user_id,name,email,subject,body,ip,created_at,category) values(?,?,?,?,?,?,?,?)').run(u ? u.id : null, name, email, subject, msg, q.ip || '', now(), category).lastInsertRowid;
+    try { X.notifyAdmins && X.notifyAdmins('✉️ رسالة جديدة من ' + (name ? name + ' · ' : '') + email + '\n' + subject + '\n\n' + msg.slice(0, 500), '/support-inbox'); } catch (e) {}
+    s.json({ ok: 1, id: Number(id) });
+  }));
+  // المشترك: طلباته وردود الدعم عليها
+  app.get('/api/support/mine', auth, wrap((q, s) => s.json(db.prepare('select id, category, subject, body, status, reply, replied_at, created_at from contact_msgs where user_id=? order by created_at desc limit 50').all(q.u.id))));
+  // المدير يردّ من المنصة: يُحفظ الرد ويُعلَّم الطلب «تم الرد» ويصل تنبيه للمشترك
+  app.post('/api/admin/messages/:id/reply', auth, admin, wrap((q, s) => {
+    const m = db.prepare('select * from contact_msgs where id=?').get(+q.params.id); if (!m) throw bad('غير موجود', 404);
+    const reply = str(q.body && q.body.reply, 4000); if (reply.length < 2) throw bad('اكتب الرد');
+    db.prepare("update contact_msgs set reply=?, replied_at=?, status='done' where id=?").run(reply, now(), m.id);
+    if (m.user_id && X.notify) X.notify(m.user_id, 'support', '💬 ردّ فريق الدعم على «' + (m.subject || '—') + '»:\n' + reply.slice(0, 600), '/help');
+    X.act && X.act(q.u.id, 'admin_reply', q, '#' + m.id);
     s.json({ ok: 1 });
   }));
   app.get('/api/admin/messages', auth, admin, wrap((q, s) => s.json({

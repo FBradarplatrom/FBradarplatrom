@@ -14,7 +14,7 @@
   st.textContent = `
 .lt{display:flex;gap:6px;overflow-x:auto;margin:0 0 18px;padding:2px;scrollbar-width:none}.lt::-webkit-scrollbar{display:none}
 .lt button{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:99px;padding:8px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s}
-.lt button:hover{color:var(--ink);border-color:var(--brand)}.lt button.on{background:linear-gradient(135deg,var(--brand),#7c3aed);border-color:transparent;color:#fff}
+.lt button:hover{color:var(--ink);border-color:var(--brand)}.lt button.on{background:linear-gradient(135deg,var(--brand),#0a7040);border-color:transparent;color:#fff}
 .l-st{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}.l-st .grow{flex:1;min-width:200px}
 .l-dot{width:10px;height:10px;border-radius:50%;background:var(--bad);flex:none}.l-dot.ok{background:var(--ok)}.l-dot.warn{background:var(--warn)}
 .l-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.l-g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
@@ -24,7 +24,7 @@
 .l-sub{margin:12px 0 6px;font-size:13px;font-weight:600;color:var(--mut)}
 .l-q{max-height:150px;overflow:auto;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
 .l-bi{display:flex;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13.5px}.l-bi:last-child{border:0}.l-bi .q{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.l-bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.l-bar i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width .3s}.l-bar.hot i{background:linear-gradient(90deg,#f59e0b,#dc2626)}
+.l-bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.l-bar i{display:block;height:100%;background:linear-gradient(90deg,#118553,#35ac74);transition:width .3s}.l-bar.hot i{background:linear-gradient(90deg,#f59e0b,#dc2626)}
 .l-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}.l-nums div{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center}.l-nums b{display:block;font-size:22px;line-height:1.3}.l-nums span{font-size:12px;color:var(--mut)}
 .l-ck{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13.5px}.l-ck label{display:flex;gap:6px;align-items:center;cursor:pointer}
 .l-steps li{margin:6px 0}.l-steps code{direction:ltr;display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:0 6px}
@@ -339,10 +339,10 @@ ${qs.length ? `<div class="l-q">${qs.slice(0, 40).map(x => `<span dir="auto"${x.
 <label class="fl">وضع الإرسال<select data-sm>${opt('auto', 'تلقائي: يصل فور الرصد', sm)}${opt('manual', 'يدوي: أرسل أنا بعد المراجعة', sm)}</select></label></div>
 <p class="sub" style="margin:10px 0 0">تصل الإعلانات المجموعة إلى «الإعلانات الواردة» (دفعة لكل عملية جمع) وتُقيَّم هناك بمعايير المنصة. الدفعات التي لا تُحلَّل تُحذف تلقائياً بعد ${num(STATS.retention.days)} يوماً.</p></div>
 
-<div class="card" style="margin-top:14px"><h2>🔎 بحث سريع</h2><div class="l-add" style="max-width:640px"><input id="l-qs" dir="auto" placeholder="كلمة البحث بلغة ${e(cname(P.country))}، مثل: ${e(quickHint())}" value="${e(P.q)}"><button class="btn" data-l="quick">ابدأ الجمع</button></div>
+<div class="card" style="margin-top:14px"><h2>بحث سريع</h2><div class="l-add" style="max-width:640px"><input id="l-qs" dir="auto" placeholder="كلمة البحث بلغة ${e(cname(P.country))}، مثل: ${e(quickHint())}" value="${e(P.q)}"><button class="btn" data-l="quick">ابدأ الجمع</button></div>
 <p style="margin:10px 0 0"><button class="btn ghost sm" data-l="current">جمع الصفحة المفتوحة في فيسبوك</button> <small>إن كنت فتحت بحثاً في مكتبة الإعلانات بنفسك.</small></p></div>
 
-<div class="card${P.edit ? ' l-edit' : ''}" style="margin-top:14px"><div class="l-st" style="margin-bottom:4px"><h2 class="grow" style="margin:0">🏆 بحث جماعي بالكلمات الذهبية</h2><button class="btn ${P.edit ? '' : 'ghost'} sm" data-l="kwedit">${P.edit ? '✓ إنهاء التعديل' : '✎ إضافة / حذف كلمات'}</button></div>
+<div class="card${P.edit ? ' l-edit' : ''}" style="margin-top:14px"><div class="l-st" style="margin-bottom:4px"><h2 class="grow" style="margin:0">بحث جماعي بالكلمات الذهبية</h2><button class="btn ${P.edit ? '' : 'ghost'} sm" data-l="kwedit">${P.edit ? '✓ إنهاء التعديل' : '✎ إضافة / حذف كلمات'}</button></div>
 ${P.edit ? '<div class="alert info">وضع التعديل: اضغط × على كلمة لتعطيلها (أو لحذفها إن أضفتها أنت)، و↺ لاستعادتها، واكتب كلمة جديدة في الخانة تحت كل لغة أو نيش. تُحفظ تلقائياً في قاموسك.</div>' : ''}
 <p class="sub">الكلمات معروضة بلغات ${e(cname(P.country))}: ${curLangs().map(l => e(MK.LANGS[l].native)).join(' · ')}. كل كلمة ذهبية تُركَّب مع مكمّلات لغتها فقط. عدّل القوائم من تبويب «القاموس».</p>
 <div class="l-ck" style="margin:6px 0 10px"><b>طريقة البحث:</b> ${Object.entries(MODES).map(([k, t]) => `<label style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;margin-inline-end:16px"><input type="radio" name="l-mode" data-p="mode" value="${k}"${(P.mode || 'combo') === k ? ' checked' : ''}> ${t}</label>`).join(' ')}
@@ -379,11 +379,11 @@ ${curScripts().map(sc => `<div class="l-sub">${SCN[sc]}</div><div class="l-chips
     root.innerHTML = `<div class="card"><div class="l-st"><div class="grow"><h2 style="margin:0">قاموس كلمات البحث</h2><p class="sub" style="margin:2px 0 0">هذه الكلمات هي ما يبحث به «البحث الجماعي». قاموس المنصة الافتراضي (لغات الجزائر + لغات الأسواق الدولية) يصلك دائماً ومحدَّثاً، وما تضيفه أو تعطّله يخصّك وحدك ولا يضيع عند تحديث الافتراضي. <small id="l-dst">تُحفظ التعديلات تلقائياً</small></p></div>
 <button class="btn ghost sm" data-l="dreset">استعادة كل الافتراضي</button></div>
 ${isAdm ? `<label class="fl chk" style="margin-top:8px"><input type="checkbox" data-l="dadmin"${DMODE === 'admin' ? ' checked' : ''}> وضع المدير: تعديل القاموس الافتراضي لكل المشتركين${DICT.custom ? ' (معدَّل)' : ''}</label>${DMODE === 'admin' ? `<p class="sub">⚠️ تعديلاتك هنا تغيّر الأصل للجميع. <button class="btn danger sm" data-l="dadminreset">العودة للأصل المرفق</button></p>` : ''}` : ''}</div>
-<div class="card" style="margin-top:14px"><h2>🏆 الكلمات الذهبية</h2><p class="sub">قوية = 3 وحدات · عادية = 1 · عامة = 0.3. تُطابَق كلمة مستقلة مكتملة، وتُقبل السوابق وصيغ المخاطب. الصيغ البديلة تُفصل بـ «/».</p>
+<div class="card" style="margin-top:14px"><h2>الكلمات الذهبية</h2><p class="sub">قوية = 3 وحدات · عادية = 1 · عامة = 0.3. تُطابَق كلمة مستقلة مكتملة، وتُقبل السوابق وصيغ المخاطب. الصيغ البديلة تُفصل بـ «/».</p>
 ${MK.ALL_LANGS.filter(lg => v.gold[lg]).map(lg => `<details class="fx"><summary>${LGN[lg]} <small>${['strong', 'normal', 'weak'].map(t => num(v.gold[lg][t].filter(x => x.s !== 'off').length)).join(' · ')}</small></summary>
 ${['strong', 'normal', 'weak'].map(t => `<div class="l-sub">${TRN[t]}</div><div class="l-chips">${v.gold[lg][t].map(x => chipD(x, `data-d="g" data-lg="${lg}" data-tr="${t}" data-t="${e(x.t)}" data-s="${x.s}"`, lg)).join('')}</div>${addBox(`data-d="g" data-lg="${lg}" data-tr="${t}"`)}`).join('')}
 <p style="margin:10px 0 0"><button class="btn ghost sm" data-l="dresetlg" data-lg="${lg}">استعادة افتراضي ${LGN[lg]}</button></p></details>`).join('')}</div>
-<div class="card" style="margin-top:14px"><div class="l-st"><h2 class="grow" style="margin:0">🗂️ النيشات ومكمّلاتها</h2></div>
+<div class="card" style="margin-top:14px"><div class="l-st"><h2 class="grow" style="margin:0">النيشات ومكمّلاتها</h2></div>
 ${v.niches.map(n => `<details class="l-nic"><summary><span${n.off ? ' style="opacity:.5;text-decoration:line-through"' : ''}>${e(n.name)}</span>${n.def ? '' : '<span class="tg soft">من إضافتك</span>'}</summary>
 <div class="l-add"><input dir="auto" value="${e(n.name)}" data-nname="${e(n.id)}" style="max-width:260px"><button class="btn ghost sm" data-l="nname" data-id="${e(n.id)}">تغيير الاسم</button><button class="btn ${n.def ? 'ghost' : 'danger'} sm" data-l="${n.def ? 'noff' : 'ndel'}" data-id="${e(n.id)}">${n.def ? (n.off ? 'إظهار' : 'إخفاء') : 'حذف'}</button></div>
 ${ALL_SCRIPTS.filter(sc => n.comps[sc]).map(sc => `<div class="l-sub">${SCN[sc]}</div><div class="l-chips">${n.comps[sc].map(x => chipD(x, `data-d="n" data-n="${e(n.id)}" data-sc="${sc}" data-t="${e(x.t)}" data-s="${x.s}"`, sc)).join('')}</div>${addBox(`data-d="n" data-n="${e(n.id)}" data-sc="${sc}"`)}`).join('')}</details>`).join('')}
@@ -427,7 +427,7 @@ ${ALL_SCRIPTS.filter(sc => n.comps[sc]).map(sc => `<div class="l-sub">${SCN[sc]}
 <li>يجب أن تكون مسجلاً الدخول إلى فيسبوك. لا تقرأ الإضافة شيئاً خارج مكتبة الإعلانات.</li>
 <li>الحدود لحماية حسابك: ${STATS ? num(STATS.limits.maxBatch) + ' بحثاً في الدفعة و' + num(STATS.limits.maxDay) + ' في اليوم' : 'حدود يومية'}، وسرعة عادية أو بطيئة. شروط ميتا تقيّد الجمع الآلي وتبعته عليك.</li></ul>
 ${B.ok ? '' : '<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَّلة في <code>chrome://extensions</code>، ثم أعد تحميل هذه الصفحة (F5). وإن كانت لديك نسخة قديمة فاحذفها ونزّل الجديدة.</p>'}</div>
-${admin ? `<div class="card" style="margin-top:14px"><h2>🛠️ للمدير</h2><p class="sub">تُربط الإضافة المنزَّلة بهذه الدومينات: ${hosts.map(h => `<code>${e(h)}</code>`).join('، ') || '—'}.
+${admin ? `<div class="card" style="margin-top:14px"><h2>للمدير</h2><p class="sub">تُربط الإضافة المنزَّلة بهذه الدومينات: ${hosts.map(h => `<code>${e(h)}</code>`).join('، ') || '—'}.
 ${hosts.includes(location.hostname) ? 'عنوانك الحالي ضمنها.' : '<b style="color:var(--bad)">عنوانك الحالي <code>' + e(location.hostname) + '</code> ليس ضمنها: اضبط BRIDGE_ORIGINS في إعدادات الخادم ثم أعد التنزيل.</b>'}</p></div>` : ''}`;
   }
 

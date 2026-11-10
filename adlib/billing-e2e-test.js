@@ -37,10 +37,11 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     const toast = async (p, re) => { await p.waitForFunction(r => new RegExp(r).test(document.querySelector('#toasts').textContent), re.source, { timeout: 8000 }); };
 
     // ---- المدير: «الربط والتكامل» → مفاتيح الدفع
-    await A.goto(BASE + '/integrations'); await A.waitForSelector('[data-cfg="stripe_secret"]');
-    ok(await A.locator('.nv[data-v="integrations"]').isVisible(), 'زر «الربط والتكامل» في القائمة');
-    ok(await A.locator('[data-cfg="openai_key"]').count() === 1, 'خانة مفتاح OpenAI موجودة');
-    ok(await A.locator('[data-cfg="satim_user"]').count() === 1 && await A.locator('[data-cfg="paypal_client"]').count() === 1 && !/[Cc]hargily/.test(await A.locator('#x-int').textContent()), 'مفاتيح SATIM وStripe وPayPal، وبلا Chargily');
+    await A.goto(BASE + '/platform/ai'); await A.waitForSelector('[data-cfg="openai_key"]');
+    ok(await A.locator('.nv[data-v="aset"]').isVisible() && await A.locator('.nv[data-v="abill"]').isVisible(), 'قسما «إعدادات المنصة» و«العروض والمدفوعات» في قائمة الإدارة');
+    ok(await A.locator('[data-cfg="openai_key"]').count() === 1, 'خانة مفتاح OpenAI في «إعدادات المنصة ← الذكاء الاصطناعي»');
+    await A.goto(BASE + '/payments/methods'); await A.waitForSelector('[data-cfg="stripe_secret"]');
+    ok(await A.locator('[data-cfg="satim_user"]').count() === 1 && await A.locator('[data-cfg="paypal_client"]').count() === 1 && !/[Cc]hargily/.test(await A.locator('#x-abill').textContent()), 'مفاتيح SATIM وStripe وPayPal، وبلا Chargily');
     await A.fill('[data-cfg="stripe_secret"]', SK); await A.fill('[data-cfg="stripe_webhook"]', WH); await A.locator('[data-cfg="stripe_secret"]').locator('xpath=ancestor::div[contains(@class,"card")][1]').locator('[data-int="save"]').click();
     await toast(A, /حُفظت الإعدادات/);
     await A.request.put(BASE + '/api/admin/config', { data: { satim_user: 'radar_api', satim_pass: 'satim-pass-9', satim_terminal: 'E010900001', paypal_client: 'PPCLIENT', paypal_secret: 'pp-secret-1' } });
@@ -56,7 +57,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(mpage === 403 || mpage === 401, 'المشترك لا يرى مفاتيح المنصة');
 
     // ---- المدير: الباقات (سعر + حدود)
-    await A.goto(BASE + '/subscribers'); await A.waitForSelector('#adm-tabs');
+    await A.goto(BASE + '/payments'); await A.waitForSelector('#t-abill [data-adm="plans"]');
     await A.click('[data-adm="plans"]'); await A.waitForSelector('#pl-t');
     const row = A.locator('#pl-t tr[data-pl]').filter({ has: A.locator('[data-f="name"][value="شهري"]') });
     await row.locator('[data-f="price"]').fill('2500'); await row.locator('[data-f="price_usd"]').fill('19'); await row.locator('[data-l="gapProducts"]').fill('2'); await row.locator('[data-l="searchesPerDay"]').fill('5'); await row.locator('[data-l="aiPerMonth"]').fill('1');
@@ -65,7 +66,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await A.click('[data-adm="savefeats"]'); await toast(A, /حُفظت المميزات/); await A.waitForSelector('#ft-t');
     if (process.env.DBG) console.log('DBG', await A.locator('#ft-t [data-g="ar"][value="تقارير أسبوعية"]').count(), await A.locator('#pl-t [data-ft^="c_"]').count());
     ok(await A.locator('#ft-t [data-g="ar"][value="تقارير أسبوعية"]').count() === 1 && await A.locator('#pl-t [data-ft^="c_"]').count() === 5, 'المدير يضيف ميزة من الواجهة فتظهر في جدول الباقات');
-    if (process.env.SHOT) await A.locator('#x-adm').screenshot({ path: process.env.SHOT + '/admin-plans.png' });
+    if (process.env.SHOT) await A.locator('#x-abill').screenshot({ path: process.env.SHOT + '/admin-plans.png' });
     const PLS = (await (await A.request.get(BASE + '/api/admin/plans')).json()).plans, pl = PLS.find(x => x.name === 'شهري');
     ok(pl.price === 2500 && pl.price_usd === 19 && pl.limits.gapProducts === 2, 'حُفظ سعر الباقة (دج و$) وحدودها');
     ok(PLS.filter(x => x.free).length === 1 && PLS.filter(x => !x.free).length === 3, 'أربع باقات: تجربة مجانية + ثلاث مدفوعة');
@@ -88,8 +89,8 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(/قيد المراجعة/.test(await M.locator('#x-billing').textContent()), 'الطلب يظهر «قيد المراجعة» في سجل المشترك');
 
     // ---- المدير يقبل
-    await A.click('[data-adm="pay"]'); await A.waitForSelector('[data-adm="approve"]');
-    ok(/BM-778899/.test(await A.locator('#x-adm').textContent()), 'رقم العملية ظاهر للمدير');
+    await A.goto(BASE + '/payments'); await A.waitForSelector('[data-adm="approve"]');
+    ok(/BM-778899/.test(await A.locator('#x-abill').textContent()), 'رقم العملية ظاهر للمدير');
     const pid = await A.locator('[data-adm="approve"]').first().getAttribute('data-id');
     ok((await A.request.get(BASE + '/api/admin/payments/' + pid + '/proof')).status() === 200, 'صورة الوصل محفوظة ويراها المدير');
     ok((await M.request.get(BASE + '/api/admin/payments/' + pid + '/proof')).status() !== 200, 'المشترك لا يصل إلى وصولات الآخرين عبر مسار المدير');
@@ -145,12 +146,12 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(hist.payments.filter(x => x.status === 'paid').map(x => x.method).sort().join(',') === 'baridi,paypal,satim,stripe,stripe', 'سجل المدفوعات بطرقها: ' + hist.payments.map(x => x.method + ':' + x.status).join(' '));
 
     // ---- الإحصائيات
-    await A.click('[data-adm="stats"]'); await A.waitForSelector('.kpis');
+    await A.goto(BASE + '/admin'); await A.waitForSelector('.kpis');
     const S = await (await A.request.get(BASE + '/api/admin/stats')).json();
     ok(S.active === 1 && S.revenueMonth === 5000 && S.revenueMonthUsd === 57 && S.revenue[11].n === 2, 'الإحصائيات: إيراد 5000 دج و57$ منفصلان: ' + S.revenueMonth + ' / ' + S.revenueMonthUsd);
     ok(S.plans[0].plan === 'شهري' && S.plans[0].n === 1, 'المشتركون حسب الباقة');
-    await A.click('[data-adm="err"]'); await A.waitForSelector('text=سجل الأخطاء');
-    await A.click('[data-adm="users"]'); ok(await A.locator('#x-users').isVisible(), 'الرجوع إلى تبويب المشتركين');
+    await A.goto(BASE + '/platform/err'); await A.waitForSelector('text=سجل الأخطاء');
+    await A.click('.nv[data-v="admin"]'); await A.waitForSelector('#x-users table'); ok(await A.locator('#x-users').isVisible(), 'قسم المشتركين');
 
     // ---- أزرار المحفوظات (3 + 2) و💰 حاسبة الربح
     await M.goto(BASE + '/saved'); await M.waitForSelector('.pc-g [data-tool="profit"]');

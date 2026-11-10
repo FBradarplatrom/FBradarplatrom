@@ -356,7 +356,7 @@ const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.jo
 const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
 const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(pub(LANDING)));
-app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/help', '/guide', '/subscribers'],
+app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/help', '/guide', '/subscribers', '/admin', '/payments', '/payments/:tab', '/support-inbox', '/platform', '/platform/:tab'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));
 app.get('/spy', (q, s) => s.redirect(301, '/gaps'));   // أدوات التجسس حُذفت؛ القسم الجديد مكانها
 // الصفحات القانونية: شروط الاستخدام، الخصوصية، الاسترداد، الاتصال (بثلاث لغات، ومعلومات النشاط من «الربط والتكامل»)
@@ -375,6 +375,7 @@ const VER = (() => { const h = crypto.createHash('sha1'); for (const d of ['publ
 const APP_HTML = fs.readFileSync(APP_PAGE, 'utf8').replace(/<script src="(\/[^"?]+\.js)">/g, '<script src="$1?v=' + VER + '">').replace('<head>', '<head><script>window.__V="' + VER + '"</script>');
 const immutable = (q, s, n) => { if (q.query.v) s.set('Cache-Control', 'public, max-age=31536000, immutable'); n(); };
 app.use(immutable);
+app.use('/fonts', express.static(path.join(__dirname, 'public', 'fonts'), { index: false, maxAge: '365d', immutable: true }));   // الخطوط لا تتغير
 app.use(express.static(path.join(__dirname, 'public'), { index: false, cacheControl: false }));
 // منطق الأسواق وفحص المنتج مشترك بين الخادم والمتصفح (ملف واحد لكل منطق)
 app.get('/radar-lib/core.js', (q, s) => s.type('application/javascript').set('Cache-Control', q.query.v ? 'public, max-age=31536000, immutable' : 'no-cache').sendFile(path.join(__dirname, 'engine', 'core.js')));   // محرك التحليل للخيط الخلفي

@@ -57,7 +57,7 @@ create table lib_ads(user_id integer, ad_id text, page_id text, page_name text, 
   try {
     const A = client(), U = client(), V = client();
     // ---------- الصفحات والروابط ----------
-    for (const p of ['/login.html', '/app.html', '/landing.html', '/app', '/library', '/admin']) eq((await V('GET', p, null, true)).status, 404, p + ' is not exposed');
+    for (const p of ['/login.html', '/app.html', '/landing.html', '/app', '/library']) eq((await V('GET', p, null, true)).status, 404, p + ' is not exposed');
     for (const p of ['/login', '/register', '/forgot', '/reset?t=abc']) { const r = await V('GET', p, null, true); ok(r.status === 200 && (await r.text()).includes('id="f-login"'), p + ' serves the login page'); }
     const lp = await (await V('GET', '/', null, true)).text(); ok(lp.includes('href="/login"') && lp.includes('href="/register"') && !lp.includes('login.html'), 'landing links are clean');
     const rd = await V('GET', '/collect/dictionary', null, true); eq([rd.status, rd.headers.get('location')], [302, '/login?next=%2Fcollect%2Fdictionary'], 'signed-out deep link goes to login and back');

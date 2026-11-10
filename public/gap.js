@@ -215,8 +215,8 @@ ${p.last_scan_at ? `<div class="g-nums"><div><b>${num(s.scanned)}</b><span>إع�
 <label class="fl">كلمات المنتج المميزة (للمقارنة، افصل بفاصلة)<input dir="auto" data-g="kw" value="${e((p.keywords || []).join('، '))}" placeholder="مثال: نجوم، بروجكتور، ضوضاء بيضاء، veilleuse"></label>
 <p style="margin:12px 0 0"><button class="btn" data-g="scan"${scanning(p.id) ? ' disabled' : ''}>${p.last_scan_at ? '🔁 أعد الفحص في ' + e(cname(TG(p))) : '🎯 ابدأ الفحص في ' + e(cname(TG(p)))}</button> <button class="btn danger sm" data-g="del">حذف من القسم</button></p>
 <p class="sub" style="margin-top:6px">يبحث في مكتبة إعلانات ميتا (${e(cname(TG(p)))}، النشطة والمتوقفة) بكل عبارة، ويقارن كل إعلان لحظة وصوله: بصمة الصورة، رابط المورّد، وكلمات المنتج. يستهلك من حدّ عمليات البحث اليومي.</p></div></div>
-<div class="card" style="margin-top:14px"><h2>✅ إعلانات مطابقة في ${e(cname(TG(p)))} <small>(${num(strong.length)})</small></h2>${strong.map(matchHtml).join('') || '<p class="sub">لا شيء مؤكد.</p>'}</div>
-${maybe.length ? `<div class="card" style="margin-top:14px"><h2>❔ محتملة: قارنها بصور المنتج وقرّر <small>(${num(maybe.length)})</small></h2>${maybe.map(matchHtml).join('')}</div>` : ''}
+<div class="card" style="margin-top:14px"><h2>إعلانات مطابقة في ${e(cname(TG(p)))} <small>(${num(strong.length)})</small></h2>${strong.map(matchHtml).join('') || '<p class="sub">لا شيء مؤكد.</p>'}</div>
+${maybe.length ? `<div class="card" style="margin-top:14px"><h2>محتملة: قارنها بصور المنتج وقرّر <small>(${num(maybe.length)})</small></h2>${maybe.map(matchHtml).join('')}</div>` : ''}
 ${rejected.length ? `<details class="fx" style="margin-top:14px"><summary>استبعدتها أنت (${num(rejected.length)})</summary>${rejected.map(matchHtml).join('')}</details>` : ''}`;
   }
   function redraw() {

@@ -5,7 +5,7 @@ let db = null;
 const NUM = (k, d) => { const n = Number(process.env[k]); return Number.isFinite(n) && n > 0 ? n : d; };
 const DEF = () => ({ searchesPerDay: NUM('LIB_MAX_SEARCHES_PER_DAY', 60), gapProducts: 50, aiPerMonth: 100, watchPages: 20 });
 const KEYS = ['searchesPerDay', 'gapProducts', 'aiPerMonth', 'watchPages'];
-// مميزات تُفعَّل أو تُعطَّل لكل باقة من «إدارة المشتركين ← الباقات» (البحث والتحليل متاحان لكل الباقات)
+// مميزات تُفعَّل أو تُعطَّل لكل باقة من «العروض والمدفوعات ← العروض والمميزات» (البحث والتحليل متاحان لكل الباقات)
 const FEATS = ['gap', 'supplier', 'ai', 'watch', 'tiktok', 'profit', 'alerts', 'sheets'];
 const FLABEL = { gap: 'ثغرات السوق', supplier: 'إيجاد المورّد', ai: 'تحليل الإعلان بالذكاء الاصطناعي', watch: 'مراقبة المنافسين', tiktok: 'اتجاهات TikTok', profit: 'حاسبة الربح', alerts: 'التنبيهات (بريد/تيليغرام)', sheets: 'التصدير إلى Google Sheets' };
 function featuresOf(u) {

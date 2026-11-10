@@ -16,7 +16,7 @@
 .gm{border:1px solid var(--line);border-radius:14px;background:var(--card2);overflow:hidden;font-size:12.5px}.gm-h{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid var(--line);color:var(--mut)}.gm-h i{width:8px;height:8px;border-radius:50%;background:var(--line)}
 .gm-b{padding:12px;display:grid;gap:8px}.gm-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.gm-c{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .gm-hl{outline:2px solid #e11d48;outline-offset:1px;border-radius:8px}.gm-btn{background:var(--brand);color:#fff;border-radius:8px;padding:4px 10px;font-weight:600}.gm-gh{border:1px solid var(--line);border-radius:8px;padding:3px 9px;background:var(--card)}
-.gm-pill{border-radius:99px;padding:2px 9px;font-weight:600;background:var(--card);border:1px solid var(--line)}.gm-bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden}.gm-bar i{display:block;height:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed)}
+.gm-pill{border-radius:99px;padding:2px 9px;font-weight:600;background:var(--card);border:1px solid var(--line)}.gm-bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden}.gm-bar i{display:block;height:100%;background:linear-gradient(90deg,#118553,#0a7040)}
 .gm .mk{width:18px;height:18px;font-size:11px}.gm-wa{background:#25d366;color:#fff;border-radius:8px;padding:4px 10px;font-weight:600}`;
   document.head.appendChild(st);
 
@@ -50,7 +50,7 @@
     ['اقرأ التصنيفات', 'تحليل جديد ← النتائج', 'analyze',
       ['كل منتج يأخذ تصنيفاً حسب عمر إعلانه النشط: 🧪 تجربة، 🌱 واعد، 💎 جوهرة، 🔥 ناري، 🕰️ قديم.', 'الإعلان الذي يستمر صاحبه في دفع ثمنه أياماً طويلة دليل على أنه يبيع.', 'أعلى الصفحة: المرصود، المجلوب، ما دخل التحليل، المستبعد، وعدد البائعين.'],
       'ابدأ بـ 💎 الجوهرة: منتجات أثبتت نفسها ولم تتشبّع بعد.',
-      win('النتائج', row(pill('🧪 تجربة'), pill('🌱 واعد'), pill('💎 جوهرة', '#4f46e5'), pill('🔥 ناري'), mk(1)) + `<div class="gm-c">${row('<b>مصباح ليلي نجوم</b>', pill('💎 جوهرة', '#4f46e5'))}<div>${row(c('نشط'), c('21 يوماً', 1), mk(2), c('29 US$'))}</div></div>`)],
+      win('النتائج', row(pill('🧪 تجربة'), pill('🌱 واعد'), pill('💎 جوهرة', '#118553'), pill('🔥 ناري'), mk(1)) + `<div class="gm-c">${row('<b>مصباح ليلي نجوم</b>', pill('💎 جوهرة', '#118553'))}<div>${row(c('نشط'), c('21 يوماً', 1), mk(2), c('29 US$'))}</div></div>`)],
     ['صفِّ النتائج', 'تحليل جديد ← الفلاتر', 'analyze',
       ['افتح «الفلاتر»: السوق، السعر، الصيغة، والترتيب.', '«استبعاد المكرر» يُبقي أقدم نسخة من نفس الإعلان لكل صفحة.', 'نزّل النتائج CSV أو أرسلها إلى Google Sheets.'],
       '',
@@ -82,7 +82,7 @@
     ['راقب المنافسين', 'مراقبة المنافسين', 'watch',
       ['من بطاقة المنتج افتح «البائعون» واضغط «👁 راقب» على صفحة منافس.', 'كل فحص يكشف إعلاناته الجديدة (منتجات يختبرها الآن) والتي توقفت.', 'يُعاد الفحص أسبوعياً، وتصلك التنبيهات إن فعّلتها.'],
       '',
-      win('👁 مراقبة المنافسين', row(c('Lumi Shop'), gh('👁 راقب', 1), mk(1)) + row(pill('🆕 3 جديد', '#4f46e5'), c('نشط 12 من 30'), mk(2)))],
+      win('👁 مراقبة المنافسين', row(c('Lumi Shop'), gh('👁 راقب', 1), mk(1)) + row(pill('🆕 3 جديد', '#118553'), c('نشط 12 من 30'), mk(2)))],
     ['اكتشف منتجات TikTok', 'منتجات TikTok', 'tiktok',
       ['اختر عبارات مثل «tiktok made me buy it» واضغط «ابدأ البحث».', 'تُرتَّب الفيديوهات بالمشاهدات والتفاعل والحداثة، وتُستبعد غير المنتجات.', 'احفظ الفيديو كمنتج لتبحث عن مورّده وتفحصه في سوقك.'],
       'سجّل الدخول في TikTok على Chrome مرة واحدة لنتائج أكثر.',
@@ -104,8 +104,8 @@
 
   W.WPRGUIDE = {
     count: S.length,
-    render(el) {
-      el.innerHTML = `<div class="card"><h2 style="margin:0 0 10px">مسار العمل</h2><div class="gd-flow">${FLOW.map(x => `<span>${x}</span>`).join('<i>←</i>')}</div></div>
+    render(el, top) {
+      el.innerHTML = (top || '') + `<div class="card"><h2 style="margin:0 0 10px">مسار العمل</h2><div class="gd-flow">${FLOW.map(x => `<span>${x}</span>`).join('<i>←</i>')}</div></div>
 <ol class="gd-toc">${S.map((s, i) => `<li><a href="#gd-${i + 1}" data-gd="${i + 1}"><b>${i + 1}</b><span>${s[0]}</span></a></li>`).join('')}</ol>
 <p class="sub" style="font-size:13px">الصور توضيحية بأسماء وأرقام وهمية. شاشتك الحقيقية تشبهها، وبياناتك لا تظهر هنا أبداً.</p>
 ${S.map((s, i) => `<section class="card gd-st" id="gd-${i + 1}"><div><div class="gd-n">الخطوة ${i + 1} / ${S.length}</div><h2>${s[0]}</h2><span class="gd-path">${s[1]}</span>

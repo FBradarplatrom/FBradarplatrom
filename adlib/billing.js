@@ -174,7 +174,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
     if (m) { const buf = Buffer.from(m[2], 'base64'); if (buf.length > 3e6) throw bad('الصورة كبيرة جداً'); proof = crypto.randomBytes(12).toString('hex') + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]); fs.writeFileSync(path.join(PROOF_DIR, proof), buf); }
     const id = db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,method,status,ref,proof,created_at) values(?,?,?,?,?,'baridi','pending',?,?,?)").run(q.u.id, p.id, p.name, p.days, p.price, ref, proof, now()).lastInsertRowid;
     act && act(q.u.id, 'payment_request', q, 'BaridiMob · ' + p.name);
-    try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.price + ' دج' + (wa ? ' · الوصل عبر واتساب · المتجر: ' + store : '')); } catch (e) {}
+    try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.price + ' دج' + (wa ? ' · الوصل عبر واتساب · المتجر: ' + store : ''), '/payments'); } catch (e) {}
     s.json({ id: Number(id) });
   }));
   app.get('/api/billing/payment/:id', auth, async (q, s, n) => {

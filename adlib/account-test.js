@@ -18,12 +18,13 @@ const open = f => { try { return new (require('better-sqlite3'))(f, { readonly: 
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
     // دليل البداية
     await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
-    ok(/0 من 5/.test(await pg.locator('.onb h2').innerText()) && /دليل البداية/.test(await pg.locator('.onb .ontag').innerText()) && (await pg.$$('.onb .onr')).length === 5, 'دليل البداية: 5 خطوات، لا شيء منجز');
+    ok(/0 من 5/.test(await pg.locator('.onb h2').innerText()) && await pg.isVisible('.onb [data-v="guide"]') && !(await pg.$('.onb .onr')), 'دليل البداية: 5 خطوات، لا شيء منجز');
     await pg.request.put(BASE + '/api/saved', { data: { k: 'k1', snap: { name: 'منتج', cat: 'gem' } } });
     await pg.request.put(BASE + '/api/notify', { data: { email: true } });
-    await pg.reload(); await pg.waitForSelector('.onb');
-    ok(/2 من 5/.test(await pg.locator('.onb h2').innerText()) && (await pg.$$('.onb .onr.ok')).length === 2, 'الخطوات المنجزة تُشطب تلقائياً (حفظ منتج + التنبيهات)');
-    await pg.click('[data-a="onbhide"]'); await pg.waitForTimeout(300);
+    await pg.reload(); await pg.waitForSelector('.onb'); const two = /2 من 5/.test(await pg.locator('.onb h2').innerText());
+    await pg.goto(BASE + '/guide'); await pg.waitForSelector('.onb-g .onr');
+    ok(two && (await pg.$$('.onb-g .onr')).length === 5 && (await pg.$$('.onb-g .onr.ok')).length === 2, 'الخطوات المنجزة تُشطب تلقائياً (حفظ منتج + التنبيهات)');
+    await pg.goto(BASE + '/'); await pg.waitForSelector('.onb'); await pg.click('[data-a="onbhide"]'); await pg.waitForTimeout(300);
     ok(!(await pg.$('.onb')), 'إخفاء الدليل');
     // المساعدة والدعم
     await A.request.post(BASE + '/api/login', { data: { email: 'a@t.dz', password: 'password123' } });

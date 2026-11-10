@@ -10,7 +10,7 @@
 
   const st = document.createElement('style');
   st.textContent = `
-.tm-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:120;display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto;animation:in .15s ease}
+.tm-bg{position:fixed;inset:0;background:rgba(18,25,22,.55);z-index:120;display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto;animation:in .15s ease}
 .tm{background:var(--card);border:1px solid var(--line);border-radius:18px;width:min(980px,100%);box-shadow:0 20px 60px rgba(0,0,0,.25);padding:18px 20px 22px}
 .tm-h{display:flex;gap:10px;align-items:center;margin-bottom:10px}.tm-h h2{flex:1;margin:0;font-size:18px}.tm-x{background:none;border:0;font-size:22px;cursor:pointer;color:var(--mut)}
 .sp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}.sp{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card2);display:flex;flex-direction:column}

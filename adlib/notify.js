@@ -6,14 +6,14 @@
 // لا يحتاج webhook ولا عنواناً عاماً، فيعمل على الاستضافة المشتركة.
 const crypto = require('crypto');
 const CFG = require('./config.js');
-const EV = { gap: '🎯 ظهر منافس في الجزائر لمنتج تتابعه في «ثغرات السوق»', watch: '👁 إعلانات جديدة لمنافس تراقبه', gem: '💎 منتج جديد صار «جوهرة» في تحليلك',
+const EV = { gap: '🎯 ظهر منافس لمنتج تتابعه في «ثغرات السوق»', support: '💬 رد من فريق الدعم', watch: '👁 إعلانات جديدة لمنافس تراقبه', gem: '💎 منتج جديد صار «جوهرة» في تحليلك',
   payment: '💳 الدفع والاشتراك', expiry: '⏰ تذكير قبل انتهاء الاشتراك', admin: '🛠 للمدير: طلبات دفع جديدة' };
 let db = null, mailer = null, appName = 'رادار المنتجات الرابحة';
 const now = () => Date.now();
 const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
 const kvGet = (u, k, d) => { const r = db.prepare('select v from user_kv where user_id=? and k=?').get(u, k); return r ? J(r.v, d) : d; };
 const kvSet = (u, k, v) => db.prepare('insert into user_kv(user_id,k,v) values(?,?,?) on conflict(user_id,k) do update set v=excluded.v').run(u, k, JSON.stringify(v));
-const DEFP = () => ({ email: false, tg: false, chat: '', ev: { gap: true, watch: true, gem: true, payment: true, expiry: true, admin: true } });
+const DEFP = () => ({ email: false, tg: false, chat: '', ev: { gap: true, watch: true, gem: true, payment: true, expiry: true, admin: true, support: true } });
 const prefs = uid => { const p = Object.assign(DEFP(), kvGet(uid, 'notify', {})); p.ev = Object.assign(DEFP().ev, p.ev || {}); return p; };
 const tgApi = () => (process.env.TELEGRAM_TEST_API || 'https://api.telegram.org') + '/bot' + CFG.get('telegram_token');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -49,7 +49,7 @@ async function notify(uid, ev, text, path) {
   return out;
 }
 const fire = (...a) => { notify(...a).catch(() => {}); };
-const notifyAdmins = text => db.prepare("select id from users where role='admin'").all().forEach(a => fire(a.id, 'admin', text, '/subscribers'));
+const notifyAdmins = (text, path) => db.prepare("select id from users where role='admin'").all().forEach(a => fire(a.id, 'admin', text, path || '/payments'));
 
 // ربط تيليغرام: رمز مؤقت ← رسالة /start رمز ← معرّف المحادثة
 const LINKS = new Map(); let offset = 0, polling = null;

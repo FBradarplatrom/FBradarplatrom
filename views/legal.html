@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#4f46e5">
+<meta name="theme-color" content="#118553">
 <title>Winning Product Radar</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23118553'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--mut:#5b6884;--line:#e3e8f2;--brand:#4f46e5}
-@media(prefers-color-scheme:dark){:root{--bg:#0a0f1e;--card:#121a2f;--ink:#e9edf8;--mut:#97a3c0;--line:#25304d;--brand:#818cf8}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.85 "IBM Plex Sans Arabic",Inter,system-ui,sans-serif}
-html[dir=ltr] body{font-family:Inter,"IBM Plex Sans Arabic",system-ui,sans-serif}
+:root{--bg:#e4e9e6;--card:#f3f8f6;--ink:#121916;--mut:#5d6661;--line:#d3d8d6;--brand:#118553}
+@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--ink:#dbe1de;--mut:#9ca4a0;--line:#2e3632;--brand:#35ac74}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.85 "Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+html[dir=ltr] body{font-family:"Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
 a{color:var(--brand)}
 header{border-bottom:1px solid var(--line);background:var(--card)}
 .w{max-width:860px;margin:0 auto;padding:0 18px}.nav{display:flex;align-items:center;gap:14px;height:62px}
-.lg{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--ink);text-decoration:none}.lg i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:grid;place-items:center;font-style:normal}
+.lg{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--ink);text-decoration:none}.lg i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#118553,#0a7040);display:grid;place-items:center;font-style:normal}
 .nav select{margin-inline-start:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card);color:var(--ink);font:inherit;font-size:13.5px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 8px}.tabs a{padding:7px 14px;border-radius:99px;border:1px solid var(--line);text-decoration:none;color:var(--mut);font-size:14px;background:var(--card)}.tabs a.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 main{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,40px);margin:12px 0 40px}
@@ -29,18 +29,18 @@ footer{color:var(--mut);font-size:13.5px;text-align:center;padding:0 0 30px}
 #cform .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.sb{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:10px 22px;font:inherit;font-weight:700;cursor:pointer}.sb:disabled{opacity:.6}
 .cm{margin:10px 0 0;font-weight:600}.cm.ok{color:#059669}.cm.err{color:#dc2626}
 .wa{position:fixed;bottom:20px;inset-inline-end:20px;width:56px;height:56px;border-radius:50%;background:#25d366;display:grid;place-items:center;box-shadow:0 8px 24px -6px rgba(0,0,0,.35);z-index:9}.wa[hidden]{display:none}
-</style>
+[hidden]{display:none!important}</style>
 <script data-fab src="/theme.js"></script></head>
 <body>
 <header><div class="w nav"><a class="lg" href="/"><i>📡</i><span id="brand"></span></a>
-<select id="lang" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></div></header>
+<select id="lang" aria-label="Language" hidden><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></div></header>
 <div class="w"><nav class="tabs" id="tabs"></nav><main id="doc"></main><footer id="ft"></footer></div>
 <script src="/legal-texts.js"></script>
 <script>
 (function(){
 /* النصوص القانونية بثلاث لغات. القيم بين {} تأتي من «الربط والتكامل ← معلومات النشاط». راجعها مع مختص قانوني قبل الإطلاق. */
 var D=window.LEGAL_D,P=window.LEGAL_PARSE;
-/* نموذج «اتصل بنا»: يصل إلى المدير في «إدارة المشتركين ← الرسائل» مع تنبيه بالبريد/تيليغرام */
+/* نموذج «اتصل بنا»: يصل إلى المدير في «صندوق الدعم» مع تنبيه بالبريد/تيليغرام */
 var F={ar:{h:'أرسل لنا رسالة',name:'الاسم',email:'بريدك الإلكتروني',subject:'الموضوع',msg:'رسالتك',send:'إرسال',ok:'✅ وصلت رسالتك، سنرد عليك على بريدك في أقرب وقت.',err:'تعذّر الإرسال، تحقق من البريد والرسالة (10 أحرف على الأقل) ثم أعد المحاولة.',many:'أرسلت رسائل كثيرة، أعد المحاولة بعد ساعة.',wa:'تواصل معنا عبر واتساب'},
  en:{h:'Send us a message',name:'Name',email:'Your email',subject:'Subject',msg:'Your message',send:'Send',ok:'✅ Message received. We will reply to your email soon.',err:'Could not send. Check your email and message (at least 10 characters) and try again.',many:'Too many messages, please try again in an hour.',wa:'Chat with us on WhatsApp'},
  fr:{h:'Envoyez-nous un message',name:'Nom',email:'Votre e-mail',subject:'Sujet',msg:'Votre message',send:'Envoyer',ok:'✅ Message reçu. Nous vous répondrons par e-mail rapidement.',err:'Envoi impossible. Vérifiez l’e-mail et le message (10 caractères minimum).',many:'Trop de messages, réessayez dans une heure.',wa:'Contactez-nous sur WhatsApp'}};

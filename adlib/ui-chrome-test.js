@@ -16,7 +16,7 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
     await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
     // القائمة
-    const groups = await pg.$$eval('.nvh', a => a.map(x => x.textContent.trim()));
+    const groups = await pg.$$eval('.nvh', a => a.filter(x => x.offsetParent !== null).map(x => x.textContent.trim()));   // المشترك لا يرى مجموعة «الإدارة»
     ok(groups.join('|') === 'البحث اليومي|منتجاتي|حسابي', 'مجموعات القائمة: ' + groups.join('، '));
     ok(await pg.isVisible('.nv[data-v="guide"]') && !(await pg.$('.nv[data-v="settings"]')), 'دليل الاستخدام في الأعلى، والإعدادات انتقلت لقائمة الحساب');
     await pg.click('#me-btn'); ok(await pg.isVisible('#am [data-v="settings"]') && await pg.isVisible('#am [data-a="billing"]') && await pg.isVisible('#am [data-a="logout"]'), 'قائمة الحساب: الإعدادات، العرض والدفع، الخروج');
@@ -44,6 +44,27 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
     await pg.waitForFunction(() => document.querySelector('.gd-st h2') && /Installez/.test(document.querySelector('.gd-st h2').textContent), null, { timeout: 15000 });
     ok(/Recherche quotidienne/i.test(await pg.innerText('#sb')), 'اللغة من الزر العائم: الدليل والقائمة بالفرنسية');
     const pub = await ctx.newPage(); await pub.goto(BASE + '/login'); await pub.waitForSelector('.wpr-dock'); ok(await pub.isVisible('.wd-th'), 'الأزرار العائمة في صفحة الدخول');
+    // الدعم: طلب من المشترك ← ردّ المدير من المنصة ← يظهر في «طلباتي» وتنبيه في لوحة التحكم
+    await pg.click('.wd-lang'); await pg.click('[data-lang="ar"]'); await pg.waitForLoadState('load');
+    await pg.goto(BASE + '/help'); await pg.waitForSelector('#hf-m');
+    ok(await pg.isVisible('.hc-hero #hc-q') && (await pg.$$('.hf-q')).length >= 12 && !(await pg.$('[data-a="onbshow"]')), 'مركز المساعدة: بحث + أسئلة مصنّفة، بلا «إظهار دليل البداية» المكرر');
+    await pg.fill('#hc-q', 'واتساب'); await pg.waitForTimeout(200); const shown = await pg.$$eval('.hf-q', a => a.filter(x => !x.hidden).length);
+    ok(shown >= 1 && shown < 14, 'البحث في الأسئلة يصفّي (' + shown + ')');
+    await pg.selectOption('#hf-c', 'billing'); await pg.fill('#hf-s', 'تفعيل العرض'); await pg.fill('#hf-m', 'أرسلت الوصل عبر واتساب، متى يُفعَّل؟'); await pg.click('[data-a="hsend"]');
+    await pg.waitForSelector('.hc-t'); ok(/قيد المراجعة/.test(await pg.innerText('.hc-t')), '«طلباتي»: الطلب قيد المراجعة');
+    const A = await b.newContext({ locale: 'ar-DZ', viewport: { width: 1280, height: 860 } }), ap = await A.newPage(); ap.on('pageerror', e => errs.push('A ' + e.message));
+    await ap.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
+    await ap.goto(BASE + '/'); await ap.waitForSelector('#nav-admin:not([hidden])');
+    ok((await ap.$$eval('#nav-admin .nv', a => a.map(x => x.dataset.v))).join(',') === 'aover,admin,abill,ainbox,aset', 'قائمة الإدارة: نظرة عامة، المشتركون، العروض والمدفوعات، صندوق الدعم، إعدادات المنصة');
+    await ap.waitForFunction(() => !document.getElementById('nb-sup').hidden); ok(true, 'شارة الرسائل الجديدة على «صندوق الدعم»');
+    await ap.click('.nv[data-v="ainbox"]'); await ap.waitForSelector('[data-reply]');
+    ok(/الدفع والعروض/.test(await ap.innerText('.sup-t')), 'نوع الطلب ظاهر للمدير');
+    await ap.fill('[data-reply]', 'فُعّل عرضك، شكراً لك.'); await ap.click('[data-adm="mreply"]'); await ap.waitForFunction(() => !document.querySelector('[data-reply]'));
+    await ap.goto(BASE + '/platform'); await ap.waitForSelector('[data-cfg="biz_name"]'); ok(!!(await ap.$('#t-aset [data-adm="legal"]')) && !!(await ap.$('#t-aset [data-adm="backup"]')), 'إعدادات المنصة: النشاط، المفاتيح، الصفحات القانونية، النسخ الاحتياطي');
+    await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum'); await pg.waitForSelector('.dal'); ok(/ردّ فريق الدعم/.test(await pg.innerText('.dal')), 'تنبيه في لوحة التحكم: ردّ الدعم');
+    await pg.click('.dal-i[data-v="help"]'); await pg.waitForSelector('.hc-t .sup-r'); ok(/فُعّل عرضك/.test(await pg.innerText('.hc-t')), 'الرد ظاهر في «طلباتي»');
+    await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum'); ok(!/ردّ فريق الدعم/.test(await pg.innerText('#d-body')), 'التنبيه يختفي بعد قراءة الرد');
+    await pg.click('[data-a="dper"][data-d="7"]'); await pg.waitForFunction(() => /7/.test(document.querySelector('.dsum h2').textContent)); ok(true, 'أزرار الفترة في الملخص');
     ok(!errs.length, 'لا أخطاء جافاسكربت ' + errs.join(' | '));
     console.log(`PASS ${pass} ui checks`);
   } catch (e) { console.error('FAIL', e.message); process.exitCode = 1; }
