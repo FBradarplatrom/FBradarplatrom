@@ -4,7 +4,7 @@
   'use strict';
   const W = window; let X = null;
   const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const num = n => Number(n || 0).toLocaleString('ar-DZ');
+  const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
   const MK = () => W.RadarMarkets, G = () => W.RadarGapMatch;
 

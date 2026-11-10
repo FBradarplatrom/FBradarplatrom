@@ -6,7 +6,7 @@
   const W = window; let X = null, inited = false, PH = null, RUNS = null, CUR = null;
   const $ = s => X.root.querySelector(s), $$ = s => [...X.root.querySelectorAll(s)];
   const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const num = n => Number(n || 0).toLocaleString('ar-DZ');
+  const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const big = n => (n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + ' مليون' : n >= 1e3 ? Math.round(n / 1e3) + ' ألف' : num(n));
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
   const VIEW = 'tiktok', PK = 'wpr_tt_prefs_v1';

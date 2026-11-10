@@ -28,7 +28,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
   const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '', out = ''; srv.stderr.on('data', d => log += d); srv.stdout.on('data', d => out += d);
   for (let i = 0; i < 60; i++) { try { await fetch(BASE + '/'); break; } catch (e) { await new Promise(r => setTimeout(r, 150)); } }
-  const b = await chromium.launch();
+  const b = await chromium.launch(); b.newPage = ((f) => o => f(Object.assign({ locale: 'ar-DZ' }, o)))(b.newPage.bind(b)); b.newContext = ((f) => o => f(Object.assign({ locale: 'ar-DZ' }, o)))(b.newContext.bind(b));   /* اللوحة بالعربية (لغة المتصفح الافتراضية) */
   try {
     const ad = await b.newContext({ viewport: { width: 1300, height: 1400 } }), mb = await b.newContext({ viewport: { width: 1300, height: 1400 } });
     const A = await ad.newPage(), M = await mb.newPage(); const errs = []; [A, M].forEach(p => p.on('pageerror', e => errs.push(e.message)));

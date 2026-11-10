@@ -4,6 +4,7 @@
   'use strict';
   if (window.__wprRelay) return;
   window.__wprRelay = true;
+  try { const l = localStorage.getItem('wpr_lang') || ''; if (l) chrome.storage.local.set({ uiLang: l }); } catch (_) { /* ignore */ }   // لغة النافذة = لغة المنصة
   const PAGE = 'WPR_PAGE', BRIDGE = 'WPR_BRIDGE';
   let port = null, retry = 0;
 

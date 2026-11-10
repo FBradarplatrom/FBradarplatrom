@@ -16,14 +16,14 @@ ul{list-style:none;margin:8px 0 0;padding:0;max-height:140px;overflow:auto}li{di
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}.btn.danger{background:var(--bad)}.btn:disabled{opacity:.45;cursor:not-allowed}
 footer{padding:8px 14px 12px;color:var(--mut);font-size:11.5px;text-align:center}
 </style></head><body>
-<header><img src="icons/icon48.png" alt=""><b>إضافة جمع الإعلانات</b><span id="conn" class="pill">…</span></header>
+<header><img src="icons/icon48.png" alt=""><b data-t="إضافة جمع الإعلانات">إضافة جمع الإعلانات</b><span id="conn" class="pill">…</span></header>
 <main>
   <section class="card" id="status"></section>
   <section class="card">
-    <h2>الإرسال إلى المنصة</h2>
-    <div class="seg"><button id="m-auto" data-mode="auto">تلقائي</button><button id="m-manual" data-mode="manual">يدوي</button></div>
+    <h2 data-t="الإرسال إلى المنصة">الإرسال إلى المنصة</h2>
+    <div class="seg"><button id="m-auto" data-mode="auto" data-t="تلقائي">تلقائي</button><button id="m-manual" data-mode="manual" data-t="يدوي">يدوي</button></div>
     <p class="mut" id="mode-hint" style="margin:8px 0"></p>
-    <div class="row"><button class="btn" id="send">إرسال الآن</button><button class="btn ghost" id="discard" hidden>مسح غير المرسل</button></div>
+    <div class="row"><button class="btn" id="send" data-t="إرسال الآن">إرسال الآن</button><button class="btn ghost" id="discard" hidden data-t="مسح غير المرسل">مسح غير المرسل</button></div>
   </section>
   <div class="row" id="actions"></div>
 </main>

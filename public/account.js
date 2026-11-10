@@ -4,7 +4,7 @@
   'use strict';
   const W = window; let X = null, inited = false;
   const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const num = n => Number(n || 0).toLocaleString('ar-DZ');
+  const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const dz = n => num(n) + ' دج';
   const $ = s => X.root.querySelector(s);
   const ST = { pending: ['warn', 'قيد المراجعة'], paid: ['ok', 'مدفوع'], rejected: ['bad', 'مرفوض'], failed: ['bad', 'فشل'] };
@@ -124,7 +124,7 @@ ${r.keys.map(k => `<td><input data-l="${k}" type="number" value="${e(p.limits ? 
     if (ATAB === 'msgs') {
       const r = await X.api('GET', '/admin/messages');
       el.innerHTML = `<div class="card"><h2>✉️ رسائل «اتصل بنا»</h2><p class="sub">تصلك هنا رسائل الزوار (من صفحة <a href="/contact" target="_blank">اتصل بنا</a>) والمشتركين (من «المساعدة والدعم»)، ويصلك تنبيه بالبريد/تيليغرام عند كل رسالة إن فعّلت التنبيهات. اضغط «رد بالبريد» لتجيب من بريدك.</p>
-${r.list.map(m => `<div class="row" style="align-items:flex-start;${m.status === 'new' ? 'border-inline-start:3px solid var(--brand);padding-inline-start:10px' : 'opacity:.75'}"><div class="grow"><b>${m.status === 'new' ? '🆕 ' : ''}${e(m.subject)}</b><div class="muted">${X.fd(m.created_at)} ${new Date(m.created_at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })} · ${e(m.name || '')} &lt;${e(m.email)}&gt; · ${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر'}</div><p style="white-space:pre-wrap;margin:6px 0 0">${e(m.body)}</p></div>
+${r.list.map(m => `<div class="row" style="align-items:flex-start;${m.status === 'new' ? 'border-inline-start:3px solid var(--brand);padding-inline-start:10px' : 'opacity:.75'}"><div class="grow"><b>${m.status === 'new' ? '🆕 ' : ''}${e(m.subject)}</b><div class="muted">${X.fd(m.created_at)} ${new Date(m.created_at).toLocaleTimeString((window.__LOC||'ar-DZ'), { hour: '2-digit', minute: '2-digit' })} · ${e(m.name || '')} &lt;${e(m.email)}&gt; · ${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر'}</div><p style="white-space:pre-wrap;margin:6px 0 0">${e(m.body)}</p></div>
 <div style="display:flex;gap:6px;flex-wrap:wrap;flex:none"><a class="btn sm" href="mailto:${e(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}">رد بالبريد</a>${m.status === 'new' ? `<button class="btn ghost sm" data-adm="mdone" data-id="${m.id}">✓ تمت المعالجة</button>` : `<button class="btn ghost sm" data-adm="mnew" data-id="${m.id}">إرجاع كجديدة</button>`}<button class="btn danger sm" data-adm="mdel" data-id="${m.id}">حذف</button></div></div>`).join('') || '<p class="sub">لا رسائل بعد.</p>'}</div>`;
     }
     if (ATAB === 'legal') {
@@ -141,13 +141,13 @@ ${r.list.map(m => `<div class="row" style="align-items:flex-start;${m.status ===
       const r = await X.api('GET', '/admin/backups'), kb = n => num(Math.round(n / 1024)) + ' KB';
       el.innerHTML = `<div class="card"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0;flex:1">💾 النسخ الاحتياطي لقاعدة البيانات</h2><button class="btn sm" data-adm="bknow">إنشاء نسخة الآن</button></div>
 <p class="sub">نسخة تلقائية كل يوم، مضغوطة، وتُحفظ آخر ${num(r.keep)} نسخة في <code dir="ltr">${e(r.dir)}</code>. حمّل نسخة إلى حاسوبك أو خدمة سحابية من وقت لآخر: إن تعطّل الخادم نفسه تضيع النسخ التي عليه.</p>
-<div class="tbw"><table class="tb"><tr><th>النسخة</th><th>التاريخ</th><th>الحجم</th><th></th></tr>${r.list.map(f => `<tr><td dir="ltr">${e(f.name)}</td><td>${X.fd(f.at)} ${new Date(f.at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })}</td><td>${kb(f.size)}</td><td><a class="btn ghost sm" href="/api/admin/backups/${encodeURIComponent(f.name)}">⬇ تحميل</a></td></tr>`).join('') || '<tr><td colspan="4" class="muted">لا نسخ بعد. أول نسخة تُنشأ تلقائياً خلال دقيقة من تشغيل المنصة.</td></tr>'}</table></div>
+<div class="tbw"><table class="tb"><tr><th>النسخة</th><th>التاريخ</th><th>الحجم</th><th></th></tr>${r.list.map(f => `<tr><td dir="ltr">${e(f.name)}</td><td>${X.fd(f.at)} ${new Date(f.at).toLocaleTimeString((window.__LOC||'ar-DZ'), { hour: '2-digit', minute: '2-digit' })}</td><td>${kb(f.size)}</td><td><a class="btn ghost sm" href="/api/admin/backups/${encodeURIComponent(f.name)}">⬇ تحميل</a></td></tr>`).join('') || '<tr><td colspan="4" class="muted">لا نسخ بعد. أول نسخة تُنشأ تلقائياً خلال دقيقة من تشغيل المنصة.</td></tr>'}</table></div>
 <details class="fx" style="margin-top:12px"><summary>كيف أسترجع نسخة؟</summary><ol class="sub" style="line-height:2"><li>أوقف التطبيق من لوحة الاستضافة.</li><li>فك ضغط النسخة (ملف <code>.gz</code>) فتحصل على ملف <code>.db</code>.</li><li>احتفظ بالملف الحالي <code>data.db</code> باسم آخر احتياطاً، ثم ضع النسخة مكانه باسم <code>data.db</code>.</li><li>شغّل التطبيق.</li></ol><p class="sub">الصور المحفوظة ووصولات الدفع في مجلدي <code>images</code> و<code>proofs</code>: انسخهما أيضاً من وقت لآخر.</p></details></div>`;
     }
     if (ATAB === 'err') {
       const s = await X.api('GET', '/admin/stats');
       el.innerHTML = `<div class="card"><div style="display:flex;gap:10px;align-items:center"><h2 style="margin:0;flex:1">⚠️ سجل الأخطاء</h2>${s.errors.list.length ? '<button class="btn danger sm" data-adm="clearerr">مسح السجل</button>' : ''}</div>
-<div class="tbw" style="margin-top:10px"><table class="tb"><tr><th>الوقت</th><th>الطلب</th><th>الرمز</th><th>الرسالة</th><th>المستخدم</th></tr>${s.errors.list.map(x => `<tr><td>${X.fd(x.at)} ${new Date(x.at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })}</td><td dir="ltr">${e(x.method)} ${e(x.path)}</td><td>${num(x.status)}</td><td dir="auto">${e(x.msg)}</td><td>${x.user_id ? '#' + x.user_id : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">✅ لا أخطاء مسجّلة.</td></tr>'}</table></div></div>`;
+<div class="tbw" style="margin-top:10px"><table class="tb"><tr><th>الوقت</th><th>الطلب</th><th>الرمز</th><th>الرسالة</th><th>المستخدم</th></tr>${s.errors.list.map(x => `<tr><td>${X.fd(x.at)} ${new Date(x.at).toLocaleTimeString((window.__LOC||'ar-DZ'), { hour: '2-digit', minute: '2-digit' })}</td><td dir="ltr">${e(x.method)} ${e(x.path)}</td><td>${num(x.status)}</td><td dir="auto">${e(x.msg)}</td><td>${x.user_id ? '#' + x.user_id : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">✅ لا أخطاء مسجّلة.</td></tr>'}</table></div></div>`;
     }
   }
   async function onAdmin(ev) {

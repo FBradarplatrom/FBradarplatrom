@@ -20,6 +20,7 @@ module.exports = async function shots(OUT) {
     const rows = T.map(([t, d], i) => ({ ad_id: String(9100 + i), page_id: 'p' + i, page_name: ['Lumi Shop', 'BackFix', 'CarCare Store', 'SleepWell', 'DriveMate', 'BlendGo'][i], status: 'active', country: ['US', 'FR', 'GB', 'DE', 'SA', 'US'][i], title: t, body: t + '. Free shipping. Only $' + (19 + i * 5) + '.99',
       start_date: day(d), link_url: 'https://shop' + i + '.example/products/item-' + i, image_url: 'https://img.example/' + i + '.jpg' }));
     const f = path.join(DIR, 'demo.json'); fs.writeFileSync(f, JSON.stringify(rows));
+    await pg.evaluate(() => { try { localStorage.setItem('wpr_lang', 'en'); } catch (e) {} });   // لوحة التحكم بالإنجليزية لصور المتجر
     await pg.goto(BASE + '/analyze'); await pg.waitForSelector('#file', { state: 'attached' }); await pg.setInputFiles('#file', f); await pg.waitForSelector('#grid .pc');
     await pg.evaluate(C => document.querySelectorAll('#grid .pc-media').forEach((m, i) => { m.style.background = 'linear-gradient(135deg,' + C[i % C.length] + ',#a78bfa)'; m.innerHTML = ''; }), C);
     await pg.evaluate(() => { const t = document.querySelector('#tabs'); window.scrollTo(0, t.getBoundingClientRect().top + window.scrollY - 20); }); await pg.waitForTimeout(300); await shot(pg, 'screenshot-2-results.png');

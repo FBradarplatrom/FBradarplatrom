@@ -13,7 +13,7 @@ function init(d, e, x) {
 }
 const load = () => { if (!cache) { cache = new Map(); if (db) for (const r of db.prepare('select k,v from settings').all()) cache.set(r.k, SECRET.has(r.k) && dec ? dec(r.v) || '' : r.v); } return cache; };
 // قيم افتراضية للمنصة (تُغيَّر من «الربط والتكامل»)
-const DEF = { support_whatsapp: '+213664442637', app_url: 'https://winningproductradar.com', legal_updated: '2026-11-10' };
+const DEF = { support_whatsapp: '+213664442637', support_email: 'contact@winningproductradar.com', app_url: 'https://winningproductradar.com', legal_updated: '2026-11-10' };
 function get(k) { const v = load().get(k); if (v) return v; const e = ENV[k]; return e && process.env[e] ? process.env[e] : (DEF[k] || ''); }
 function set(k, v) {
   if (!db) throw new Error('config');

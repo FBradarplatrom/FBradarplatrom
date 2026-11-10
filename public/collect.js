@@ -6,7 +6,7 @@
   let X = null;                              // سياق المنصة: api, toast, e, fd, ago, root, me, cur, url, refresh
   const $ = s => X.root.querySelector(s), $$ = s => [...X.root.querySelectorAll(s)];
   const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const num = n => Number(n || 0).toLocaleString('ar-DZ');
+  const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const VIEW = 'collect';
 
   /* ---------- الأنماط ---------- */

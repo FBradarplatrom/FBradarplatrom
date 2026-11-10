@@ -1,0 +1,21 @@
+[
+ "٠١٢٣٤٥٦٧٨٩",
+ "مشكله مشاكل شيء هذا هاذا هذه هاذي الذي التي مع بدون كل كلما اكثر اقل جدا فقط نهائيا بعد قبل عند الي علي منه عنه لديك عندك الان اليوم كثير",
+ "official officiel officielle store shop boutique online officialstore global international algerie algeria dz dza maroc morocco tunisie tunisia france fr uk usa us eg egypt ksa uae mena africa afrique arabia arab الرسمي الرسميه الرسمية رسمي متجر الجزائر الجزائريه المغرب تونس مصر السعوديه الامارات العربيه",
+ "// رادار المنتجات → Google Sheets",
+ "// الصق هذا في: الجدول ← Extensions ← Apps Script، ثم Deploy ← New deployment ← Web app (Execute as: Me · Who has access: Anyone)",
+ "const TOKEN = 'ضع-رمزاً-سرياً-هنا';",
+ "if (TOKEN && d.token !== TOKEN) return out({ ok: false, error: 'رمز خاطئ' });",
+ "استعادة كلمة المرور | رادار المنتجات الرابحة",
+ "وصلنا طلب لاستعادة كلمة المرور لحسابك.",
+ "تعيين كلمة مرور جديدة",
+ "الرابط صالح لمدة ساعة واحدة. إن لم تطلبه فتجاهل هذه الرسالة.",
+ "1) فك الضغط في مجلد دائم (لا تحذفه بعد التثبيت).",
+ "2) افتح chrome://extensions وفعّل «وضع المطوّر».",
+ "3) اضغط «تحميل إضافة غير مضغوطة» واختر المجلد radar-ad-collector.",
+ "4) افتح المنصة: ستظهر حالة الإضافة «متصلة» في قسم جمع الإعلانات (إن لم تتصل اضغط F5).",
+ "لا تعمل هذه الإضافة إلا مع المنصة التي نزّلتها منها، ولا تخزّن مفاتيح ولا كلمات مرور.",
+ "تتطلب Chrome 116 فأحدث على الحاسوب.",
+ "keywords: 8-14 distinctive words (Arabic and French) that would appear in an Algerian ad for this exact product (type, material, key feature), not generic words like \"جودة\" or \"livraison\".",
+ "Never invent facts about the product (specs, certifications, reviews) that are not in the ad text; say \"غير مذكور\" when unknown. Answer in Arabic (Modern Standard), except the ad copies. Return ONLY JSON."
+]

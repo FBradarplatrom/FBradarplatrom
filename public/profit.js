@@ -4,7 +4,7 @@
   'use strict';
   const W = window;
   const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const num = n => Math.round(Number(n) || 0).toLocaleString('ar-DZ');
+  const num = n => Math.round(Number(n) || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const dz = n => num(n) + ' دج';
   const MK = () => W.RadarMarkets || W.WPRMarkets || null;
   const rate = c => { if (!c || c === 'DZD') return 1; const m = MK(); return (m && m.RATES_DZD && m.RATES_DZD[c]) || 0; };
@@ -71,12 +71,12 @@ ${inp('leads', 'عدد الطلبات يومياً', 'للتقدير اليوم�
 <div><b>${dz(r.beCpl)}</b><span>أقصى تكلفة إعلان للطلب قبل الخسارة</span></div>
 <div><b>${dz(r.unit)}</b><span>تكلفة القطعة واصلة</span></div>
 <div><b>${dz(r.adPer)}</b><span>الإعلان لكل طلب مسلَّم</span></div>
-<div><b>${num(r.dDel * 10) / 10 === 0 ? 0 : (Math.round(r.dDel * 10) / 10).toLocaleString('ar-DZ')}</b><span>طلب مسلَّم يومياً من ${num(v.leads)}</span></div>
+<div><b>${num(r.dDel * 10) / 10 === 0 ? 0 : (Math.round(r.dDel * 10) / 10).toLocaleString((window.__LOC||'ar-DZ'))}</b><span>طلب مسلَّم يومياً من ${num(v.leads)}</span></div>
 <div class="${r.day > 0 ? 'good' : r.day < 0 ? 'bad' : ''}"><b>${dz(r.month)}</b><span>الربح المتوقَّع شهرياً (${dz(r.day)} يومياً)</span></div>
 </div>
 <div class="pf-v ${cls}">${cls === 'good' ? '✅ منتج مربح: هامش جيد يتحمّل ارتفاع تكلفة الإعلان.' : cls === 'mid' ? '⚠️ مربح لكن الهامش ضيق: أي ارتفاع في تكلفة الإعلان أو المرتجعات قد يمحو الربح. جرّب رفع السعر أو عرض كمية (2 بـ…).' : '❌ خاسر بهذه الأرقام: ارفع السعر، أو اخفض تكلفة الإعلان تحت ' + dz(r.beCpl) + '، أو حسّن نسبة التأكيد.'}</div>
 ${r.rateOk ? '' : '<div class="alert">لا يوجد سعر صرف لهذه العملة؛ اكتب التكلفة بالدينار.</div>'}
-<div class="pf-f">من كل ${num(100)} طلب: يُؤكَّد ${num(+v.conf || 0)}، ويُسلَّم ${num(r.ok * 100)}. تكلفة الإعلان تُدفع على كل الطلبات، لذلك تُقسَم على المسلَّم فقط (${dz(v.cpl)} ÷ ${(Math.round(r.ok * 100) / 100).toLocaleString('ar-DZ')}).
+<div class="pf-f">من كل ${num(100)} طلب: يُؤكَّد ${num(+v.conf || 0)}، ويُسلَّم ${num(r.ok * 100)}. تكلفة الإعلان تُدفع على كل الطلبات، لذلك تُقسَم على المسلَّم فقط (${dz(v.cpl)} ÷ ${(Math.round(r.ok * 100) / 100).toLocaleString((window.__LOC||'ar-DZ'))}).
 المرتجعات: ${dz(r.retPer)} لكل طلب مسلَّم. أسعار الصرف تقريبية (اليوان ≈ ${num(rate('CNY') * 10) / 10 || '—'} دج).</div>`;
     };
     b.addEventListener('input', draw); b.addEventListener('change', draw);

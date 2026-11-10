@@ -5,7 +5,7 @@
   const W = window; let X = null, LIST = null, CUR = null, inited = false;
   const $ = s => X.root.querySelector(s);
   const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const num = n => Number(n || 0).toLocaleString('ar-DZ');
+  const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
   const VIEW = 'watch', QK = 'wpr_watch_queue_v1';
   const ls = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (x) { return null; } };

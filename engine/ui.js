@@ -10,13 +10,13 @@ const TRK=new Map();
 function trackOf(p){const ads=(p.ads||p.counted||[]).map(a=>TRK.get(String(a.ad_id))).filter(Boolean);if(!ads.length)return null;
  const f=Math.min(...ads.map(x=>x.f)),l=Math.max(...ads.map(x=>x.l)),n=Math.max(...ads.map(x=>x.n)),act=ads.filter(x=>x.a).length,span=Math.max(0,Math.round((l-f)/864e5));
  const ended=ads.filter(x=>!x.a&&x.e).map(x=>x.e),stop=act?0:(ended.length?Math.max(...ended):l);return{f,l,n,span,act,tot:ads.length,stop}}
-const trackChip=p=>{const t=trackOf(p);if(!t||t.n<2)return'';return t.act?`<span class="tg soft" title="رُصد في ${t.n} أيام جمع مختلفة">📈 مستمر منذ ${t.span} يوماً من المتابعة · ${t.act} إعلان نشط</span>`:`<span class="tg bad" title="آخر رصد ${new Date(t.l).toLocaleDateString('ar-DZ')}">📉 توقف بعد ${Math.max(1,Math.round((t.stop-t.f)/864e5))} يوماً من المتابعة</span>`};
+const trackChip=p=>{const t=trackOf(p);if(!t||t.n<2)return'';return t.act?`<span class="tg soft" title="رُصد في ${t.n} أيام جمع مختلفة">📈 مستمر منذ ${t.span} يوماً من المتابعة · ${t.act} إعلان نشط</span>`:`<span class="tg bad" title="آخر رصد ${new Date(t.l).toLocaleDateString((window.__LOC||'ar-DZ'))}">📉 توقف بعد ${Math.max(1,Math.round((t.stop-t.f)/864e5))} يوماً من المتابعة</span>`};
 async function trackPass(){const ids=[...new Set(ALL.map(a=>String(a.ad_id||'')).filter(x=>x&&!TRK.has(x)))];if(!ids.length)return;
  for(let i=0;i<ids.length;i+=5000){try{const r=await fetch('/api/track',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ids:ids.slice(i,i+5000)})});if(!r.ok)return;const j=await r.json();for(const k in j)TRK.set(k,j[k])}catch(x){return}}
  if(PROD.some(p=>trackOf(p)))render()}
 const flag=c=>/^[A-Z]{2}$/.test(c||'')?String.fromCodePoint(...[...c].map(x=>127397+x.charCodeAt())):'';
 const mkName=c=>{const m=MK();return m&&m.COUNTRIES[c]?m.COUNTRIES[c].name:c};
-const nf=n=>Number(n||0).toLocaleString('ar-DZ');
+const nf=n=>Number(n||0).toLocaleString((window.__LOC||'ar-DZ'));
 /* السعر بعملته + ما يعادله بالدينار */
 const priceTxt=p=>{if(!p.pr)return'—';const m=MK(),c=p.cur||'DZD',sym=m?m.curSymbol(c):c;return nf(p.pr)+' '+sym+(c!=='DZD'&&p.prDzd?`<small style="display:block;font-weight:400">≈ ${nf(p.prDzd)} دج</small>`:'')};
 /* سوق المنتج وكل الأسواق التي ظهر فيها */
@@ -24,7 +24,7 @@ const mkChip=p=>{const ms=(p.markets||[]).filter(Boolean),m=p.market||ms[0];if(!
 /* أسعار الصرف (تقريبية، قابلة للتعديل، تُحفظ في هذا المتصفح) */
 const RK='wpr_rates_v1',myRates=()=>{try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}};
 const CL={ended:'⏹️ توقف بعد نجاح',trial:'🧪 تحت التجربة',prom:'🌱 واعد',gem:'💎 جوهرة',maybe:'🔸 رابح محتمل',fire:'🔥 رابح',old:'🕰️ قديم في السوق',low:'ضعيف',excl:'🚫 مستبعد',watch:'👀 للمراقبة (قديم)',new:'🆕 جديد (قديم)'};
-const fd=d=>new Date(d).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
+const fd=d=>new Date(d).toLocaleDateString((window.__LOC||'ar-DZ'),{year:'numeric',month:'long',day:'numeric'});
 let ALL=[],PROD=[],VIEW=[],shown=60,NOW=Date.now(),FAV=new Set(),tab='all';
 const arr=j=>{if(Array.isArray(j))return j;for(const k in j){if(Array.isArray(j[k]))return j[k];if(j[k]&&typeof j[k]==='object')for(const k2 in j[k])if(Array.isArray(j[k][k2]))return j[k][k2]}return[j]};
 /* مكتبة Excel (900 كيلوبايت) تُحمَّل فقط عند رفع ملف Excel/CSV، لا مع كل فتح للمنصة */
@@ -95,7 +95,7 @@ function render(){shown=60;const v=id=>($('#'+id)||{}).value||'',ck=id=>!!($('#'
  VIEW=B.filter(p=>tab==='all'?true:tab==='fav'?FAV.has(p.k):p.cat===tab);
  const so=v('sort'),tk=p=>{const t=trackOf(p);return t?(t.act?t.n:-1):0};   /* المتابعة: رُصد نشطاً في أيام جمع أكثر = أوثق */
  VIEW.sort((a,b)=>so==='days'?b.days-a.days:so==='new'?a.days-b.days:a.rank-b.rank||(b.ben||0)-(a.ben||0)||tk(b)-tk(a)||(b.days||0)-(a.days||0));
- const S=sumStats(),nf=x=>x==null?'—':Number(x).toLocaleString('ar-DZ');
+ const S=sumStats(),nf=x=>x==null?'—':Number(x).toLocaleString((window.__LOC||'ar-DZ'));
  $('#sum').innerHTML=[[S.observed,'الإعلانات المرصودة',S.observed==null?'العدد الذي تعرضه مكتبة ميتا أعلى نتائج البحث («~220 نتيجة»). يظهر للدفعات التي جُمعت بالإضافة 1.6 فأحدث: حدّث الإضافة وأعد الجمع':'مجموع ما عرضته مكتبة ميتا أعلى نتائج '+S.searches+' بحث («~N نتيجة»)'],
   [S.fetched,'الإعلانات التي تم جلبها','كل إعلان مختلف وصل من الإضافة (بلا تكرار) = «الكل» = دخلت التحليل + المستبعدة'],[S.analyzed,'دخلت التحليل','إعلانات نشطة غير مستبعدة، كل منها في تصنيف عمره'],
   [S.excluded,'الإعلانات المستبعدة',S.excl_detail+' · تظهر في تبويب «مستبعد»'],[S.sellers,'عدد البائعين','أسماء صفحات مختلفة في الإعلانات التي دخلت التحليل']]

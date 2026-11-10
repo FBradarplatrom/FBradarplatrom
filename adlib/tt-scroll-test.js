@@ -16,7 +16,7 @@ more();
 new IntersectionObserver(e => { if (e[0].isIntersecting) more(); }, { rootMargin: '0px' }).observe(document.getElementById('s'));
 </script></body></html>`;
 (async () => {
-  const b = await chromium.launch(); let ok = false;
+  const b = await chromium.launch(); b.newPage = ((f) => o => f(Object.assign({ locale: 'ar-DZ' }, o)))(b.newPage.bind(b)); b.newContext = ((f) => o => f(Object.assign({ locale: 'ar-DZ' }, o)))(b.newContext.bind(b));   /* اللوحة بالعربية (لغة المتصفح الافتراضية) */ let ok = false;
   try {
     const pg = await b.newPage({ viewport: { width: 1200, height: 800 } });
     await pg.route('https://www.tiktok.com/**', r => r.fulfill({ contentType: 'text/html', body: PAGE }));
