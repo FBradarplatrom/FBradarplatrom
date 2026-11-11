@@ -33,8 +33,8 @@ fs.writeFileSync(path.join(OUT, zipName), zip(files));
 for (const lg of ['en', 'ar', 'fr']) fs.writeFileSync(path.join(OUT, `listing-${lg}.txt`), [
   'Name / الاسم:', L.name[lg], '', 'Summary / الملخص (≤132):', sub(L.short[lg]), '', 'Description / الوصف:', sub(L.description[lg]), ''].join('\n'));
 fs.writeFileSync(path.join(OUT, 'review-answers.txt'), [
-  'Category: ' + L.category, '', 'Single purpose:', L.single_purpose, '', 'Permission justifications:',
-  ...Object.entries(L.permissions).map(([k, v]) => '• ' + k + ': ' + v), '', 'Remote code: ' + L.remote_code, '',
+  'Category: ' + L.category, '', 'Single purpose:', sub(L.single_purpose), '', 'Permission justifications:',
+  ...Object.entries(L.permissions).map(([k, v]) => '• ' + k + ': ' + sub(v)), '', 'Remote code: ' + L.remote_code, '',
   'Data usage – collects: ' + L.data_usage.collects.join('; '), 'Data usage – does NOT collect: ' + L.data_usage.does_not_collect.join('; '),
   'Certifications: ' + L.data_usage.certify.join('; '), '', 'Privacy policy URL: ' + sub(L.privacy_url), 'Homepage URL: ' + sub(L.homepage_url), 'Support URL: ' + sub(L.support_url), ''].join('\n'));
 console.log('✔ ' + path.join('store-build', zipName) + '  (v' + m.version + ', ' + files.length + ' files)');

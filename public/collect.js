@@ -29,7 +29,7 @@
 .l-ck{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13.5px}.l-ck label{display:flex;gap:6px;align-items:center;cursor:pointer}
 .l-steps li{margin:6px 0}.l-steps code{direction:ltr;display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:0 6px}
 .l-add{display:flex;gap:6px;margin-top:8px}.l-add input{max-width:260px}
-.wtip{position:absolute;z-index:300;transform:translate(-50%,calc(-100% - 6px)) scale(.96);background:#111827;color:#fff;padding:5px 11px;border-radius:9px;font-size:12.5px;line-height:1.5;max-width:280px;text-align:center;opacity:0;pointer-events:none;transition:opacity .14s ease,transform .14s ease;box-shadow:0 6px 18px rgba(0,0,0,.2)}.wtip.on{opacity:1;transform:translate(-50%,calc(-100% - 6px)) scale(1)}
+.wtip{position:fixed;top:0;left:0;z-index:300;transform:translate(-50%,calc(-100% - 6px)) scale(.96);background:#111827;color:#fff;padding:5px 11px;border-radius:9px;font-size:12.5px;line-height:1.5;max-width:280px;text-align:center;opacity:0;pointer-events:none;transition:opacity .14s ease,transform .14s ease;box-shadow:0 6px 18px rgba(0,0,0,.2)}.wtip.on{opacity:1;transform:translate(-50%,calc(-100% - 6px)) scale(1)}
 .lc[data-tip]{text-decoration:underline dotted rgba(127,127,127,.55);text-underline-offset:4px}.l-q span[data-tip]{cursor:help}
 .lc .x{font-style:normal;margin-inline-start:4px;opacity:.6}
 .l-nic{border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:8px 0;background:var(--card)}.l-nic summary{cursor:pointer;padding:9px 0;font-weight:600;display:flex;gap:8px;align-items:center}`;
@@ -183,7 +183,7 @@
     const t = ev.target.closest && ev.target.closest('[data-tip]');
     if (!t || !t.dataset.tip) { tipEl.classList.remove('on'); return; }
     tipEl.textContent = t.dataset.tip; const r = t.getBoundingClientRect();
-    tipEl.style.top = (r.top + scrollY) + 'px'; tipEl.style.left = (r.left + r.width / 2 + scrollX) + 'px'; tipEl.classList.add('on');
+    tipEl.style.top = r.top + 'px'; tipEl.style.left = (r.left + r.width / 2) + 'px'; tipEl.classList.add('on');   // ثابت على الشاشة: لا يطيل الصفحة بعد التنقل
   });
   document.addEventListener('scroll', () => tipEl.classList.remove('on'), true);
 

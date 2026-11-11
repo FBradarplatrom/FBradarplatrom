@@ -5,7 +5,7 @@
 // 3) الحكم: ثغرة مؤكدة · منافسة ضعيفة · جُرّب وتوقف · مشبع · يحتاج تحققك · غير حاسم. والثغرات تُراقَب أسبوعياً.
 const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js'), MK = require('./lib/markets.js');
 
-const WEEK = 7 * 864e5;
+const WEEK = 7 * 864e5, SIMILAR_MAX = 40;
 const VERDICTS = ['new', 'gap', 'weak', 'tried', 'saturated', 'check', 'inconclusive'];
 
 module.exports = function mountGap(app, X) {
@@ -147,6 +147,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     const p = own(q.u.id, q.params.id), qs = cleanTerms(q.body && q.body.queries).map(t => ({ q: t.q, lang: t.lang, status: 'pending', seen: 0 }));
     if (!qs.length) throw bad('اكتب عبارة بحث واحدة على الأقل');
     const id = db.prepare('insert into gap_scans(gp_id,user_id,started_at,queries,seen) values(?,?,?,?,?)').run(p.id, q.u.id, now(), JSON.stringify(qs), '[]').lastInsertRowid;
+    db.prepare("delete from gap_matches where gp_id=? and level='similar' and decision is null").run(p.id);   // «المشابهة» تُبنى من جديد مع كل فحص
     s.json({ scan: Number(id) });
   }));
   // إعلانات السوق المستهدف من الإضافة → صفوف موحّدة تعود للصفحة لتقارنها (الصورة تُقارن في المتصفح)
@@ -169,14 +170,17 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     const p = own(q.u.id, q.params.id), b = q.body || {};
     const up = db.prepare(`insert into gap_matches(gp_id,user_id,ad_id,scan_id,row,ev,level,created_at) values(?,?,?,?,?,?,?,?)
       on conflict(gp_id,ad_id) do update set row=excluded.row, ev=excluded.ev, scan_id=excluded.scan_id,
-      level=case when excluded.level='strong' then 'strong' else gap_matches.level end`);
+      level=case when excluded.level='strong' or gap_matches.level='strong' then 'strong' when excluded.level='possible' or gap_matches.level='possible' then 'possible' else 'similar' end`);
     let n = 0;
     for (const m of (Array.isArray(b.matches) ? b.matches : []).slice(0, 200)) {
-      if (!m || !m.row || !m.row.ad_id || !['strong', 'possible'].includes(m.level)) continue;
+      if (!m || !m.row || !m.row.ad_id || !['strong', 'possible', 'similar'].includes(m.level)) continue;
       const row = {}; ['ad_id', 'library_url', 'page_id', 'page_name', 'status', 'start_date', 'days_running', 'title', 'body', 'link_url', 'domain', 'image_url', 'video_url', 'duplicates', 'search']
         .forEach(k => { row[k] = m.row[k] == null ? '' : typeof m.row[k] === 'number' ? m.row[k] : str(m.row[k], k === 'body' ? 1500 : 1200); });
       up.run(p.id, q.u.id, String(row.ad_id), +b.scan || 0, JSON.stringify(row), JSON.stringify(m.ev || {}).slice(0, 2000), m.level, now()); n++;
     }
+    // «مشابهة» = نتائج البحث التي لم تطابق: نُبقي الأقرب فقط (لا تدخل في الحكم إلا إن أكّدها المشترك «نفس المنتج»)
+    db.prepare(`delete from gap_matches where gp_id=? and level='similar' and decision is null and id not in
+      (select id from gap_matches where gp_id=? and level='similar' order by cast(json_extract(ev,'$.score') as integer) desc, id desc limit ${SIMILAR_MAX})`).run(p.id, p.id);
     const v = view(refresh(p)); s.json({ saved: n, verdict: v.verdict, stats: v.stats });
   }));
   app.post('/api/gap/:id/finish', auth, active, wrap((q, s) => {
@@ -187,7 +191,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     db.prepare('update gap_scans set finished_at=?, queries=? where id=?').run(now(), JSON.stringify(qs), sc.id);
     db.prepare('update gap_products set last_scan_at=?, next_check_at=? where id=?').run(now(), now() + WEEK, p.id);
     // تنبيه: منافسون جدد ظهروا في هذا الفحص (أول ظهور لإعلانهم)
-    const fresh = db.prepare("select count(*) n, sum(level='strong') st from gap_matches where gp_id=? and created_at>=? and (decision is null or decision!='no')").get(p.id, sc.started_at || 0);
+    const fresh = db.prepare("select count(*) n, sum(level='strong') st from gap_matches where gp_id=? and created_at>=? and (decision is null or decision!='no') and (level!='similar' or decision='yes')").get(p.id, sc.started_at || 0);
     if (fresh.n) NT.fire(q.u.id, 'gap', '🎯 «' + (p.name || 'منتج') + '»: ' + fresh.n + ' إعلان جديد في ' + cnameAr(okC(p.target) || 'DZ') + (fresh.st ? ' (' + fresh.st + ' مطابق بقوة)' : ' (محتمل)') + '. افتحه لتتحقق: هل دخل منافس؟', '/gaps/' + p.id);
     s.json(Object.assign(view(refresh(p)), { matches: matchesOf(p.id) }));
   }));

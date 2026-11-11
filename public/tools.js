@@ -54,6 +54,41 @@
     taobao: { n: 'Taobao', url: q => 'https://s.taobao.com/search?q=' + encodeURIComponent(q), zh: true, note: 'يتطلب تسجيل الدخول' },
     pdd: { n: 'Pinduoduo', url: q => 'https://mobile.yangkeduo.com/search_result.html?search_key=' + encodeURIComponent(q), zh: true, note: 'يتطلب تسجيل الدخول برقم الهاتف' }
   };
+  /* ---------- 🖼️ البحث بصورة المنتج مباشرة في كل سوق ----------
+     مع الإضافة (1.7.4+): تفتح الإضافة السوق وتضع صورة المنتج في «البحث بالصورة» تلقائياً.
+     بدونها: يُفتح السوق وتُنزَّل الصورة لترفعها من أيقونة الكاميرا. Pinduoduo لا يتيح البحث بالصورة إلا في تطبيقه. */
+  const IMS = { ali: ['AliExpress', 'https://www.aliexpress.com/'], alibaba: ['Alibaba', 'https://www.alibaba.com/'], '1688': ['1688', 'https://www.1688.com/'],
+    taobao: ['Taobao', 'https://www.taobao.com/'], pdd: ['Pinduoduo', 'https://mobile.yangkeduo.com/', 1] };
+  const IMG_MIN = '1.7.4';
+  const vlt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; };
+  const toast = (m, t) => (X ? X.toast(m, t) : W.__toast && W.__toast(m, t));
+  async function blobOfImg(u) { const r = await fetch(img(u)); if (!r.ok) throw new Error('تعذّر جلب الصورة من مصدرها (قد تكون منتهية الصلاحية)'); return r.blob(); }
+  async function jpegOf(u) {                     // JPEG بحجم معقول: كل الأسواق تقبله
+    const bm = await createImageBitmap(await blobOfImg(u)), k = Math.min(1, 1000 / Math.max(bm.width, bm.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(bm, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.9);
+  }
+  async function saveImg(u) { const a = document.createElement('a'); a.href = await jpegOf(u); a.download = 'product-' + Date.now() + '.jpg'; document.body.appendChild(a); a.click(); a.remove(); }
+  // يُستدعى مباشرة من ضغطة الزر (قبل أي انتظار) حتى لا يحجب المتصفح فتح التبويب
+  function imageSearch(m, u) {
+    const M = IMS[m]; if (!M || !u) return;
+    const b = W.WPRLIB && W.WPRLIB.bridge;
+    if (M[2]) { saveImg(u).catch(() => {}); return toast('Pinduoduo لا يتيح البحث بالصورة في موقعه، بل في تطبيقه فقط. نزّلنا لك الصورة: افتح تطبيق Pinduoduo على هاتفك واضغط أيقونة الكاميرا وارفعها.'); }
+    if (b && b.ok() && !vlt(b.version(), IMG_MIN)) {
+      toast(`تفتح الإضافة ${M[0]} وتضع صورة المنتج في البحث بالصورة…`);
+      return jpegOf(u).then(image => b.send('imgsearch', { market: m, image }, 60000)).then(r => {
+        if (r && r.ok) return toast(`✅ أُرسلت صورة المنتج إلى البحث بالصورة في ${M[0]}. النتائج في التبويب المفتوح.`);
+        toast(r && r.error === 'no_input' ? `لم نجد زر البحث بالصورة في ${M[0]} تلقائياً (قد يطلب تسجيل الدخول). وضعنا الصورة في أعلى صفحته: اضغط أيقونة الكاميرا وارفعها.` : `تعذّر إرسال الصورة إلى ${M[0]} (قد يكون حوّلك إلى صفحة أخرى). نزّلنا الصورة لترفعها من أيقونة الكاميرا.`, 'err');
+        if (!r || r.error !== 'no_input') saveImg(u).catch(() => {});
+      }).catch(x => toast(x.message === 'timeout' ? 'لم تردّ الإضافة. أعد تحميل الصفحة وجرّب مجدداً.' : x.message, 'err'));
+    }
+    W.open(M[1], '_blank', 'noopener');
+    saveImg(u).then(() => toast(b && b.ok() ? `نزّلنا الصورة: اضغط أيقونة الكاميرا في ${M[0]} وارفعها. حدّث الإضافة إلى ${IMG_MIN} لتُرفع تلقائياً.` : `نزّلنا الصورة: اضغط أيقونة الكاميرا في ${M[0]} وارفعها. ثبّت الإضافة لتُرفع تلقائياً.`)).catch(x => toast(x.message, 'err'));
+  }
+  W.WPRIMG = { search: imageSearch, markets: IMS };
+  const imgBtns = u => Object.keys(IMS).map(m => `<button type="button" class="btn ghost sm" data-imgs="${m}" data-img="${e(u)}">${e(IMS[m][0])}</button>`).join('');
+
   const SK = 'wpr_sup_mk_v1', selMk = () => { try { return JSON.parse(localStorage.getItem(SK)) || ['ali', '1688', 'alibaba']; } catch (x) { return ['ali', '1688', 'alibaba']; } };
   const parsePrice = (t, cur) => {
     const s = String(t || ''), m = /(\d[\d.,\s]*)/.exec(s); if (!m) return null;
@@ -97,18 +132,24 @@ ${Object.keys(by).length > 1 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;
     try { const x = JSON.parse(localStorage.getItem('wpr_supq_' + k) || 'null'); if (x) Q = Object.assign(Q, x); } catch (x) {}
     if (!Q.q) { const el = body(); if (el) el.innerHTML = '<p class="sub">🔍 جارٍ التعرّف على المنتج من صورته ونص إعلانه…</p>'; try { Q = Object.assign(Q, await X.api('POST', '/sup/query', { name: p.name, kw: p.kw, texts: p.texts, images: p.images })); localStorage.setItem('wpr_supq_' + k, JSON.stringify(Q)); } catch (x) {} }
     const im = p.images[0], sel = selMk();
-    const draw = items => { const el = body(); if (!el) return; el.innerHTML = `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${im ? `<img src="${e(img(im))}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">` : '<div></div>'}<div>
+    const draw = items => { const el = body(); if (!el) return;
+      // الأسواق الصينية تبحث بالصينية: عبارة بلا حروف صينية تعطي نتائج قليلة أو لا شيء
+      const zhWarn = Q.zh && /[\u4e00-\u9fff]/.test(Q.zh) ? '' : `<p class="sub" style="margin:4px 0;color:var(--warn,#b45309)">⚠️ 1688 وTaobao وPinduoduo تبحث بالصينية. اكتب العبارة بالصينية في خانتها، أو ابحث فيها بالصورة أدناه.${Q.q ? ` <a href="https://translate.google.com/?sl=auto&tl=zh-CN&text=${encodeURIComponent(Q.q)}" target="_blank" rel="noopener">ترجمة Google ↗</a>` : ''}</p>`; el.innerHTML = `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${im ? `<img src="${e(img(im))}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">` : '<div></div>'}<div>
 <p class="sub" style="margin-top:0">${Q.vision ? '🧠 تعرّف الذكاء الاصطناعي على المنتج من <b>صورته</b>' + (Q.product ? ': <b>' + e(Q.product) + '</b>' : '') + '.' : 'عبارة البحث من اسم المنتج. أضف OPENAI_API_KEY من «الربط والتكامل» ليتعرّف على المنتج من صورته.'}${(Q.features || []).length ? ' علاماته: ' + Q.features.map(e).join('، ') : ''}</p>
 <div class="grid2" style="gap:8px;margin:0"><label class="fl">بالإنجليزية (AliExpress، Alibaba)<input id="sup-q" dir="ltr" value="${e(Q.q || '')}" placeholder="e.g. star projector night light"></label><label class="fl">بالصينية (1688، Taobao، Pinduoduo)<input id="sup-zh" dir="auto" value="${e(Q.zh || '')}" placeholder="مثل: 星空投影小夜灯"></label></div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0">${Object.keys(MKS).map(m => `<label class="fl chk" style="margin:0" title="${e(MKS[m].note)}"><input type="checkbox" data-sm="${m}"${sel.includes(m) ? ' checked' : ''}> ${e(MKS[m].n)} <small>(${e(MKS[m].note)})</small></label>`).join('')}</div>
-<p style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 0"><button class="btn" data-tm="sup-go">🔎 ابحث في الأسواق المختارة</button>${im ? `<a class="btn ghost sm" target="_blank" rel="noopener" href="https://lens.google.com/uploadbyurl?url=${encodeURIComponent(im)}">🖼️ بالصورة: Google Lens ↗</a><a class="btn ghost sm" target="_blank" rel="noopener" href="https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(im)}">🖼️ Yandex ↗</a>` : ''}</p>
-<p class="sub" style="margin:4px 0 0">تفتح الإضافة كل سوق في تبويب، تقرأ النتائج وتعود، ثم تقارن المنصة صورة كل نتيجة بصورة منتجك وتحوّل السعر (يوان/دولار) إلى الدينار. Taobao وPinduoduo يحتاجان أن تكون مسجّلاً فيهما على Chrome.</p></div></div>
+${zhWarn}
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 0"><button class="btn" data-tm="sup-go">🔎 ابحث بالكلمة في الأسواق المختارة</button></p>
+<p class="sub" style="margin:4px 0 0">تفتح الإضافة كل سوق في تبويب، تقرأ النتائج وتعود، ثم تقارن المنصة صورة كل نتيجة بصورة منتجك وتحوّل السعر (يوان/دولار) إلى الدينار. Taobao وPinduoduo يحتاجان أن تكون مسجّلاً فيهما على Chrome (وPinduoduo يطلب رقم هاتف).</p>
+${im ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><b>🖼️ ابحث بصورة المنتج مباشرة</b><p class="sub" style="margin:2px 0 6px">تفتح الإضافة السوق وترفع صورة المنتج في «البحث بالصورة» تلقائياً.</p>
+<div style="display:flex;gap:6px;flex-wrap:wrap">${imgBtns(im)}<a class="btn ghost sm" target="_blank" rel="noopener" href="https://lens.google.com/uploadbyurl?url=${encodeURIComponent(im)}">Google Lens ↗</a><a class="btn ghost sm" target="_blank" rel="noopener" href="https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(im)}">Yandex ↗</a></div></div>` : ''}</div></div>
 ${items.length ? supCards(items) : '<p class="sub" style="margin-top:12px">لا نتائج بعد.</p>'}${prev.updated_at ? `<p class="sub" style="margin-top:8px">آخر بحث: ${X.fd(prev.updated_at)} · ${num(items.length)} نتيجة</p>` : ''}`; };
     let ITEMS = prev.items || [];
     draw(ITEMS);
     if (ITEMS.some(x => x.sim == null)) supRank(k, ITEMS, p).then(draw).catch(() => {});
     body().onclick = async ev => {
       const f = ev.target.closest('[data-tm="supf"]'); if (f) { SUPF = f.dataset.m; return draw(ITEMS); }
+      const ib = ev.target.closest('[data-imgs]'); if (ib) return imageSearch(ib.dataset.imgs, ib.dataset.img);
       if (!ev.target.closest('[data-tm="sup-go"]')) return;
       const el = body(), q = el.querySelector('#sup-q').value.trim(), zh = el.querySelector('#sup-zh').value.trim();
       const mk = [...el.querySelectorAll('[data-sm]:checked')].map(c => c.dataset.sm); localStorage.setItem(SK, JSON.stringify(mk));

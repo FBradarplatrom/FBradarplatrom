@@ -224,6 +224,82 @@ async function openPlatform() {
   } catch (_) { return { ok: false }; }
 }
 
+/* ---------- البحث بصورة المنتج في أسواق المورّدين ---------- */
+// المنصة ترسل صورة المنتج (JPEG مصغّرة)، فتفتح الإضافة الصفحة الرئيسية للسوق وتضع الصورة في خانة «البحث بالصورة» كأنك رفعتها بنفسك.
+const IMG_HOME = { ali: 'https://www.aliexpress.com/', alibaba: 'https://www.alibaba.com/', '1688': 'https://www.1688.com/', taobao: 'https://www.taobao.com/' };
+const IMG_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/;
+function tabReady(tabId, ms) {
+  return new Promise((res) => {
+    const done = (v) => { clearTimeout(t); chrome.tabs.onUpdated.removeListener(on); res(v); };
+    const on = (id, info) => { if (id === tabId && info.status === 'complete') done(true); };
+    const t = setTimeout(() => done(false), ms);
+    chrome.tabs.onUpdated.addListener(on);
+    chrome.tabs.get(tabId).then((tb) => { if (tb && tb.status === 'complete') done(true); }).catch(() => done(false));
+  });
+}
+// تُحقن في صفحة السوق (دالة من الإضافة نفسها، لا شيفرة عن بُعد): تجد خانة رفع الصورة (أو تضغط أيقونة الكاميرا لتظهر) وتضع الملف فيها.
+// إن لم تجدها: تعرض لوحة صغيرة فيها الصورة وزر حفظها، ليرفعها المستخدم من أيقونة الكاميرا بنفسه.
+async function uploadToImageSearch(dataUrl, market, lang) {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const bin = atob(dataUrl.split(',')[1]), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  const type = (/^data:([^;]+)/.exec(dataUrl) || [])[1] || 'image/jpeg';
+  const file = new File([u8], 'product.' + (type.split('/')[1] === 'jpeg' ? 'jpg' : type.split('/')[1]), { type });
+  const seen = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const findInput = () => [...document.querySelectorAll('input[type="file"]')].find((i) => !i.disabled && (!i.accept || /image|jpe?g|png|webp/i.test(i.accept)));
+  const SEL = {
+    ali: ['[class*="picSearch"]', '[class*="pic-search"]', '[class*="image-search"]', '[class*="imageSearch"]', '[class*="camera"]'],
+    alibaba: ['[class*="image-search"]', '[class*="imageSearch"]', '[class*="img-search"]', '[class*="picture-search"]', '[class*="camera"]'],
+    '1688': ['[class*="img-search"]', '[class*="image-search"]', '[class*="imageSearch"]', '[class*="pic-search"]', '[class*="camera"]'],
+    taobao: ['[class*="image-search"]', '[class*="imgsearch"]', '[class*="imageSearch"]', '[class*="pailitao"]', '[class*="camera"]']
+  }[market] || [];
+  const WORDS = /(pic|image|img|photo|picture)[-_ ]?(search|upload)|camera|拍立淘|以图搜|图片搜索|搜索图片|search by image|image search/i;
+  const cands = () => {
+    const a = SEL.flatMap((s) => [...document.querySelectorAll(s)]);
+    const b = [...document.querySelectorAll('[class],[title],[aria-label]')].filter((el) => {
+      const c = typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || '';
+      return WORDS.test(c + ' ' + (el.getAttribute('title') || '') + ' ' + (el.getAttribute('aria-label') || ''));
+    });
+    return [...new Set(a.concat(b))].filter((el) => { if (!seen(el)) return false; const r = el.getBoundingClientRect(); return r.top < 400 && r.width < 200 && r.height < 120; });
+  };
+  let inp = findInput();
+  for (let round = 0; !inp && round < 4; round++) {
+    for (const c of cands().slice(0, 5)) { try { c.click(); } catch (_) { /* ignore */ } await sleep(800); inp = findInput(); if (inp) break; }
+    if (!inp) await sleep(1500);
+  }
+  if (inp) {
+    const dt = new DataTransfer(); dt.items.add(file);
+    inp.files = dt.files;
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+    return { ok: true };
+  }
+  // احتياط: لوحة بالصورة (يمكن سحبها إلى أيقونة الكاميرا) وزر حفظها
+  const box = document.createElement('div');
+  box.setAttribute('style', 'position:fixed;z-index:2147483647;top:16px;right:16px;width:250px;background:#fff;color:#111;border:2px solid #15803d;border-radius:14px;padding:12px;font:14px/1.5 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.25);direction:' + (lang === 'ar' ? 'rtl' : 'ltr'));
+  const im = document.createElement('img'); im.src = dataUrl; im.setAttribute('style', 'width:100%;border-radius:10px;display:block;margin-bottom:8px');
+  const tx = document.createElement('div'); tx.textContent = { ar: 'صورة المنتج من رادار المنتجات الرابحة: اضغط أيقونة الكاميرا 📷 في خانة البحث وارفعها (أو اسحبها إليها).', fr: 'Photo du produit (Radar) : cliquez sur l’icône appareil photo 📷 de la recherche et importez-la (ou glissez-la).', en: 'Product photo from Winning Product Radar: click the camera icon 📷 in the search box and upload it (or drag it there).' }[lang] || '';
+  const a = document.createElement('a'); a.href = dataUrl; a.download = file.name; a.textContent = { ar: '⬇ حفظ الصورة', fr: '⬇ Enregistrer l’image', en: '⬇ Save image' }[lang]; a.setAttribute('style', 'display:inline-block;margin-top:8px;color:#15803d;font-weight:700');
+  const x = document.createElement('button'); x.textContent = '×'; x.setAttribute('style', 'position:absolute;top:4px;left:8px;border:0;background:none;font-size:20px;cursor:pointer'); x.onclick = () => box.remove();
+  box.append(x, im, tx, a); document.documentElement.appendChild(box);
+  return { ok: false, error: 'no_input' };
+}
+async function imageSearch(m) {
+  const home = IMG_HOME[m.market];
+  if (!home) return { ok: false, error: 'market' };
+  const img = String(m.image || '');
+  if (img.length > 4e6 || !IMG_RE.test(img)) return { ok: false, error: 'image' };
+  let tab;
+  try { tab = await chrome.tabs.create({ url: home, active: true }); } catch (_) { return { ok: false, error: 'tab' }; }
+  await tabReady(tab.id, 30000);
+  await sleep(1200);                                                     // واجهة السوق تُبنى بعد التحميل
+  try {
+    const r = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: uploadToImageSearch, args: [img, m.market, ['ar', 'fr', 'en'].includes(await get('uiLang')) ? await get('uiLang') : 'ar'] });
+    const out = (r && r[0] && r[0].result) || { ok: false, error: 'inject' };
+    return Object.assign({ market: m.market }, out);
+  } catch (_) { return { ok: false, error: 'inject', market: m.market }; }  // تحويل لنطاق آخر أو صفحة دخول لا تُحقن
+}
+
 /* ---------- أوامر المنصة ---------- */
 async function onPage(port, m) {
   if (!m || typeof m.cmd !== 'string') return;
@@ -234,6 +310,7 @@ async function onPage(port, m) {
     case 'tt_status': { let logged = false; try { logged = !!(await chrome.cookies.get({ url: 'https://www.tiktok.com', name: 'sessionid' })); } catch (_) { /* ignore */ } reply({ ok: true, logged }); break; }
     case 'ping': reply({ ok: true, version: VERSION, state: await full(await get(QK)) }); break;
     case 'start': reply(await locked(() => startQueue(m))); break;
+    case 'imgsearch': reply(await imageSearch(m)); break;
     case 'start_current': reply(await locked(() => startCurrent(m))); break;
     case 'stop': reply(await stopQueue()); break;
     case 'skip': reply(await skipCurrent()); break;

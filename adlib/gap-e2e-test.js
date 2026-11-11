@@ -99,7 +99,7 @@ const raw = (id, o) => ({ ad_archive_id: String(id), page_id: o.page || 'p' + id
     ok(byAd['901'] && byAd['901'].level === 'strong' && byAd['901'].ev.image >= 80, 'same supplier photo (resized, framed, logo) → strong image match');
     ok(byAd['902'] && byAd['902'].level === 'strong' && /ali:/.test(byAd['902'].ev.supplier), 'same AliExpress item → strong supplier match');
     ok(byAd['903'] && byAd['903'].level === 'possible', 'distinctive words only → possible (needs your check)');
-    ok(!byAd['904'], 'a different lamp is not matched');
+    ok(byAd['904'] && byAd['904'].level === 'similar' && /من بحث/.test(byAd['904'].ev.why), 'a different lamp is not matched (kept only as a similar search result)');
     ok(p.verdict === 'weak' && p.stats.activeSellers === 2 && p.stats.scanned === 4, 'verdict: weak competition (2 active sellers)');
     // ---- تحققك اليدوي يغيّر الحكم
     await pg.click(`[data-g="no"][data-m="${byAd['901'].id}"]`); await pg.waitForTimeout(400);
@@ -122,11 +122,17 @@ const raw = (id, o) => ({ ad_archive_id: String(id), page_id: o.page || 'p' + id
       window.postMessage({ tag: 'WPR_BRIDGE', evt: 'done', id: b }, location.origin); }, b2);
     await pg.waitForFunction(() => !document.querySelector('#g-live h2'), null, { timeout: 15000 });
     p = await (await pg.request.get(BASE + '/api/gap/' + j2.id)).json();
+    await pg.waitForSelector('text=إعلانات مشابهة من نتائج البحث');
+    ok(p.matches.length === 1 && p.matches[0].level === 'similar' && (await pg.textContent('#x-gap')).includes('Lamps DZ'), 'no match → the search results are shown as similar ads');
+    await pg.screenshot({ path: path.join(process.env.SHOT_DIR || DIR, 'gap-similar.png'), fullPage: true });
     ok(p.verdict === 'gap' && p.watch && p.next_check_at > Date.now() + 6 * 864e5, 'nothing found with 2 completed searches → confirmed gap, re-check scheduled in 7 days');
+    await pg.click(`[data-g="yes"][data-m="${p.matches[0].id}"]`); await pg.waitForTimeout(500);
+    p = await (await pg.request.get(BASE + '/api/gap/' + j2.id)).json();
+    ok(p.verdict === 'weak' && p.stats.matches === 1, 'a similar ad you confirm as the same product counts as a competitor');
     // ---- القائمة
     await pg.goto(BASE + '/gaps'); await pg.waitForSelector('.g-card');
     const lt = await pg.textContent('#x-gap');
-    ok(/ثغرة مؤكدة/.test(lt) && /جُرّب وتوقف/.test(lt), 'list shows both verdicts');
+    ok(/منافسة ضعيفة/.test(lt) && /جُرّب وتوقف/.test(lt), 'list shows both verdicts');
     await pg.waitForTimeout(700);
     ok(await pg.evaluate(() => document.querySelector('.nv.on').dataset.v === 'gap'), 'menu highlights the gap section');
     await pg.screenshot({ path: path.join(process.env.SHOT_DIR || DIR, 'gap-list.png'), fullPage: true });

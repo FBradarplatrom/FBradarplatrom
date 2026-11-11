@@ -25,6 +25,9 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok((await pg.getAttribute('button[data-g="en"][data-t="Helps"]', 'data-tip')) === 'يساعد', 'English golden word carries its Arabic meaning');
     await pg.hover('button[data-g="en"][data-t="Helps"]'); await pg.waitForTimeout(250);
     ok(await pg.evaluate(() => { const t = document.querySelector('.wtip'); return t.classList.contains('on') && t.textContent === 'يساعد'; }), 'hover shows the meaning in a floating tooltip');
+    // التلميح ثابت على الشاشة: بعد الانتقال لصفحة قصيرة لا يبقى فراغ أبيض أسفلها (كان يطيل الصفحة)
+    await pg.evaluate(() => { const t = document.querySelector('.wtip'); t.style.top = '9000px'; });
+    ok(await pg.evaluate(() => getComputedStyle(document.querySelector('.wtip')).position === 'fixed' && document.documentElement.scrollHeight < 9000), 'the floating tooltip never stretches the page');
     await pg.click('button[data-g="en"][data-t="Helps"]'); await pg.click('button[data-c="kids"][data-sc="en"][data-t="your child"]');
     ok((await pg.getAttribute('#l-prev .l-q span', 'data-tip')) === 'يساعد + طفلك', 'search preview shows the meaning of the combined phrase');
     await pg.selectOption('select[data-p="country"]', 'TW'); await pg.waitForTimeout(400); await pg.$$eval('details', d => d.forEach(x => { x.open = true; }));
