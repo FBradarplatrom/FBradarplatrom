@@ -72,7 +72,21 @@ app.use(gzip);
 // الأمان: ترويسات تمنع تضمين المنصة في مواقع أخرى (clickjacking) وتخمين أنواع الملفات وتسريب الروابط
 app.use((q, s, n) => { s.set({ 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' }); if (q.secure) s.set('Strict-Transport-Security', 'max-age=15552000'); n(); });
 app.use(express.json({ limit: '50mb', verify: (q, s, buf) => { if (q.url.startsWith('/api/billing/webhook')) q.rawBody = buf; } }), cookie());   // الجسم الخام لتحقق توقيع بوابة الدفع
-app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });   // البيانات حيّة: لا تُخزَّن في المتصفح (تظهر فور وصولها)
+app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });
+// ---------- وضع الصيانة: الزوار والمشتركون يرون صفحة الصيانة (503)، والمدير يعمل عادياً ----------
+// مفتوح دائماً: صفحة الدخول (ليدخل المدير)، الصفحات القانونية، الملفات الثابتة، وإشعارات بوابات الدفع (حتى لا يضيع دفع)
+const MAINT_HTML = fs.readFileSync(path.join(__dirname, 'views', 'maint.html'), 'utf8'), CFGM = require('./adlib/config.js');
+const maintOn = () => CFGM.get('maint_on') === '1';
+const MAINT_OPEN = /^\/(login|forgot|reset|terms|privacy|refund|contact|fonts\/|radar-lib\/|api\/(login|logout|health|legal\/info|maint\/info|billing\/(webhook|return))|[\w.-]+\.(js|css|svg|png|ico|woff2|txt|map)$)/;
+app.use((q, s, n) => {
+  if (!maintOn() || MAINT_OPEN.test(q.path)) return n();
+  const u = optUser(q), r = u && db.prepare('select role from users where id=?').get(u.id); if (r && r.role === 'admin') return n();
+  s.set({ 'Retry-After': '1800', 'Cache-Control': 'no-store' });
+  if (q.path.startsWith('/api/')) return s.status(503).json({ error: 'المنصة في صيانة قصيرة، نعود قريباً', maint: true });
+  s.status(503).type('html').send(MAINT_HTML);
+});
+app.get('/api/maint/info', (q, s) => s.json({ on: maintOn(), msg: CFGM.get('maint_msg') || '', until: CFGM.get('maint_until') || '', whatsapp: CFGM.get('support_whatsapp') || '' }));
+   // البيانات حيّة: لا تُخزَّن في المتصفح (تظهر فور وصولها)
 
 
 const wrap = h => (q, s, n) => { try { h(q, s, n); } catch (e) { n(e); } };
@@ -162,7 +176,7 @@ app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
 // تسجيل الخروج من كل الأجهزة
 app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
 app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
-app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: contactUrl(), totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
+app.get('/api/me', auth, (q, s) => s.json({ maint: q.u.role === 'admin' && maintOn(), email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: contactUrl(), totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
@@ -378,7 +392,14 @@ Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () =
 require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
 require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يومية لقاعدة البيانات
 require('./adlib/support.js')(app, BX);
-require('./adlib/wa.js')(app, BX);       // 💬 رسائل واتساب الجاهزة (يضبطها المدير، تظهر للمشترك)  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
+require('./adlib/wa.js')(app, BX);
+require('./adlib/stats.js')(app, BX);
+app.get('/maint-preview', auth, admin, (q, s) => s.set('Cache-Control', 'no-store').type('html').send(MAINT_HTML));
+app.put('/api/admin/maint', auth, admin, wrap((q, s) => {
+  const b = q.body || {}, until = String(b.until || '').slice(0, 30);
+  CFGM.set('maint_on', b.on ? '1' : ''); CFGM.set('maint_msg', String(b.msg || '').slice(0, 600)); CFGM.set('maint_until', until && !isNaN(new Date(until)) ? new Date(until).toISOString() : '');
+  act(q.u.id, 'admin_maint', q, b.on ? 'تفعيل وضع الصيانة' : 'إيقاف وضع الصيانة'); s.json({ ok: 1, on: maintOn() });
+}));    // 📊 إحصائيات المنصة الشاملة + نبضة النشاط والبلد       // 💬 رسائل واتساب الجاهزة (يضبطها المدير، تظهر للمشترك)  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
 // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
 ML.routes(app, BX);   // المدير: حالة البريد، بريد تجريبي إلى أي عنوان، فحص SPF/DKIM

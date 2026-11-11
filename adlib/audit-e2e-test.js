@@ -9,7 +9,7 @@ const SHOTS = process.argv.includes('--shots') ? process.argv[process.argv.index
 let pass = 0; const ok = (c, m) => { if (!c && process.env.AUDIT_SOFT) { console.log('XX', m); process.exitCode = 1; return; } assert.ok(c, m); pass++; console.log('ok', m); };
 const SKIP = '[translate=no],[dir=auto],.pc-ti,.pc-sub,.l-chips,script,style,textarea,code,pre,option,.noi18n';
 const USER_V = ['/', '/collect', '/inbox', '/analyze', '/archive', '/saved', '/compete', '/gaps', '/watch', '/tiktok', '/integrations', '/settings', '/subscription', '/security', '/help', '/guide'];
-const ADMIN_V = ['/admin', '/subscribers', '/payments', '/payments/plans', '/payments/methods', '/support-inbox', '/platform', '/platform/wa', '/platform/ai', '/platform/tg', '/platform/legal', '/platform/backup', '/platform/err'];
+const ADMIN_V = ['/admin', '/subscribers', '/payments', '/payments/plans', '/payments/methods', '/support-inbox', '/platform', '/platform/wa', '/platform/ai', '/platform/tg', '/platform/legal', '/platform/backup', '/platform/maint', '/platform/err'];
 (async () => {
   const srv = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env: Object.assign({}, process.env, { PORT, JWT_SECRET: 'q'.repeat(40), ADMIN_EMAIL: 'a@t.dz', DB_FILE: path.join(DIR, 'd.db'), NODE_ENV: 'test', BACKUP_DISABLE: '1', SMTP_HOST: 'json', SMTP_USER: 'contact@example.com' }), stdio: 'ignore' });
   for (let i = 0; i < 60; i++) { try { await fetch(BASE + '/'); break; } catch (e) { await new Promise(r => setTimeout(r, 150)); } }

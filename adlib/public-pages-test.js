@@ -14,11 +14,14 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
   try {
     // prices for the pricing section
     const A = await b.newPage(); await A.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
-    // قبل تحديد الأسعار: كل الباقات المفعّلة تظهر («السعر يُعلن قريباً»)
-    const pub0 = await (await fetch(BASE + '/api/plans/public')).json();
-    ok(pub0.plans.length === 4, 'كل الباقات المفعّلة تظهر للزبائن حتى قبل تحديد السعر (' + pub0.plans.length + ')');
+    // الأسعار الافتراضية: 3 باقات بسعر شهري × مدد بخصم (مثل عرض الأسعار المعتمد)
+    const pub0 = await (await fetch(BASE + '/api/plans/public')).json(), st = pub0.plans.find(p => p.name === 'البداية');
+    ok(pub0.plans.length === 4 && pub0.periods.map(x => x.m + ':' + x.off).join(',') === '1:0,3:5,6:8,12:15', 'تجربة مجانية + 3 باقات، والمدد 1/3/6/12 بخصم 0/5/8/15٪');
+    ok(st.price === 3900 && st.periods.find(x => x.m === 6).dzd === 21500 && st.periods.find(x => x.m === 6).monthly === 3583 && st.periods.find(x => x.m === 6).save === 1900, 'البداية: 3900 شهرياً، 6 أشهر = 21500 (3583 للشهر، توفير 1900)');
     { const pg0 = await b.newPage(); await pg0.goto(BASE + '/?lang=ar'); await pg0.waitForSelector('#plans .plan');
-      ok((await pg0.$$('#plans .plan')).length === 4 && /السعر يُعلن قريباً/.test(await pg0.locator('#plans').innerText()), 'باقة بلا سعر: «السعر يُعلن قريباً» بدل أن تختفي'); await pg0.close(); }
+      const t0 = await pg0.locator('#plans').innerText();
+      ok((await pg0.$$('#plans .plan')).length === 3 && (await pg0.$$('.ptabs [data-per]')).length === 4 && await pg0.getAttribute('.ptabs .on', 'data-per') === '6' && /21[.,٬\s]?500/.test(t0) && /3[.,٬\s]?583/.test(t0) && await pg0.isVisible('.ptrial'), 'الأسعار: أزرار المدد (6 أشهر افتراضياً)، 3 بطاقات، والتجربة المجانية');
+      await pg0.click('.ptabs [data-per="12"]'); ok(/39[.,٬\s]?800/.test(await pg0.locator('#plans').innerText()), 'تغيير المدة يغيّر الأسعار (12 شهراً −15٪)'); await pg0.close(); }
     // المدير يضيف ميزة ويحذف أخرى ويخفي ميزة مدمجة
     const cat0 = (await (await A.request.get(BASE + '/api/admin/plans')).json()).cat;
     ok(cat0.length === 8 && cat0.every(f => f.builtin && f.ar && f.en && f.fr), 'كتالوج المميزات: 8 مدمجة بثلاث لغات');
@@ -41,14 +44,14 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
       await pg.goto(BASE + '/?lang=' + lg); await pg.waitForSelector('#plans .plan');
       const txt = await pg.locator('body').innerText();
       ok(h1.test(await pg.locator('h1').innerText()) && await pg.getAttribute('html', 'dir') === dir, lg + ': العنوان واتجاه الصفحة');
-      ok((await pg.$$('#plans .plan')).length === 4 && /\$19/.test(txt), lg + ': الباقات الأربع بأسعارها');
+      ok((await pg.$$('#plans .plan')).length === 3 && await pg.isVisible('.ptrial') && /\$104\.88/.test(txt), lg + ': الباقات الثلاث بأسعارها (والدولار للبطاقة الدولية) + التجربة المجانية');
       ok(!/الجزائري|algérien|Algerian market/i.test(await pg.locator('.hero').innerText()), lg + ': لا عبارة «للسوق الجزائري» في الواجهة');
       ok(!/(أوزان|weights|pondération|الكلمات الذهبية|golden word|mots dorés|عدد البائعين|number of sellers|37|26 نقطة)/i.test(txt), lg + ': لا كشف لطريقة التصنيف والأوزان');
       ok(!/(للجزائر فقط|لكل الأسواق|Every market|Tous les marchés|only for one country|réservé à un seul pays)/i.test(txt) && (await pg.$$('#faqs details')).length >= 8, lg + ': أسئلة مفيدة، وبلا «للجزائر فقط» ولا «لكل الأسواق»');
       await pg.waitForSelector('.wpr-dock .wd-th'); ok(await pg.isVisible('#lang-b') && !(await pg.$('.wpr-dock .wd-lang')) && !(await pg.isVisible('#lang')), lg + ': اللغة في الأعلى، والأزرار العائمة واتساب والوضع فقط');
       ok(await pg.isVisible('footer .fb p') && await pg.isVisible('footer .fcp') && /BaridiMob/.test(await pg.innerText('#pay')) && !/طرق الدفع:|Payment methods:|Moyens de paiement/.test(await pg.innerText('#pay')), lg + ': فوتر بالوصف والحقوق، وجملة الدفع');
-      const free = pg.locator('#plans .plan').first(), offs = await free.locator('li.off').allTextContents(), ons = await pg.locator('#plans .plan').nth(1).locator('li.off').count();
-      ok(offs.length === 2 && offs.some(x => /TikTok/.test(x)) && offs.some(x => /واتساب|WhatsApp/.test(x)) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (✕ لغير المشمول): ' + offs.join(' | '));
+      const tr = await pg.innerText('.ptrial'), ons = await pg.locator('#plans .plan').nth(1).locator('li.off').count();
+      ok(/TikTok/.test(tr) && /واتساب|WhatsApp/.test(tr) && ons === 0, lg + ': مميزات كل باقة كما حددها المدير (غير المشمول في التجربة مذكور): ' + tr.replace(/\n/g, ' '));
       if (process.env.SHOT) await pg.screenshot({ path: process.env.SHOT + '/landing-' + lg + '.png', fullPage: true });
       await pg.close();
     }

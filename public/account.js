@@ -10,15 +10,20 @@
   const ST = { pending: ['warn', 'قيد المراجعة'], paid: ['ok', 'مدفوع'], rejected: ['bad', 'مرفوض'], failed: ['bad', 'فشل'] };
   const MT = { satim: '💳 CIB / الذهبية', stripe: '💳 بطاقة دولية (Stripe)', paypal: '🅿️ PayPal', card: '💳 بطاقة', baridi: '📱 BaridiMob / CCP / تحويل' };
   const money = (a, c) => (c === 'USD' ? '$' + Number(a || 0).toFixed(2) : dz(a));
-  const priceOf = x => [x.price > 0 ? dz(x.price) : '', x.price_usd > 0 ? '$' + Number(x.price_usd).toFixed(2) : ''].filter(Boolean).join(' · ');
+  const perName = m => +m === 1 ? 'شهر' : +m === 12 ? '12 شهراً' : m + ' أشهر';
+  const perOf = (p, m) => (p && p.periods || []).find(z => z.m === +m);
+  const defMonths = () => { const ms = ((BL && BL.periods) || []).map(x => +x.m); return ms.includes(6) ? 6 : ms[0] || 1; };
   const st = document.createElement('style');
   st.textContent = `.meter{margin:8px 0}.meter .t{display:flex;justify-content:space-between;font-size:13px}.meter .b{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:4px}.meter .b i{display:block;height:100%;background:linear-gradient(90deg,#118553,#35ac74)}.meter .b i.hot{background:linear-gradient(90deg,#f59e0b,#dc2626)}
+.per-t{display:flex;gap:6px;flex-wrap:wrap}.per-t button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:7px 16px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.3;color:var(--ink)}.per-t button small{font-size:11.5px;color:var(--brand);font-weight:700}.per-t button.on{background:var(--brand);border-color:var(--brand);color:#fff}.per-t button.on small{color:#d6f5e4}
 .plan-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.plan{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--card2);display:flex;flex-direction:column;gap:6px}.plan.on{border-color:var(--brand);box-shadow:0 0 0 2px rgba(17,133,83,.25)}.plan .pr{font-size:24px;font-weight:800}.plan ul{margin:4px 0;padding-inline-start:18px;font-size:13px}
 .adm-t{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}.adm-t button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}.adm-t button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kpis div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}.kpis b{display:block;font-size:22px}.kpis span{font-size:12.5px;color:var(--mut)}
 .bars{display:flex;align-items:flex-end;gap:6px;height:140px;margin-top:10px}.bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:11px;color:var(--mut)}.bars i{display:block;width:100%;background:linear-gradient(180deg,#35ac74,#118553);border-radius:6px 6px 0 0;min-height:2px}
 .btn.wa{background:#25d366;color:#fff;border-color:#25d366;display:inline-flex;gap:8px;align-items:center}.btn.wa:hover{background:#1ebe5b}
 .wa-box{margin:14px 0 4px;padding:14px;border:1px solid #25d36655;background:#25d36612;border-radius:14px;display:flex;flex-direction:column;gap:6px}.wa-box>b{display:flex;gap:8px;align-items:center;color:#128c4b}.wa-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.st-k>div.ok b{color:var(--ok)}.st-k>div.warn b{color:var(--warn)}.st-hb{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:10px;align-items:center;padding:5px 0;font-size:14px}.st-hb i{height:8px;background:var(--card2);border-radius:99px;overflow:hidden}.st-hb i s{display:block;height:100%;background:var(--brand);border-radius:99px}.st-hb b{min-width:36px;text-align:end}
+.st-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 18px}.st-l>div{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}.st-l span{color:var(--mut)}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:860px){.grid3{grid-template-columns:1fr}}
 .wa-m{display:flex;flex-direction:column;gap:10px}.wa-m textarea{font:inherit;line-height:1.7}
 .sup-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.sup-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.sup-f button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
@@ -62,14 +67,15 @@ ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>س�
     if (['pay', 'upgrade', 'renew', 'billing'].includes(key) && !BL) BL = await X.api('GET', '/billing');
     const me = X.me(), paid = BL ? BL.plans.filter(x => x.price > 0 || x.price_usd > 0) : [], cur = BL ? (BL.plan && BL.plan !== 'none' ? BL.plan : '') : '';
     const curPlan = paid.find(x => x.name === cur), others = key === 'upgrade' ? paid.filter(x => x.name !== cur) : paid;
-    let sel = o.plan || (key === 'renew' && curPlan ? curPlan.id : (others[0] || {}).id), dirty = false;
+    let sel = o.plan || (key === 'renew' && curPlan ? curPlan.id : (others[0] || {}).id), mon = o.months || defMonths(), dirty = false;
     const TOP = { tech: 'مشكلة تقنية', billing: 'الدفع والعروض', usage: 'سؤال عن الاستعمال', idea: 'اقتراح', other: 'أخرى' };
     const b = T.open(WAT[key], '');
-    const vars = () => { const p = paid.find(x => x.id === +sel) || {}, f = b.querySelector('#wa-store'), tp = b.querySelector('#wa-topic');
-      return { name: me.name || '', email: me.email, plan: p.name || '', days: p.days || '', amount: p.price > 0 ? dz(p.price) : p.price_usd > 0 ? '$' + Number(p.price_usd).toFixed(2) : '', current: cur || '—',
+    const vars = () => { const p = paid.find(x => x.id === +sel) || {}, z = perOf(p, mon) || {}, f = b.querySelector('#wa-store'), tp = b.querySelector('#wa-topic');
+      return { name: me.name || '', email: me.email, plan: p.name ? p.name + ' · ' + perName(z.m || mon) : '', days: z.days || '', amount: z.dzd > 0 ? dz(z.dzd) : z.usd > 0 ? '$' + Number(z.usd).toFixed(2) : '', current: cur || '—',
         expires: BL && BL.expires_at ? X.fd(BL.expires_at) : '—', store: f ? f.value.trim() : '', request: '…', topic: tp ? (TOP[tp.value] || '') : '' }; };
     const needPlan = ['pay', 'upgrade', 'renew'].includes(key);
-    b.innerHTML = `<div class="wa-m">${needPlan ? (others.length ? `<label class="fl">${key === 'upgrade' ? 'العرض الذي تريده' : 'العرض'}<select id="wa-plan">${others.map(x => `<option value="${x.id}"${x.id === +sel ? ' selected' : ''}>${e(x.name)} · ${priceOf(x)} · ${num(x.days)} يوماً</option>`).join('')}</select></label>` : '<div class="alert">لا توجد عروض مدفوعة بعد.</div>') : ''}
+    b.innerHTML = `<div class="wa-m">${needPlan ? (others.length ? `<label class="fl">${key === 'upgrade' ? 'العرض الذي تريده' : 'العرض'}<select id="wa-plan">${others.map(x => `<option value="${x.id}"${x.id === +sel ? ' selected' : ''}>${e(x.name)} · ${dz(x.price)} / شهرياً</option>`).join('')}</select></label>
+<label class="fl">المدة<select id="wa-mon">${(BL.periods || []).map(z => { const pz = perOf(paid.find(x => x.id === +sel), z.m); return pz ? `<option value="${z.m}"${+z.m === +mon ? ' selected' : ''}>${perName(z.m)} · ${dz(pz.dzd)}${z.off ? ' (−' + z.off + '%)' : ''}</option>` : ''; }).join('')}</select></label>` : '<div class="alert">لا توجد عروض مدفوعة بعد.</div>') : ''}
 ${key === 'pay' ? `${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : ''}<label class="fl">اسم متجرك<input id="wa-store" maxlength="80" dir="auto" placeholder="مثال: Boutique Amine"></label>` : ''}
 ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">${Object.entries(TOP).map(([k, t]) => `<option value="${k}"${k === o.topic ? ' selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
 <label class="fl">الرسالة <small class="muted" style="font-weight:400">(يمكنك تعديلها قبل الإرسال)</small><textarea id="wa-text" rows="8" dir="auto"></textarea></label>
@@ -78,14 +84,15 @@ ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">
     const ta = b.querySelector('#wa-text'), upd = () => { if (!dirty) ta.value = waFill(key, vars()); };
     upd(); ta.addEventListener('input', () => { dirty = true; });
     b.addEventListener('input', ev => { if (ev.target.id === 'wa-store') upd(); });
-    b.addEventListener('change', ev => { if (ev.target.id === 'wa-plan') { sel = +ev.target.value; dirty = false; upd(); } if (ev.target.id === 'wa-topic') { dirty = false; upd(); } });
+    b.addEventListener('change', ev => { if (ev.target.id === 'wa-plan' || ev.target.id === 'wa-mon') { if (ev.target.id === 'wa-plan') { sel = +ev.target.value; const pm = paid.find(x => x.id === sel), sm = b.querySelector('#wa-mon');   // مبالغ المدد للباقة الجديدة
+          if (sm && pm) [...sm.options].forEach(o => { const z = perOf(pm, o.value); if (z) o.textContent = perName(z.m) + ' · ' + dz(z.dzd) + (z.off ? ' (−' + z.off + '%)' : ''); }); } else mon = +ev.target.value; dirty = false; upd(); } if (ev.target.id === 'wa-topic') { dirty = false; upd(); } });
     b.addEventListener('click', ev => {
       if (!ev.target.closest('[data-wa="go"]')) return;
       if (key === 'pay') {
         const st = b.querySelector('#wa-store'); if (st.value.trim().length < 2) { st.focus(); return X.toast('اكتب اسم متجرك', 'err'); }
         if (!sel) return;
         const win = W.open('', '_blank');                         // يُفتح الآن (قبل الانتظار) حتى لا يمنعه المتصفح
-        const pr = X.api('POST', '/billing/baridi', { plan_id: +sel, via: 'whatsapp', store: st.value.trim() }).then(r => {
+        const pr = X.api('POST', '/billing/baridi', { plan_id: +sel, months: +mon, via: 'whatsapp', store: st.value.trim() }).then(r => {
           const url = waUrl(ta.value.split('#…').join('#' + r.id));
           if (win) win.location.href = url; else location.href = url;
           T.close(); X.toast('أرسل صورة الوصل في واتساب. يُفعَّل عرضك عند الاستلام.'); drawBilling();
@@ -99,18 +106,22 @@ ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">
 
   function plansModal() {
     const T = W.WPRTOOLS; if (!T) return;
-    let sel = BL.plans[0] && BL.plans[0].id;
+    let sel = (BL.plans.find(x => x.note) || BL.plans[0] || {}).id, PM = defMonths();
     const draw = () => {
       const b = T.open('💳 الدفع أو تغيير العرض', '');
-      const p = BL.plans.find(x => x.id === sel) || BL.plans[0];
-      b.innerHTML = `<h3 style="margin:0 0 8px">1. اختر العرض</h3><div class="plan-g">${BL.plans.map(x => `<div class="plan${x.id === sel ? ' on' : ''}" data-acc="pick" data-id="${x.id}" style="cursor:pointer"><b>${e(x.name)}</b><span class="pr">${priceOf(x)}</span><small>${num(x.days)} يوماً${x.days >= 60 && x.price > 0 ? ' · ' + dz(Math.round(x.price / x.days * 30)) + ' للشهر' : ''}</small>
-<ul>${Object.keys(BL.labels).map(k => `<li>${e(BL.labels[k])}: <b>${num(x.limits[k])}</b></li>`).join('')}</ul>${x.note ? `<small>${e(x.note)}</small>` : ''}</div>`).join('')}</div>
-<h3 style="margin:16px 0 6px">2. ادفع: العرض «${e(p.name)}» · ${priceOf(p)}</h3>
-${BL.methods.satim && p.price > 0 ? `<div class="card" style="margin:8px 0"><b>💳 بطاقة CIB أو الذهبية (Edahabia)</b><p class="sub">دفع آمن مباشرة عبر بوابة SATIM بالدينار. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="satim">ادفع ${dz(p.price)}</button></div>` : ''}
-${BL.methods.stripe && p.price_usd > 0 ? `<div class="card" style="margin:8px 0"><b>💳 Visa / Mastercard (Stripe)</b><p class="sub">لكل الدول. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="stripe">ادفع $${Number(p.price_usd).toFixed(2)}</button></div>` : ''}
-${BL.methods.paypal && p.price_usd > 0 ? `<div class="card" style="margin:8px 0"><b>🅿️ PayPal</b><p class="sub">ادفع من حسابك في PayPal أو ببطاقتك. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="paypal">ادفع $${Number(p.price_usd).toFixed(2)} بـ PayPal</button></div>` : ''}
-${(BL.methods.baridi || BL.methods.whatsapp) && p.price > 0 ? `<div class="card pay-m" style="margin:8px 0"><b>📱 BaridiMob أو CCP أو تحويل بنكي</b>
-<p class="sub" style="margin:6px 0">حوّل <b>${dz(p.price)}</b> ثم أرسل الوصل مع اسم متجرك: يُفعَّل عرضك عند الاستلام.</p>
+      const ms = (BL.periods || []).map(x => +x.m).filter(m => BL.plans.some(p => perOf(p, m)));
+      if (!ms.includes(PM)) PM = ms[0];
+      const p = BL.plans.find(x => x.id === sel) || BL.plans[0], x = perOf(p, PM) || {};
+      b.innerHTML = `<h3 style="margin:0 0 8px">1. اختر المدة</h3><div class="per-t">${ms.map(m => { const off = ((BL.periods || []).find(z => +z.m === m) || {}).off; return `<button type="button" data-acc="per" data-m="${m}" class="${m === PM ? 'on' : ''}">${perName(m)}${off ? `<small><bdi dir="ltr">-${off}%</bdi></small>` : ''}</button>`; }).join('')}</div>
+<h3 style="margin:16px 0 8px">2. اختر الباقة</h3><div class="plan-g">${BL.plans.map(q => { const z = perOf(q, PM); if (!z) return ''; return `<div class="plan${q.id === sel ? ' on' : ''}" data-acc="pick" data-id="${q.id}" style="cursor:pointer"><b>${e(q.name)}</b><span class="pr">${dz(z.monthly)} <small>/ شهرياً</small></span>
+<small>${z.m > 1 ? `المجموع ${dz(z.dzd)} عن ${perName(z.m)}${z.save ? ` · توفّر ${dz(z.save)}` : ''}` : 'يُدفع كل شهر'}</small>
+<ul>${Object.keys(BL.labels).map(k => `<li>${e(BL.labels[k])}: <b>${num(q.limits[k])}</b></li>`).join('')}</ul>${q.note ? `<small>${e(q.note)}</small>` : ''}</div>`; }).join('')}</div>
+<h3 style="margin:16px 0 6px">3. ادفع: «${e(p.name)} · ${perName(PM)}» · ${dz(x.dzd)}${x.usd ? ' · $' + Number(x.usd).toFixed(2) : ''}</h3>
+${BL.methods.satim && x.dzd > 0 ? `<div class="card" style="margin:8px 0"><b>💳 بطاقة CIB أو الذهبية (Edahabia)</b><p class="sub">دفع آمن مباشرة عبر بوابة SATIM بالدينار. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="satim">ادفع ${dz(x.dzd)}</button></div>` : ''}
+${BL.methods.stripe && x.usd > 0 ? `<div class="card" style="margin:8px 0"><b>💳 Visa / Mastercard (Stripe)</b><p class="sub">لكل الدول. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="stripe">ادفع $${Number(x.usd).toFixed(2)}</button></div>` : ''}
+${BL.methods.paypal && x.usd > 0 ? `<div class="card" style="margin:8px 0"><b>🅿️ PayPal</b><p class="sub">ادفع من حسابك في PayPal أو ببطاقتك. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="paypal">ادفع $${Number(x.usd).toFixed(2)} بـ PayPal</button></div>` : ''}
+${(BL.methods.baridi || BL.methods.whatsapp) && x.dzd > 0 ? `<div class="card pay-m" style="margin:8px 0"><b>📱 BaridiMob أو CCP أو تحويل بنكي</b>
+<p class="sub" style="margin:6px 0">حوّل <b>${dz(x.dzd)}</b> ثم أرسل الوصل مع اسم متجرك: يُفعَّل عرضك عند الاستلام.</p>
 ${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:8px 0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : '<p class="sub">اطلب معلومات التحويل عبر واتساب.</p>'}
 ${BL.methods.whatsapp ? `<p style="margin:10px 0 0"><button class="btn wa" data-acc="wa"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg> إرسال الوصل عبر واتساب</button></p>
 <p class="sub" style="margin:6px 0 0">رسالة جاهزة (العرض، المبلغ، اسم متجرك، بريد حسابك): أرفق صورة الوصل وأرسلها.</p>` : ''}
@@ -122,14 +133,15 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
         const t = ev.target.closest('[data-acc]'); if (!t) return;
         const a = t.dataset.acc;
         if (a === 'pick') { sel = +t.dataset.id; return draw(); }
+        if (a === 'per') { PM = +t.dataset.m; return draw(); }
         const run = f => { const pr = Promise.resolve().then(f); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => X.toast(x.message || 'خطأ', 'err')); };
-        if (a === 'pay') run(async () => { const r = await X.api('POST', '/billing/checkout', { plan_id: sel, method: t.dataset.m }); location.href = r.url; });
-        if (a === 'wa') { T.close(); return waModal('pay', { plan: sel }); }
+        if (a === 'pay') run(async () => { const r = await X.api('POST', '/billing/checkout', { plan_id: sel, months: PM, method: t.dataset.m }); location.href = r.url; });
+        if (a === 'wa') { T.close(); return waModal('pay', { plan: sel, months: PM }); }
         if (a === 'baridi') run(async () => {
           const ref = b.querySelector('#bm-ref').value.trim(), f = b.querySelector('#bm-img').files[0];
           const proof = f ? await shrink(f) : '';
           if (!ref && !proof) return X.toast('اكتب رقم العملية أو أرفق صورة الوصل', 'err');
-          await X.api('POST', '/billing/baridi', { plan_id: sel, ref, proof }); T.close(); X.toast('أُرسل طلبك. سيُفعَّل اشتراكك بعد المراجعة وستصلك رسالة.'); drawBilling();
+          await X.api('POST', '/billing/baridi', { plan_id: sel, months: PM, ref, proof }); T.close(); X.toast('أُرسل طلبك. سيُفعَّل اشتراكك بعد المراجعة وستصلك رسالة.'); drawBilling();
         });
       };
     };
@@ -154,7 +166,7 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     aover: [['stats', '']],
     abill: [['pay', 'طلبات الدفع'], ['plans', 'العروض والمميزات'], ['methods', 'طرق الدفع']],
     ainbox: [['msgs', '']],
-    aset: [['general', 'النشاط والتواصل'], ['wa', 'رسائل واتساب'], ['ai', 'الذكاء الاصطناعي'], ['tg', 'التنبيهات'], ['legal', 'الصفحات القانونية'], ['backup', 'النسخ الاحتياطي'], ['err', 'سجل الأخطاء']]
+    aset: [['general', 'النشاط والتواصل'], ['wa', 'رسائل واتساب'], ['ai', 'الذكاء الاصطناعي'], ['tg', 'التنبيهات'], ['legal', 'الصفحات القانونية'], ['backup', 'النسخ الاحتياطي'], ['maint', 'وضع الصيانة'], ['err', 'سجل الأخطاء']]
   };
   const ABASE = { aover: '/admin', abill: '/payments', ainbox: '/support-inbox', aset: '/platform' };
   let AVIEW = 'aover', ATAB = 'stats', MF = 'new';
@@ -193,11 +205,33 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
       return;
     }
     if (ATAB === 'stats') {
-      const s = await X.api('GET', '/admin/stats'), mx = Math.max(1, ...s.revenue.map(r => r.a));
-      el.innerHTML = `<div class="kpis"><div><b>${num(s.active)}</b><span>مشترك نشط</span></div><div><b>${num(s.users)}</b><span>كل الحسابات</span></div><div><b>${num(s.newMonth)}</b><span>تسجيلات هذا الشهر</span></div><div><b>${num(s.expiring7)}</b><span>ينتهي خلال 7 أيام</span></div><div><b>${num(s.expired30)}</b><span>انتهى خلال 30 يوماً (لم يجدّد)</span></div><div><b>${dz(s.revenueMonth)}</b><span>إيرادات هذا الشهر</span></div>${s.revenueMonthUsd ? `<div><b>$${Number(s.revenueMonthUsd).toFixed(2)}</b><span>إيرادات الشهر بالدولار (Stripe/PayPal)</span></div>` : ''}<div><b>${num(s.pending)}</b><span>دفع بانتظار المراجعة</span></div><div><b>${num(s.usage.activeUsers7)}</b><span>دخلوا خلال 7 أيام</span></div></div>
-<div class="card" style="margin-top:14px"><h2>الإيرادات (12 شهراً)</h2><div class="bars">${s.revenue.map(r => `<div title="${e(r.m)}: ${dz(r.a)} · ${num(r.n)} دفعة"><small>${r.a ? num(Math.round(r.a / 1000)) + 'ك' : ''}</small><i style="height:${Math.round(r.a / mx * 110)}px"></i>${e(r.m.slice(5))}</div>`).join('')}</div></div>
-<div class="grid2" style="margin-top:14px"><div class="card"><h2>الاستعمال</h2><div class="kpis"><div><b>${num(s.usage.searchesToday)}</b><span>عمليات بحث اليوم</span></div><div><b>${num(s.usage.searches30)}</b><span>عمليات بحث (30 يوماً)</span></div><div><b>${num(s.usage.ads30)}</b><span>إعلانات جُمعت (30 يوماً)</span></div><div><b>${num(s.usage.aiMonth)}</b><span>طلبات ذكاء اصطناعي هذا الشهر</span></div></div></div>
-<div class="card"><h2>المشتركون النشطون حسب الباقة</h2>${s.plans.map(p => `<div class="row"><div class="grow">${e(p.plan || '—')}</div><b>${num(p.n)}</b></div>`).join('') || '<p class="sub">—</p>'}<p class="sub" style="margin-top:8px">${s.errors.day ? `⚠️ ${num(s.errors.day)} خطأ خلال 24 ساعة (تبويب «الأخطاء»)` : '✅ لا أخطاء خلال 24 ساعة'}</p></div></div>`;
+      const s = await X.api('GET', '/admin/stats'), S = s.subs || {}, Wk = s.work || {}, Mo = s.money || {}, Sy = s.system || {};
+      const flag = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].map(x => 127397 + x.charCodeAt())) : '';
+      let DN = null; try { DN = new Intl.DisplayNames([W.__LANG || 'ar'], { type: 'region' }); } catch (x) {}
+      const cname = c => c === '?' || !c ? 'غير معروف' : (DN ? DN.of(c) : c), LGN = { ar: 'العربية', en: 'English', fr: 'Français', '?': 'غير معروف' };
+      const kp = (n, l, cls) => `<div class="${cls || ''}"><b>${n}</b><span>${l}</span></div>`;
+      const bars = (arr, val, lab, tip) => { const mx = Math.max(1, ...arr.map(val)); return `<div class="bars">${arr.map(r => `<div title="${e(tip(r))}"><small>${val(r) ? num(val(r)) : ''}</small><i style="height:${Math.round(val(r) / mx * 110)}px"></i><span>${e(lab(r))}</span></div>`).join('')}</div>`; };
+      const hb = (arr, k, lab) => { const mx = Math.max(1, ...arr.map(x => x[k])); return arr.map(x => `<div class="st-hb"><span>${lab(x)}</span><i><s style="width:${Math.round(x[k] / mx * 100)}%"></s></i><b>${num(x[k])}</b></div>`).join('') || '<p class="sub">لا بيانات بعد.</p>'; };
+      const ago = t => t ? X.ago(t) : '—', mb = n => (n / 1048576).toFixed(1) + ' MB', up = x => x > 86400 ? Math.floor(x / 86400) + ' يوم' : x > 3600 ? Math.floor(x / 3600) + ' ساعة' : Math.floor(x / 60) + ' دقيقة';
+      el.innerHTML = `<div class="kpis st-k">${kp(num(S.online), 'متصل الآن', 'ok')}${kp(num(S.paidActive), 'مشترك يدفع (نشط)')}${kp(num(S.trialActive), 'في التجربة المجانية')}${kp(num(S.expired), 'اشتراك منتهٍ')}${kp(num(S.members), 'كل المشتركين')}${kp(S.conv + '%', 'نسبة التحويل إلى الدفع')}</div>
+<div class="kpis st-k" style="margin-top:10px">${kp(num(S.new1), 'تسجيلات اليوم')}${kp(num(S.new7), 'تسجيلات 7 أيام')}${kp(num(S.new30), 'تسجيلات 30 يوماً')}${kp(num(S.dau), 'نشطون اليوم')}${kp(num(S.wau), 'نشطون هذا الأسبوع')}${kp(num(s.expiring7), 'ينتهي خلال 7 أيام', s.expiring7 ? 'warn' : '')}</div>
+<div class="card" style="margin-top:14px"><h2>التسجيلات الجديدة (30 يوماً)</h2>${bars(s.regs, r => r.n, r => r.d.slice(8), r => r.d + ': ' + r.n)}</div>
+<div class="grid2" style="margin-top:14px"><div class="card"><h2>البلدان</h2><p class="sub" style="margin:0 0 8px">بلد المشترك من متصفحه (المنطقة الزمنية واللغة). «النشط» = اشتراكه ساري.</p>${hb(s.geo.countries, 'n', x => `${flag(x.c)} ${e(cname(x.c))} <small class="muted">${num(x.a)} نشط</small>`)}</div>
+<div class="card"><h2>لغة الواجهة</h2>${hb(s.geo.langs, 'n', x => e(LGN[x.l] || x.l))}<h2 style="margin-top:16px">الأسواق المستهدفة (ثغرات السوق)</h2>${hb(s.geo.targets, 'n', x => `${flag(x.c)} ${e(cname(x.c))}`)}</div></div>
+<div class="card" style="margin-top:14px"><h2>الإيرادات</h2><div class="kpis">${kp(dz(s.revenueMonth), 'هذا الشهر (دج)')}${kp('$' + Number(s.revenueMonthUsd || 0).toFixed(2), 'هذا الشهر ($)')}${kp(dz(Mo.totalDzd || 0), 'منذ البداية (دج)')}${kp(num(s.pending) + ' · ' + dz(Mo.pendingAmount || 0), 'طلبات دفع بانتظارك', s.pending ? 'warn' : '')}</div>
+${bars(s.revenue, r => r.a, r => r.m.slice(5), r => r.m + ': ' + dz(r.a) + ' · ' + r.n + ' دفعة')}
+<div class="grid2" style="margin-top:10px"><div><b>حسب طريقة الدفع</b>${hb(Mo.byMethod || [], 'n', x => e((MT[x.method] || x.method) + ' · ' + (x.cur === 'USD' ? '$' + Number(x.a).toFixed(2) : dz(x.a))))}</div><div><b>حسب المدة المدفوعة</b>${hb(Mo.byPeriod || [], 'n', x => e((x.days >= 365 ? '12 شهراً' : x.days >= 180 ? '6 أشهر' : x.days >= 90 ? '3 أشهر' : 'شهر') + ' · ' + dz(x.a)))}</div></div></div>
+<div class="grid2" style="margin-top:14px"><div class="card"><h2>المشتركون النشطون حسب الباقة</h2>${hb(s.plans, 'n', x => e(x.plan || '—'))}<p class="sub" style="margin-top:8px">${num(S.paidEver)} مشترك دفع مرة على الأقل · ${num(S.tfa)} فعّلوا التحقق بخطوتين</p></div>
+<div class="card"><h2>ما يجري في المنصة</h2><div class="st-l">
+${[['الإعلانات المجلوبة اليوم', Wk.adsToday], ['الإعلانات المجلوبة (7 أيام)', Wk.ads7], ['الإعلانات المجلوبة (30 يوماً)', Wk.ads30], ['كل الإعلانات المخزّنة', Wk.adsAll], ['عمليات البحث اليوم', s.usage.searchesToday], ['عمليات البحث (30 يوماً)', s.usage.searches30], ['دفعات جمع (30 يوماً)', Wk.batches30], ['تحليلات (30 يوماً)', Wk.analyses30], ['منتجات محفوظة', Wk.saved], ['إعلانات مستبعدة (علامات تجارية)', Wk.excluded],
+  ['طلبات الذكاء الاصطناعي هذا الشهر', Wk.ai], ['تحليل إعلان بالذكاء (30 يوماً)', Wk.aiAd], ['«الخروج من المنافسة» (30 يوماً)', Wk.edge30], ['منتجات «ثغرات السوق»', Wk.gapProducts], ['فحوص الثغرات (7 أيام)', Wk.gapScans7], ['صفحات منافسين مراقَبة', Wk.watchPages], ['فحوص المراقبة (7 أيام)', Wk.watchScans7], ['بحوث TikTok (30 يوماً)', Wk.ttRuns30], ['فيديوهات TikTok المخزّنة', Wk.ttItems], ['بحوث المورّد', Wk.supplier], ['رسائل دعم جديدة', Wk.supportNew], ['تنبيهات أُرسلت (7 أيام)', Wk.notify7]]
+  .map(([l, v]) => `<div><span>${e(l)}</span><b>${num(v || 0)}</b></div>`).join('')}</div></div></div>
+<div class="grid2" style="margin-top:14px"><div class="card"><h2>الإعلانات المجلوبة حسب السوق (30 يوماً)</h2>${hb(Wk.adsByCountry || [], 'n', x => `${flag(x.c)} ${e(cname(x.c))}`)}</div>
+<div class="card"><h2>النظام والخلفية</h2><div class="st-l">${[['الإصدار', Sy.version], ['Node.js', Sy.node], ['يعمل منذ', up(Sy.uptime || 0)], ['الذاكرة المستعملة', (Sy.mem || 0) + ' MB'], ['حجم قاعدة البيانات', mb(Sy.dbSize || 0)],
+  ['آخر نسخة احتياطية', Sy.lastBackup ? ago(Sy.lastBackup.at) + ' · ' + mb(Sy.lastBackup.size) + ' · ' + num(Sy.lastBackup.count) + ' نسخ' : 'لا توجد'], ['أخطاء آخر 24 ساعة', num(s.errors.day)], ['وضع الصيانة', Sy.maint ? 'مفعّل' : 'متوقف']].map(([l, v]) => `<div><span>${e(l)}</span><b dir="auto">${e(v)}</b></div>`).join('')}</div>
+<p style="margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap"><a class="btn ghost sm" href="/platform/err" data-adm-go="err">سجل الأخطاء</a><a class="btn ghost sm" href="/platform/backup">النسخ الاحتياطي</a><a class="btn ghost sm" href="/platform/maint">وضع الصيانة</a></p></div></div>
+<div class="card" style="margin-top:14px"><h2>أنشط المشتركين (30 يوماً)</h2><div class="tbw"><table class="tb"><tr><th>المشترك</th><th>البلد</th><th>الباقة</th><th>عمليات البحث</th><th>إعلانات مجلوبة</th><th>آخر نشاط</th></tr>${(s.top || []).map(u => `<tr><td><b>${e(u.name || '—')}</b><br><small dir="ltr">${e(u.email)}</small></td><td>${flag(u.country)} ${e(u.country ? cname(u.country) : '—')}</td><td>${e(u.plan || '—')}</td><td>${num(u.searches)}</td><td>${num(u.ads)}</td><td>${ago(u.last_seen)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">لا نشاط بعد.</td></tr>'}</table></div></div>`;
+      return;
     }
     if (ATAB === 'pay') {
       const L = await X.api('GET', '/admin/payments'), pend = L.filter(p => p.status === 'pending');
@@ -205,15 +239,17 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
 <td>${p.status === 'pending' ? `<button class="btn sm" data-adm="approve" data-id="${p.id}">✓ قبول وتفعيل</button> <button class="btn danger sm" data-adm="reject" data-id="${p.id}">رفض</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">لا مدفوعات بعد.</td></tr>'}</table></div>`;
     }
     if (ATAB === 'plans') {
-      const r = await X.api('GET', '/admin/plans');
-      // كل عرض بطاقة عمودية: الاسم والحالة، السعر والمدة، الحدود، المميزات (أسهل للقراءة والتعديل)
+      const r = await X.api('GET', '/admin/plans'), PERS = r.periods || [];
+      const auto = (p, m) => { const per = PERS.find(x => +x.m === +m) || { off: 0 }, base = (+p.price || 0) * m; return per.off ? Math.round(base * (1 - per.off / 100) / 100) * 100 : base; };
+      // كل باقة بطاقة: الاسم والحالة، السعر الشهري، مبلغ كل مدة (تلقائي بالخصم أو يدوي)، الحدود، المميزات
       const row = p => `<div class="card pe${p.id ? '' : ' pe-new'}" data-pl="${p.id || ''}">
-<div class="pe-h"><input data-f="name" value="${e(p.name || '')}" placeholder="${p.id ? 'اسم العرض' : '+ عرض جديد: اكتب اسمه'}" aria-label="اسم العرض">${p.free ? '<span class="pill ok">تجربة مجانية</span>' : ''}</div>
-<div class="pe-sw"><label><input data-f="active" type="checkbox"${p.active !== false ? ' checked' : ''}> مفعّل (يظهر للشراء)</label><label title="تُمنح تلقائياً عند التسجيل"><input data-f="free" type="checkbox"${p.free ? ' checked' : ''}> مجاني للتجربة</label></div>
-<div class="pe-s">السعر والمدة</div>
-<div class="pe-r"><span>المدة (أيام)</span><input data-f="days" type="number" min="1" value="${e(p.days || 30)}"></div>
-<div class="pe-r"><span>السعر بالدينار (دج)</span><input data-f="price" type="number" min="0" value="${e(p.price || 0)}"></div>
-<div class="pe-r"><span>السعر بالدولار ($)</span><input data-f="price_usd" type="number" min="0" step="0.01" value="${e(p.price_usd || 0)}"></div>
+<div class="pe-h"><input data-f="name" value="${e(p.name || '')}" placeholder="${p.id ? 'اسم الباقة' : '+ باقة جديدة: اكتب اسمها'}" aria-label="اسم الباقة">${p.free ? '<span class="pill ok">تجربة مجانية</span>' : ''}</div>
+<div class="pe-sw"><label><input data-f="active" type="checkbox"${p.active !== false ? ' checked' : ''}> مفعّلة (تظهر للشراء)</label><label title="تُمنح تلقائياً عند التسجيل"><input data-f="free" type="checkbox"${p.free ? ' checked' : ''}> مجانية للتجربة</label></div>
+<div class="pe-s">${p.free ? 'مدة التجربة' : 'السعر الشهري'}</div>
+<div class="pe-r"${p.free ? '' : ' hidden'}><span>مدة التجربة (أيام)</span><input data-f="days" type="number" min="1" value="${e(p.days || 7)}"></div>
+<div class="pe-r"${p.free ? ' hidden' : ''}><span>السعر الشهري بالدينار (دج)</span><input data-f="price" type="number" min="0" value="${e(p.price || 0)}"></div>
+<div class="pe-r"${p.free ? ' hidden' : ''}><span>السعر الشهري بالدولار ($)</span><input data-f="price_usd" type="number" min="0" step="0.01" value="${e(p.price_usd || 0)}"></div>
+${p.free ? '' : `<div class="pe-s">مبلغ كل مدة (دج) <small class="muted" style="font-weight:400">فارغ = تلقائي بالخصم</small></div>${PERS.filter(x => +x.m > 1).map(x => `<div class="pe-r"><span>${perName(x.m)}${x.off ? ` <small class="muted"><bdi dir="ltr">-${x.off}%</bdi></small>` : ''}</span><input data-t="${x.m}" type="number" min="0" value="${e((p.totals || {})[x.m] || '')}" placeholder="${num(auto(p, x.m))}"></div>`).join('')}`}
 <div class="pe-s">الحدود</div>
 ${r.keys.map(k => `<div class="pe-r"><span>${e(r.labels[k])}</span><input data-l="${k}" type="number" min="0" value="${e(p.limits ? p.limits[k] : '')}" placeholder="بلا حد"></div>`).join('')}
 <div class="pe-s">المميزات المشمولة</div>
@@ -221,11 +257,15 @@ ${r.keys.map(k => `<div class="pe-r"><span>${e(r.labels[k])}</span><input data-l
 <div class="pe-r pe-n"><span>شارة في صفحة الأسعار</span><input data-f="note" value="${e(p.note || '')}" placeholder="مثلاً: الأكثر طلباً"></div></div>`;
       const frow = f => `<tr data-fk="${e(f.k || '')}"><td><input data-g="ar" value="${e(f.ar || '')}" placeholder="بالعربية" style="width:190px"></td><td><input data-g="en" dir="ltr" value="${e(f.en || '')}" placeholder="English" style="width:170px"></td><td><input data-g="fr" dir="ltr" value="${e(f.fr || '')}" placeholder="Français" style="width:170px"></td>
 <td style="text-align:center"><input type="checkbox" data-g="shown"${f.shown !== false ? ' checked' : ''}></td><td>${f.builtin ? '<small class="muted">ميزة من المنصة</small>' : f.k ? '<button class="btn danger sm" data-adm="fdel">حذف</button>' : '<small class="muted">جديدة</small>'}</td></tr>`;
-      el.innerHTML = `<div class="pe-top"><div class="grow"><h2 style="margin:0">العروض</h2><p class="sub" style="margin:4px 0 0">السعر بالدينار (BaridiMob وCCP والتحويل وCIB/الذهبية) وبالدولار (Stripe وPayPal). العرض «المجاني للتجربة» يُمنح تلقائياً لكل مسجّل جديد. العرض بلا سعر أو غير المفعّل لا يظهر للشراء. الحدود تطبَّق فوراً على كل مشترك في هذا العرض. اترك الحد فارغاً = بلا حد.</p></div><button class="btn" data-adm="saveplans">حفظ العروض</button></div>
+      const prow = x => `<div class="pe-r" data-per><span>المدة</span><select data-pm style="width:130px">${[1, 2, 3, 4, 6, 9, 12, 18, 24].map(m => `<option value="${m}"${+x.m === m ? ' selected' : ''}>${perName(m)}</option>`).join('')}</select><span>الخصم %</span><input data-po type="number" min="0" max="90" value="${e(x.off || 0)}" style="width:80px"><button class="btn ghost sm" data-adm="pdel" title="حذف">×</button></div>`;
+      el.innerHTML = `<div class="pe-top"><div class="grow"><h2 style="margin:0">الباقات والأسعار</h2><p class="sub" style="margin:4px 0 0">كل باقة لها سعر شهري، والمشترك يختار المدة (شهر، 3، 6، 12 شهراً) فيأخذ خصمها. السعر بالدينار لـ BaridiMob وCCP والتحويل وCIB/الذهبية، وبالدولار لـ Stripe وPayPal. الباقة «المجانية للتجربة» تُمنح لكل مسجّل جديد. الحدود تطبَّق فوراً على كل مشترك في الباقة.</p></div><button class="btn" data-adm="saveall">حفظ كل التغييرات</button></div>
+<div class="card" style="margin-bottom:14px"><h2>المدد والخصومات</h2><p class="sub">تظهر للزبون كأزرار فوق الأسعار (مثلاً «6 أشهر −8٪»). الخصم يُحسب على السعر الشهري، ويمكنك كتابة مبلغ دقيق لكل مدة داخل بطاقة الباقة.</p><div id="per-t" style="max-width:520px">${PERS.map(prow).join('')}</div><p style="margin:8px 0 0"><button class="btn ghost sm" data-adm="padd">+ مدة</button></p></div>
 <div class="pe-g" id="pl-t">${r.plans.map(row).join('')}${row({})}</div>
-<div class="card" style="margin-top:16px"><h2>قائمة المميزات (تظهر للزبائن في صفحة الأسعار)</h2><p class="sub">أضف ميزة جديدة (اكتب اسمها في السطر الفارغ) أو عدّل اسمها أو احذفها، ثم فعّلها في بطاقات العروض أعلاه. المميزات «من المنصة» تُطبَّق فعلاً على المشترك حسب عرضه، ولا تُحذف لكن يمكن إخفاؤها من صفحة الأسعار (فتصبح متاحة للجميع).</p>
-<div class="tbw"><table class="tb" id="ft-t"><tr><th>الاسم بالعربية</th><th>English</th><th>Français</th><th>تظهر في الأسعار</th><th></th></tr>${r.cat.map(frow).join('')}${frow({ shown: true })}</table></div>
-<p style="margin:10px 0 0"><button class="btn" data-adm="savefeats">حفظ المميزات</button></p></div>`;
+<div class="card" style="margin-top:16px"><h2>قائمة المميزات (تظهر للزبائن في صفحة الأسعار)</h2><p class="sub">أضف ميزة جديدة (اكتب اسمها في السطر الفارغ) أو عدّل اسمها أو احذفها، وفعّلها في بطاقات الباقات أعلاه. المميزات «من المنصة» تُطبَّق فعلاً على المشترك حسب باقته، ولا تُحذف لكن يمكن إخفاؤها من صفحة الأسعار.</p>
+<div class="tbw"><table class="tb" id="ft-t"><tr><th>الاسم بالعربية</th><th>English</th><th>Français</th><th>تظهر في الأسعار</th><th></th></tr>${r.cat.map(frow).join('')}${frow({ shown: true })}</table></div></div>
+<p style="margin:14px 0 0"><button class="btn" data-adm="saveall">حفظ كل التغييرات</button></p>`;
+      el.querySelectorAll('[data-pl] [data-f="free"]').forEach(c => c.onchange = () => { const card = c.closest('[data-pl]'); card.querySelector('[data-f="days"]').closest('.pe-r').hidden = !c.checked; ['price', 'price_usd'].forEach(n => { card.querySelector(`[data-f="${n}"]`).closest('.pe-r').hidden = c.checked; }); });
+      return;
     }
     if (ATAB === 'msgs') {
       const r = await X.api('GET', '/admin/messages'), CAT = { tech: 'مشكلة تقنية', billing: 'الدفع والعروض', usage: 'سؤال عن الاستعمال', idea: 'اقتراح', other: 'أخرى' };
@@ -246,6 +286,16 @@ ${m.user_id && !m.reply ? `<label class="fl">الرد (يصل إلى المشت�
 ${Object.entries(r.keys).map(([k, [t, vs]]) => `<div class="card" style="margin-top:14px"><h2>${e(t)}</h2><p class="sub" style="margin:0 0 8px">المتاح هنا: ${vs.map(v => `<code dir="ltr">{${v}}</code>`).join(' ')}</p>
 <div class="grid3" style="margin:0">${L3.map(([l, n]) => `<label class="fl">${n}<textarea rows="8" data-wat="${k}" data-l="${l}" dir="${l === 'ar' ? 'rtl' : 'ltr'}" style="font:inherit;font-size:13.5px;line-height:1.7">${e(r.templates[k][l])}</textarea>${r.templates[k][l] !== r.defaults[k][l] ? '<small class="muted">معدّلة</small>' : ''}</label>`).join('')}</div></div>`).join('')}
 <p style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0"><button class="btn" data-adm="wasave">حفظ الرسائل</button><button class="btn ghost" data-adm="wareset">استرجاع الرسائل الأصلية</button></p>`;
+      return;
+    }
+    if (ATAB === 'maint') {
+      const r = await X.api('GET', '/maint/info'), loc = v => { if (!v) return ''; const d = new Date(v), z = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()); };
+      el.innerHTML = `<div class="card"><h2>وضع الصيانة <span class="pill ${r.on ? 'warn' : 'ok'}">${r.on ? 'مفعّل' : 'متوقف'}</span></h2>
+<p class="sub">عند التفعيل يرى الزوار والمشتركون صفحة «نُحسّن المنصة الآن» بلغتهم (مع زر واتساب)، وتتوقف الإضافة مؤقتاً. أنت (المدير) تستعمل المنصة عادياً، وصفحة الدخول وإشعارات بوابات الدفع تبقى تعمل. الصفحة تتحدث تلقائياً عند الإيقاف.</p>
+<label class="fl" style="flex-direction:row;gap:8px;align-items:center;margin:10px 0"><input type="checkbox" id="mt-on"${r.on ? ' checked' : ''}> <b>تفعيل وضع الصيانة الآن</b></label>
+<label class="fl">رسالة للزوار بالعربية <small class="muted" style="font-weight:400">(اختياري: فارغ = الرسالة الافتراضية، والإنجليزية والفرنسية تلقائية)</small><textarea id="mt-msg" rows="3" maxlength="600" placeholder="نقوم بصيانة قصيرة لنقدّم لك منصة أسرع وأفضل. بياناتك ومنتجاتك محفوظة كما هي.">${e(r.msg)}</textarea></label>
+<label class="fl" style="max-width:320px">العودة المتوقعة <small class="muted" style="font-weight:400">(اختياري)</small><input type="datetime-local" id="mt-until" value="${e(loc(r.until))}"></label>
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><button class="btn" data-adm="mtsave">حفظ</button><a class="btn ghost" href="/maint-preview" target="_blank" rel="noopener">معاينة صفحة الصيانة ↗</a></p></div>`;
       return;
     }
     if (ATAB === 'legal') {
@@ -285,19 +335,26 @@ ${Object.entries(r.keys).map(([k, [t, vs]]) => `<div class="card" style="margin-
       const t = {}; if (a === 'wasave') X.root.querySelectorAll('[data-wat]').forEach(x => { (t[x.dataset.wat] = t[x.dataset.wat] || {})[x.dataset.l] = x.value; });
       await X.api('PUT', '/admin/wa', { templates: t }); WA = null; X.toast(a === 'wasave' ? 'حُفظت الرسائل' : 'استُرجعت الرسائل الأصلية'); return drawAdmin();
     }
+    if (a === 'mtsave') {
+      const on = $('#mt-on').checked; if (on && !confirm('تفعيل وضع الصيانة؟ لن يستطيع المشتركون استعمال المنصة حتى توقفه.')) return;
+      const u = $('#mt-until').value; await X.api('PUT', '/admin/maint', { on, msg: $('#mt-msg').value.trim(), until: u ? new Date(u).toISOString() : '' });
+      X.toast(on ? 'وضع الصيانة مفعّل' : 'وضع الصيانة متوقف: المنصة متاحة للجميع'); return setTimeout(() => location.reload(), 600);
+    }
     if (a === 'lgsave') { await X.api('PUT', '/admin/legal', Object.assign({ body: $('#lg-body').value }, LG)); X.toast('حُفظت الصفحة، وتظهر الآن للزوار'); return drawAdmin(); }
     if (a === 'lgreset') { if (!confirm('استرجاع النص الأصلي لهذه الصفحة؟ سيُحذف تعديلك.')) return; await X.api('PUT', '/admin/legal', Object.assign({ body: '' }, LG)); X.toast('عاد النص الأصلي'); return drawAdmin(); }
     if (a === 'clearerr') { await X.api('DELETE', '/admin/errors'); return drawAdmin(); }
     if (a === 'bknow') { await X.api('POST', '/admin/backups', {}); X.toast('أُنشئت نسخة احتياطية'); return drawAdmin(); }
     if (a === 'fdel') { b.closest('tr').remove(); return; }
-    if (a === 'savefeats') {
+    if (a === 'pdel') { b.closest('[data-per]').remove(); return; }
+    if (a === 'padd') { const t = $('#per-t'), d = document.createElement('div'); d.innerHTML = `<div class="pe-r" data-per><span>المدة</span><select data-pm style="width:130px">${[1, 2, 3, 4, 6, 9, 12, 18, 24].map(m => `<option value="${m}">${perName(m)}</option>`).join('')}</select><span>الخصم %</span><input data-po type="number" min="0" max="90" value="0" style="width:80px"><button class="btn ghost sm" data-adm="pdel" title="حذف">×</button></div>`; t.appendChild(d.firstElementChild); return; }
+    if (a === 'saveall') {   // زر واحد يحفظ كل شيء (كان زرّان، فتضيع تعديلات المميزات أو الباقات إن ضُغط الآخر)
+      const periods = [...X.root.querySelectorAll('#per-t [data-per]')].map(r => ({ m: +r.querySelector('[data-pm]').value, off: +r.querySelector('[data-po]').value || 0 }));
+      if (!periods.length) return X.toast('أضف مدة واحدة على الأقل', 'err');
+      const plans = [...X.root.querySelectorAll('#pl-t [data-pl]')].map((tr, i) => { const f = n => tr.querySelector(`[data-f="${n}"]`); const L = {}, Tt = {}; tr.querySelectorAll('[data-l]').forEach(x => { if (x.value) L[x.dataset.l] = +x.value; }); tr.querySelectorAll('[data-t]').forEach(x => { if (+x.value > 0) Tt[x.dataset.t] = +x.value; });
+        return { id: +tr.dataset.pl || 0, name: f('name').value.trim(), days: f('free').checked ? +f('days').value : 30, price: +f('price').value, price_usd: +f('price_usd').value, totals: Tt, free: f('free').checked, features: [...tr.querySelectorAll('[data-ft]:checked')].map(x => x.dataset.ft), active: f('active').checked, note: f('note').value.trim(), limits: L, sort: i }; }).filter(p => p.name);
       const list = [...X.root.querySelectorAll('#ft-t [data-fk]')].map(tr => { const g = n => tr.querySelector(`[data-g="${n}"]`); return { k: tr.dataset.fk || undefined, ar: g('ar').value.trim(), en: g('en').value.trim(), fr: g('fr').value.trim(), shown: g('shown').checked }; }).filter(f => f.ar || f.en || f.fr);
-      await X.api('PUT', '/admin/features', { list }); X.toast('حُفظت المميزات'); return drawAdmin();
-    }
-    if (a === 'saveplans') {
-      const plans = [...X.root.querySelectorAll('#pl-t [data-pl]')].map((tr, i) => { const f = n => tr.querySelector(`[data-f="${n}"]`); const L = {}; tr.querySelectorAll('[data-l]').forEach(x => { if (x.value) L[x.dataset.l] = +x.value; });
-        return { id: +tr.dataset.pl || 0, name: f('name').value.trim(), days: +f('days').value, price: +f('price').value, price_usd: +f('price_usd').value, free: f('free').checked, features: [...tr.querySelectorAll('[data-ft]:checked')].map(x => x.dataset.ft), active: f('active').checked, note: f('note').value.trim(), limits: L, sort: i }; }).filter(p => p.name);
-      await X.api('PUT', '/admin/plans', { plans }); X.toast('حُفظت الباقات'); return drawAdmin();
+      await X.api('PUT', '/admin/plans', { plans, periods }); await X.api('PUT', '/admin/features', { list });
+      X.toast('حُفظت الباقات والأسعار والمميزات'); return drawAdmin();
     }
   }
 

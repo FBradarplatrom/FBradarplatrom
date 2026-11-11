@@ -24,8 +24,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const U = await mk(), up = await U.newPage(), uerr = []; up.on('pageerror', e => uerr.push(e.message));
     await up.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
     const AP = (await (await ap.request.get(BASE + '/api/admin/plans')).json()).plans;
-    await ap.request.put(BASE + '/api/admin/plans', { data: { plans: AP.map(p => Object.assign({}, p, { price: p.name === 'شهري' ? 2900 : p.price, features: undefined })) } });
-    ok((await (await up.request.get(BASE + '/api/billing')).json()).plans.some(p => p.price === 2900), 'عرض شهري مدفوع');
+    await ap.request.put(BASE + '/api/admin/plans', { data: { plans: AP.map(p => Object.assign({}, p, { price: p.name === 'البداية' ? 2900 : p.price, features: undefined })) } });
+    ok((await (await up.request.get(BASE + '/api/billing')).json()).plans.some(p => p.price === 2900), 'باقة مدفوعة');
     await up.goto(BASE + '/subscription'); await up.waitForSelector('.wa-box');
     const btns = await up.$$eval('.wa-box [data-wac]', a => a.map(x => x.dataset.wac));
     ok(btns.join(',') === 'pay,upgrade,renew,billing', 'اشتراكي: أزرار واتساب (الوصل، الترقية، التجديد، سؤال)');

@@ -24,6 +24,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.goto(BASE + '/subscription'); await pg.waitForSelector('[data-acc="plans"]');
     ok((await pg.innerText('[data-acc="plans"]')).includes('الدفع أو تغيير العرض'), 'زر «الدفع أو تغيير العرض»');
     await pg.click('[data-acc="plans"]'); await pg.waitForSelector('.pay-m');
+    await pg.click('.per-t [data-acc="per"][data-m="1"]'); await pg.locator('.plan-g [data-acc="pick"]', { hasText: paid.name }).click(); await pg.waitForSelector('.plan-g .plan.on:has-text("' + paid.name + '")');   // شهر واحد، الباقة الأولى
     const tx = await pg.innerText('.pay-m');
     ok(/BaridiMob أو CCP أو تحويل بنكي/.test(tx) && /يُفعَّل عرضك عند الاستلام/.test(tx) && tx.includes('CCP: 0011223344'), 'بطاقة التحويل: BaridiMob/CCP/بنك + معلومات التحويل');
     await pg.click('[data-acc="wa"]'); await pg.waitForSelector('#wa-store');   // نافذة الرسالة الجاهزة (يضبطها المدير)

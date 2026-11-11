@@ -59,16 +59,16 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     // ---- المدير: الباقات (سعر + حدود)
     await A.goto(BASE + '/payments'); await A.waitForSelector('#t-abill [data-adm="plans"]');
     await A.click('[data-adm="plans"]'); await A.waitForSelector('#pl-t');
-    const row = A.locator('#pl-t [data-pl]').filter({ has: A.locator('[data-f="name"][value="شهري"]') });
+    const row = A.locator('#pl-t [data-pl]').filter({ has: A.locator('[data-f="name"][value="البداية"]') });
     await row.locator('[data-f="price"]').fill('2500'); await row.locator('[data-f="price_usd"]').fill('19'); await row.locator('[data-l="gapProducts"]').fill('2'); await row.locator('[data-l="searchesPerDay"]').fill('5'); await row.locator('[data-l="aiPerMonth"]').fill('1');
-    await A.click('[data-adm="saveplans"]'); await toast(A, /حُفظت الباقات/);
     await A.locator('#ft-t tr[data-fk=""] [data-g="ar"]').fill('تقارير أسبوعية'); await A.locator('#ft-t tr[data-fk=""] [data-g="en"]').fill('Weekly reports');
-    await A.click('[data-adm="savefeats"]'); await toast(A, /حُفظت المميزات/); await A.waitForSelector('#ft-t');
+    await A.locator('[data-adm="saveall"]').first().click(); await toast(A, /حُفظت الباقات والأسعار والمميزات/); await A.waitForSelector('#ft-t');   // زر واحد يحفظ كل شيء
     if (process.env.DBG) console.log('DBG', await A.locator('#ft-t [data-g="ar"][value="تقارير أسبوعية"]').count(), await A.locator('#pl-t [data-ft^="c_"]').count());
     ok(await A.locator('#ft-t [data-g="ar"][value="تقارير أسبوعية"]').count() === 1 && await A.locator('#pl-t [data-ft^="c_"]').count() === 5, 'المدير يضيف ميزة من الواجهة فتظهر في جدول الباقات');
     if (process.env.SHOT) await A.locator('#x-abill').screenshot({ path: process.env.SHOT + '/admin-plans.png' });
-    const PLS = (await (await A.request.get(BASE + '/api/admin/plans')).json()).plans, pl = PLS.find(x => x.name === 'شهري');
+    const PLS = (await (await A.request.get(BASE + '/api/admin/plans')).json()).plans, pl = PLS.find(x => x.name === 'البداية');
     ok(pl.price === 2500 && pl.price_usd === 19 && pl.limits.gapProducts === 2, 'حُفظ سعر الباقة (دج و$) وحدودها');
+    ok(pl.features.length === 9 && pl.periods.find(x => x.m === 6).dzd === 13800 && pl.periods.find(x => x.m === 3).dzd === 7100 && pl.periods.find(x => x.m === 1).dzd === 2500, 'الميزة الجديدة في الباقة + أسعار المدد (المبلغ اليدوي القديم الأعلى من السعر يُهمَل، و3 أشهر −5٪)');
     ok(PLS.filter(x => x.free).length === 1 && PLS.filter(x => !x.free).length === 3, 'أربع باقات: تجربة مجانية + ثلاث مدفوعة');
     ok((await (await M.request.get(BASE + '/api/me')).json()).plan === 'تجربة مجانية', 'المسجّل الجديد يأخذ الباقة المجانية تلقائياً');
 
@@ -76,9 +76,11 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await M.goto(BASE + '/subscription'); await M.waitForSelector('#x-billing .meter');
     ok((await M.locator('#x-billing .meter').count()) === 4, 'عدادات الاستعمال الأربعة');
     await M.click('[data-acc="plans"]'); await M.waitForSelector('.plan-g .plan');
+    ok(await M.locator('.per-t [data-acc="per"]').count() === 4 && await M.locator('.per-t .on').getAttribute('data-m') === '6', 'نافذة الدفع: المدد الأربع، و6 أشهر مختارة');
+    await M.click('.per-t [data-acc="per"][data-m="1"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'البداية' }).click(); await M.waitForSelector('.per-t [data-m="1"].on');
     ok(/2[.,٬]?500|٢٬?٥٠٠/.test(await M.locator('.plan-g').textContent()), 'الباقة بسعرها في نافذة الاختيار');
     ok(['satim', 'stripe', 'paypal'].every(async m => 1) && await M.locator('[data-acc="pay"][data-m="satim"]').count() === 1 && await M.locator('[data-acc="pay"][data-m="stripe"]').count() === 1 && await M.locator('[data-acc="pay"][data-m="paypal"]').count() === 1 && await M.locator('[data-acc="baridi"]').count() === 1, 'طرق الدفع: CIB/الذهبية، Stripe، PayPal، BaridiMob');
-    ok(/\$19\.00/.test(await M.locator('.plan-g').textContent()), 'السعر بالدولار ظاهر');
+    ok(/\$19\.00/.test(await M.locator('.tm').textContent()), 'السعر بالدولار ظاهر');
     // BaridiMob: رقم العملية + صورة الوصل
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
     ok(await M.isVisible('[data-acc="wa"]') && /اسم متجرك/.test(await M.locator('.pay-m').textContent()), 'الطريقة اليدوية: BaridiMob/CCP/تحويل + زر واتساب');
@@ -96,7 +98,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok((await M.request.get(BASE + '/api/admin/payments/' + pid + '/proof')).status() !== 200, 'المشترك لا يصل إلى وصولات الآخرين عبر مسار المدير');
     await A.click('[data-adm="approve"]'); await toast(A, /فُعّل الاشتراك/);
     let me = await (await M.request.get(BASE + '/api/me')).json();
-    ok(me.plan === 'شهري' && me.expires_at > Date.now() + 32 * 864e5, 'القبول يفعّل الباقة ويضيف 30 يوماً فوق التجربة');
+    ok(me.plan === 'البداية' && me.expires_at > Date.now() + 32 * 864e5, 'القبول يفعّل الباقة ويضيف 30 يوماً فوق التجربة');
 
     // ---- حدود الباقة
     const mk = async i => { await M.request.put(BASE + '/api/saved', { data: { k: 'p' + i, snap: { v: 2, name: 'منتج ' + i, kw: 'kw' + i, cat: 'gem', score: 80, n: 1, copies: 1, images: [], top: { title: 'Night light ' + i, body: 'Star projector', link_url: 'https://shop.example/p' + i, image_url: '', country: 'US', page_id: '11' + i, page_name: 'Shop', library_url: 'https://www.facebook.com/ads/library/?id=' + i }, recs: [{ a: { title: 'Night light ' + i, body: 'Star projector', link_url: 'https://shop.example/p' + i, image_url: '', country: 'US', page_id: '11' + i, page_name: 'Shop', library_url: 'https://www.facebook.com/ads/library/?id=' + i }, age: 20, cat: 'gem', score: 80, ev: [] }], refIndex: 0, sellers: [], market: 'US', markets: ['US'], cur: 'USD', pr: 29, hits: [], why: [], proofs: [], also: [], tags: [] } } }); return M.request.post(BASE + '/api/gap', { data: { k: 'p' + i } }); };
@@ -110,7 +112,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(bl.limits.gapProducts === 2 && bl.usage.gapProducts === 2, 'الاستعمال والحدود في /api/billing');
 
     const days = async () => (await (await M.request.get(BASE + '/api/me')).json()).expires_at;
-    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('[data-acc="plans"]'); await M.click('[data-acc="plans"]'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
+    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('[data-acc="plans"]'); await M.click('[data-acc="plans"]'); await M.click('.per-t [data-acc="per"][data-m="1"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'البداية' }).click(); await M.waitForSelector('.plan-g .plan.on:has-text("البداية")'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
     // ---- SATIM: CIB / الذهبية مباشرة
     let before = await days();
     await openPay('satim'); await Promise.all([M.waitForURL(/paid=/), M.click('[data-acc="pay"][data-m="satim"]')]);
@@ -149,7 +151,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await A.goto(BASE + '/admin'); await A.waitForSelector('.kpis');
     const S = await (await A.request.get(BASE + '/api/admin/stats')).json();
     ok(S.active === 1 && S.revenueMonth === 5000 && S.revenueMonthUsd === 57 && S.revenue[11].n === 2, 'الإحصائيات: إيراد 5000 دج و57$ منفصلان: ' + S.revenueMonth + ' / ' + S.revenueMonthUsd);
-    ok(S.plans[0].plan === 'شهري' && S.plans[0].n === 1, 'المشتركون حسب الباقة');
+    ok(S.plans[0].plan === 'البداية' && S.plans[0].n === 1, 'المشتركون حسب الباقة');
     await A.goto(BASE + '/platform/err'); await A.waitForSelector('text=سجل الأخطاء');
     await A.click('.nv[data-v="admin"]'); await A.waitForSelector('#x-users table'); ok(await A.locator('#x-users').isVisible(), 'قسم المشتركين');
 
@@ -211,7 +213,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     const ex = await b.newContext(), E = await ex.newPage(); E.on('pageerror', e => errs.push(e.message));
     await E.request.post(BASE + '/api/register', { data: { email: 'x@t.dz', password: 'password123' } });
     const uid = (await (await A.request.get(BASE + '/api/admin/users')).json()).find(u => u.email === 'x@t.dz').id;
-    await A.request.post(BASE + '/api/admin/users/' + uid, { data: { days: -10, plan: 'شهري' } });
+    await A.request.post(BASE + '/api/admin/users/' + uid, { data: { days: -10, plan: 'البداية' } });
     await E.goto(BASE + '/subscription'); await E.waitForSelector('[data-acc="plans"]');
     ok(/اشترك الآن/.test(await E.locator('[data-acc="plans"]').textContent()), 'منتهي الاشتراك يرى «اشترك الآن»');
 

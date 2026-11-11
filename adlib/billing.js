@@ -20,12 +20,17 @@ create table if not exists plans(id integer primary key, name text unique, days 
 create table if not exists payments(id integer primary key, user_id integer, plan_id integer, plan_name text, days integer, amount integer, method text, status text, ref text, proof text, checkout_id text, created_at integer, paid_at integer, note text, admin_id integer);
 create index if not exists payments_u on payments(user_id, created_at);
 create table if not exists error_logs(id integer primary key, at integer, method text, path text, status integer, msg text, stack text, user_id integer);`);
-  ['alter table plans add column features text', 'alter table plans add column price_usd real default 0', 'alter table plans add column free integer default 0', "alter table payments add column currency text default 'DZD'", 'alter table payments add column ext text']
+  ['alter table plans add column totals text', 'alter table plans add column features text', 'alter table plans add column price_usd real default 0', 'alter table plans add column free integer default 0', "alter table payments add column currency text default 'DZD'", 'alter table payments add column ext text']
     .forEach(x => { try { db.exec(x); } catch (e) {} });
-  // الباقات الأولى: المدد المعتادة، والسعر يحدده المدير (باقة سعرها 0 لا تُعرض للشراء)
-  if (!db.prepare('select count(*) n from plans').get().n) {
-    const ins = db.prepare('insert into plans(name,days,price,limits,active,sort) values(?,?,?,?,1,?)'), L = JSON.stringify(LIM.DEF());
-    [['شهري', 30, 1], ['ربع سنوي', 90, 2], ['سنوي', 365, 3]].forEach(([n, d, s]) => ins.run(n, d, 0, L, s));
+  // الباقات: مستويات بسعر شهري، والمشترك يختار المدة (شهر، 3، 6، 12 شهراً) بخصم. المبالغ الافتراضية من عرض الأسعار المعتمد.
+  const TIERS = [['البداية', 3900, 29, { searchesPerDay: 20, gapProducts: 20, aiPerMonth: 30, watchPages: 5 }, { 6: 21500 }, ''],
+    ['النمو', 6900, 49, { searchesPerDay: 60, gapProducts: 80, aiPerMonth: 120, watchPages: 20 }, { 6: 38000 }, 'الأكثر طلباً'],
+    ['الاحتراف', 10900, 79, { searchesPerDay: 200, gapProducts: 300, aiPerMonth: 400, watchPages: 60 }, { 6: 60100 }, '']];
+  if (!CFG.get('pricing_v2')) {
+    db.prepare("update plans set active=0 where name in ('شهري','ربع سنوي','سنوي') and coalesce(free,0)=0").run();   // الباقات القديمة (حسب المدة) تبقى للسجل فقط
+    const ins = db.prepare('insert or ignore into plans(name,days,price,price_usd,limits,active,sort,note,totals) values(?,30,?,?,?,1,?,?,?)');
+    TIERS.forEach(([n, pr, us, L, t, note], i) => ins.run(n, pr, us, JSON.stringify(L), i + 1, note, JSON.stringify(t)));
+    CFG.set('pricing_v2', '1');
   }
   // الباقة المجانية لتجربة المنصة: تُمنح تلقائياً عند التسجيل (المدة والحدود يعدّلها المدير)
   if (!db.prepare('select count(*) n from plans where free=1').get().n)
@@ -40,14 +45,29 @@ create table if not exists error_logs(id integer primary key, at integer, method
     db.prepare("update plan_features set ar=?, en=?, fr=? where k='ai' and ar='تحليل الإعلان بالذكاء الاصطناعي'").run(LIM.FLABEL.ai, EN.ai, FR.ai); }
   const catalog = () => db.prepare('select k,ar,en,fr,builtin,shown,sort from plan_features order by sort, rowid').all().map(x => ({ k: x.k, ar: x.ar || '', en: x.en || '', fr: x.fr || '', builtin: !!x.builtin, shown: !!x.shown, sort: x.sort }));
   const catKeys = () => catalog().map(x => x.k);
-  const planView = p => ({ id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, features: (() => { const f = J(p.features, null), all = catKeys(); return Array.isArray(f) ? all.filter(k => f.includes(k)) : all; })(), limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });
+  // المدد المتاحة وخصم كل مدة (يعدّلها المدير). 12 شهراً = 365 يوماً
+  const PER_DEF = [{ m: 1, off: 0 }, { m: 3, off: 5 }, { m: 6, off: 8 }, { m: 12, off: 15 }];
+  const periodsCfg = () => { let a = null; try { a = JSON.parse(CFG.get('billing_periods') || 'null'); } catch (e) {} return Array.isArray(a) && a.length ? a : PER_DEF; };
+  const perLabel = m => m === 1 ? 'شهر' : m === 12 ? '12 شهراً' : m + ' أشهر';
+  // سعر الباقة لمدة: المبلغ اليدوي إن ضبطه المدير، وإلا السعر الشهري × الأشهر − الخصم (مقرّب لأقرب 100 دج)
+  function priceFor(p, m) {
+    const per = periodsCfg().find(x => +x.m === +m); if (!per) return null;
+    const tot = J(p.totals, {}) || {}, base = (+p.price || 0) * m, ub = (+p.price_usd || 0) * m, off = Math.max(0, Math.min(90, +per.off || 0));
+    const dzd = +tot[m] > 0 && (+tot[m] <= base || !base) ? Math.round(+tot[m]) :   // مبلغ يدوي أعلى من السعر الكامل (بعد تغيير السعر الشهري) يُهمَل
+       off ? Math.round(base * (1 - off / 100) / 100) * 100 : base;
+    const usdv = ub ? Math.round(ub * (1 - off / 100) * 100) / 100 : 0;
+    return { m: +m, days: +m === 12 ? 365 : +m * 30, label: perLabel(+m), dzd, usd: usdv, base, off: base ? Math.max(0, Math.round((1 - dzd / base) * 100)) : off, monthly: Math.round(dzd / m), save: Math.max(0, base - dzd) };
+  }
+  const periodsOf = p => p.free ? [] : periodsCfg().map(x => priceFor(p, x.m)).filter(x => x && (x.dzd > 0 || x.usd > 0));
+  const planView = p => ({ totals: J(p.totals, {}) || {}, periods: periodsOf(p), id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, features: (() => { const f = J(p.features, null), all = catKeys(); return Array.isArray(f) ? all.filter(k => f.includes(k)) : all; })(), limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });
   const plans = (all) => db.prepare('select * from plans' + (all ? '' : ' where active=1 and coalesce(free,0)=0 and (price>0 or price_usd>0)') + ' order by sort, days').all().map(planView);
 
   /* ---------- التفعيل ---------- */
   function markPaid(pay, adminId) {
     if (!pay || pay.status === 'paid') return false;
     const u = db.prepare('select id, expires_at from users where id=?').get(pay.user_id); if (!u) return false;
-    db.prepare('update users set expires_at=?, plan=? where id=?').run(Math.max(now(), u.expires_at || 0) + pay.days * DAY, pay.plan_name, u.id);
+    const pl = pay.plan_id && db.prepare('select name from plans where id=?').get(pay.plan_id);
+    db.prepare('update users set expires_at=?, plan=? where id=?').run(Math.max(now(), u.expires_at || 0) + pay.days * DAY, pl ? pl.name : String(pay.plan_name || '').split(' · ')[0], u.id);
     db.prepare("update payments set status='paid', paid_at=?, admin_id=? where id=?").run(now(), adminId || null, pay.id);
     act && act(u.id, 'payment', null, pay.method + ' · ' + pay.plan_name + ' · ' + pay.amount + ' دج');
     try { X.notify && X.notify(u.id, 'payment', '✅ تم تفعيل اشتراكك: ' + pay.plan_name + ' (' + pay.days + ' يوماً)'); } catch (e) {}
@@ -59,23 +79,24 @@ create table if not exists error_logs(id integer primary key, at integer, method
   // للصفحة العامة (الأسعار): الباقات المفعّلة فقط، بلا بيانات داخلية
   app.get('/api/plans/public', (q, s) => {
     const L = db.prepare('select * from plans where active=1 order by sort, days').all().map(planView)
-      .map(p => ({ name: p.name, days: p.days, price: p.price, price_usd: p.price_usd, free: p.free, note: p.note, limits: p.limits, features: p.features }));
-    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, features: catalog().filter(x => x.shown), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!(CFG.get('baridi_info') || CFG.get('support_whatsapp')) } });
+      .map(p => ({ name: p.name, days: p.days, price: p.price, price_usd: p.price_usd, free: p.free, note: p.note, limits: p.limits, features: p.features, periods: p.periods }));
+    s.set('Cache-Control', 'public, max-age=60').json({ plans: L, periods: periodsCfg(), features: catalog().filter(x => x.shown), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: !!(CFG.get('baridi_info') || CFG.get('support_whatsapp')) } });
   });
   app.get('/api/billing', auth, wrap((q, s) => {
     const u = q.u;
     s.json({
       plan: u.plan, expires_at: u.expires_at, role: u.role, features: LIM.featuresOf(u), featureLabels: LIM.FLABEL, limits: LIM.limitsOf(u), usage: LIM.usage(u), labels: LIM.LABEL,
-      plans: plans(false), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: CFG.get('baridi_info') || '', whatsapp: CFG.get('support_whatsapp') || '' },
+      plans: plans(false), periods: periodsCfg(), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: CFG.get('baridi_info') || '', whatsapp: CFG.get('support_whatsapp') || '' },
       payments: db.prepare('select id,plan_name,days,amount,method,status,ref,created_at,paid_at,note from payments where user_id=? order by created_at desc limit 12').all(u.id)
     });
   }));
-  const getPlan = id => { const p = db.prepare('select * from plans where id=? and active=1 and coalesce(free,0)=0').get(+id); if (!p) throw bad('الباقة غير متاحة'); return p; };
+  // الباقة + المدة المختارة (months: 1، 3، 6، 12). السعر والأيام من المدة
+  const getPlan = (id, months) => { const p = db.prepare('select * from plans where id=? and active=1 and coalesce(free,0)=0').get(+id); if (!p) throw bad('الباقة غير متاحة');
+    const per = priceFor(p, +months || 1); if (!per) throw bad('المدة غير متاحة'); return Object.assign({}, p, { per }); };
   /* ---------- الدفع الإلكتروني: SATIM (CIB/الذهبية) · Stripe · PayPal ---------- */
   const newPay = (u, p, method, amount, currency) => Number(db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,currency,method,status,created_at) values(?,?,?,?,?,?,?,'pending',?)")
-    .run(u.id, p.id, p.name, p.days, amount, currency, method, now()).lastInsertRowid);
+    .run(u.id, p.id, p.name + ' · ' + p.per.label, p.per.days, amount, currency, method, now()).lastInsertRowid);
   const failPay = (pid, note) => db.prepare("update payments set status='failed', note=? where id=? and status='pending'").run(str(note, 200), pid);
-  const usd = p => Math.round((+p.price_usd || 0) * 100) / 100;
   const SATIM = () => process.env.SATIM_TEST_API || (CFG.get('satim_mode') === 'live' ? 'https://cib.satim.dz/payment/rest' : 'https://test.satim.dz/payment/rest');
   const STRIPE = () => process.env.STRIPE_TEST_API || 'https://api.stripe.com';
   const PAYPAL = () => process.env.PAYPAL_TEST_API || (CFG.get('paypal_mode') === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com');
@@ -86,12 +107,12 @@ create table if not exists error_logs(id integer primary key, at integer, method
   }
   app.post('/api/billing/checkout', auth, async (q, s, n) => {
     try {
-      const p = getPlan(q.body && q.body.plan_id), method = String(q.body.method || ''), base = baseUrl(q);
+      const p = getPlan(q.body && q.body.plan_id, q.body && q.body.months), method = String(q.body.method || ''), base = baseUrl(q);
       if (method === 'satim') {
         if (!CFG.get('satim_user') || !CFG.get('satim_pass')) throw bad('الدفع بـ CIB/الذهبية غير مفعّل بعد');
-        if (!(p.price > 0)) throw bad('لا سعر بالدينار لهذه الباقة');
-        const pid = newPay(q.u, p, 'satim', p.price, 'DZD'), back = base + '/api/billing/return/satim?pid=' + pid;
-        const qs = new URLSearchParams({ userName: CFG.get('satim_user'), password: CFG.get('satim_pass'), orderNumber: String(pid).padStart(10, '0'), amount: String(Math.round(p.price * 100)), currency: '012',
+        if (!(p.per.dzd > 0)) throw bad('لا سعر بالدينار لهذه الباقة');
+        const pid = newPay(q.u, p, 'satim', p.per.dzd, 'DZD'), back = base + '/api/billing/return/satim?pid=' + pid;
+        const qs = new URLSearchParams({ userName: CFG.get('satim_user'), password: CFG.get('satim_pass'), orderNumber: String(pid).padStart(10, '0'), amount: String(Math.round(p.per.dzd * 100)), currency: '012',
           returnUrl: back, failUrl: back, language: lang(q), jsonParams: JSON.stringify({ force_terminal_id: CFG.get('satim_terminal') || '', udf1: String(pid) }) });
         const r = await fetch(SATIM() + '/register.do?' + qs, { signal: AbortSignal.timeout(20000) }), j = await r.json().catch(() => ({}));
         if (String(j.errorCode || '0') !== '0' || !j.formUrl) { failPay(pid, j.errorMessage || 'SATIM ' + j.errorCode); throw bad('تعذّر إنشاء صفحة الدفع: ' + (j.errorMessage || j.errorCode || 'SATIM'), 502); }
@@ -99,10 +120,10 @@ create table if not exists error_logs(id integer primary key, at integer, method
       }
       if (method === 'stripe') {
         if (!CFG.get('stripe_secret')) throw bad('الدفع بالبطاقة الدولية غير مفعّل بعد');
-        if (!(usd(p) > 0)) throw bad('لا سعر بالدولار لهذه الباقة');
-        const pid = newPay(q.u, p, 'stripe', usd(p), 'USD');
-        const f = new URLSearchParams({ mode: 'payment', 'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'usd', 'line_items[0][price_data][unit_amount]': String(Math.round(usd(p) * 100)),
-          'line_items[0][price_data][product_data][name]': p.name + ' · ' + p.days + ' days', success_url: base + '/subscription?paid=' + pid, cancel_url: base + '/subscription?failed=' + pid,
+        if (!(p.per.usd > 0)) throw bad('لا سعر بالدولار لهذه الباقة');
+        const pid = newPay(q.u, p, 'stripe', p.per.usd, 'USD');
+        const f = new URLSearchParams({ mode: 'payment', 'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'usd', 'line_items[0][price_data][unit_amount]': String(Math.round(p.per.usd * 100)),
+          'line_items[0][price_data][product_data][name]': p.name + ' · ' + p.per.m + (p.per.m > 1 ? ' months' : ' month'), success_url: base + '/subscription?paid=' + pid, cancel_url: base + '/subscription?failed=' + pid,
           client_reference_id: String(pid), 'metadata[payment_id]': String(pid), customer_email: q.u.email });
         const r = await fetch(STRIPE() + '/v1/checkout/sessions', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Bearer ' + CFG.get('stripe_secret'), 'content-type': 'application/x-www-form-urlencoded' }, body: f.toString() });
         const j = await r.json().catch(() => ({}));
@@ -111,10 +132,10 @@ create table if not exists error_logs(id integer primary key, at integer, method
       }
       if (method === 'paypal') {
         if (!CFG.get('paypal_client') || !CFG.get('paypal_secret')) throw bad('PayPal غير مفعّل بعد');
-        if (!(usd(p) > 0)) throw bad('لا سعر بالدولار لهذه الباقة');
-        const pid = newPay(q.u, p, 'paypal', usd(p), 'USD'), tok = await paypalToken();
+        if (!(p.per.usd > 0)) throw bad('لا سعر بالدولار لهذه الباقة');
+        const pid = newPay(q.u, p, 'paypal', p.per.usd, 'USD'), tok = await paypalToken();
         const r = await fetch(PAYPAL() + '/v2/checkout/orders', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Bearer ' + tok, 'content-type': 'application/json' },
-          body: JSON.stringify({ intent: 'CAPTURE', purchase_units: [{ reference_id: String(pid), custom_id: String(pid), description: p.name, amount: { currency_code: 'USD', value: usd(p).toFixed(2) } }],
+          body: JSON.stringify({ intent: 'CAPTURE', purchase_units: [{ reference_id: String(pid), custom_id: String(pid), description: p.name + ' · ' + p.per.m + ' mo', amount: { currency_code: 'USD', value: p.per.usd.toFixed(2) } }],
             application_context: { return_url: base + '/api/billing/return/paypal?pid=' + pid, cancel_url: base + '/subscription?failed=' + pid, user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING' } }) });
         const j = await r.json().catch(() => ({})), ap = (j.links || []).find(l => l.rel === 'approve' || l.rel === 'payer-action');
         if (!j.id || !ap) { failPay(pid, j.message); throw bad('PayPal: ' + (j.message || 'تعذّر إنشاء الطلب'), 502); }
@@ -166,7 +187,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
   app.post('/api/billing/baridi', auth, wrap((q, s) => {
     // طريقتان: الوصل عبر واتساب (اسم المتجر فقط هنا، والوصل يصل في واتساب) أو رقم العملية/صورة الوصل هنا
     const wa = q.body.via === 'whatsapp', store = str(q.body.store, 80);
-    const p = getPlan(q.body && q.body.plan_id), ref = wa ? ('WhatsApp · ' + store).slice(0, 100) : str(q.body.ref, 60), img = wa ? '' : String(q.body.proof || '');
+    const p = getPlan(q.body && q.body.plan_id, q.body && q.body.months), ref = wa ? ('WhatsApp · ' + store).slice(0, 100) : str(q.body.ref, 60), img = wa ? '' : String(q.body.proof || '');
     if (!CFG.get('baridi_info') && !(wa && CFG.get('support_whatsapp'))) throw bad('الدفع عبر BaridiMob غير مفعّل');
     if (wa && store.length < 2) throw bad('اكتب اسم متجرك');
     const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(img);
@@ -174,9 +195,9 @@ create table if not exists error_logs(id integer primary key, at integer, method
     if (db.prepare("select count(*) n from payments where user_id=? and status='pending' and method='baridi'").get(q.u.id).n >= 3) throw bad('لديك طلبات قيد المراجعة. انتظر قبولها.');
     let proof = '';
     if (m) { const buf = Buffer.from(m[2], 'base64'); if (buf.length > 3e6) throw bad('الصورة كبيرة جداً'); proof = crypto.randomBytes(12).toString('hex') + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]); fs.writeFileSync(path.join(PROOF_DIR, proof), buf); }
-    const id = db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,method,status,ref,proof,created_at) values(?,?,?,?,?,'baridi','pending',?,?,?)").run(q.u.id, p.id, p.name, p.days, p.price, ref, proof, now()).lastInsertRowid;
-    act && act(q.u.id, 'payment_request', q, 'BaridiMob · ' + p.name);
-    try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.price + ' دج' + (wa ? ' · الوصل عبر واتساب · المتجر: ' + store : ''), '/payments'); } catch (e) {}
+    const id = db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,method,status,ref,proof,created_at) values(?,?,?,?,?,'baridi','pending',?,?,?)").run(q.u.id, p.id, p.name + ' · ' + p.per.label, p.per.days, p.per.dzd, ref, proof, now()).lastInsertRowid;
+    act && act(q.u.id, 'payment_request', q, 'BaridiMob · ' + p.name + ' · ' + p.per.label);
+    try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.per.label + ' · ' + p.per.dzd + ' دج' + (wa ? ' · الوصل عبر واتساب · المتجر: ' + store : ''), '/payments'); } catch (e) {}
     s.json({ id: Number(id) });
   }));
   app.get('/api/billing/payment/:id', auth, async (q, s, n) => {
@@ -201,7 +222,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
     else throw bad('إجراء غير معروف');
     s.json({ ok: 1 });
   }));
-  app.get('/api/admin/plans', auth, admin, wrap((q, s) => s.json({ plans: plans(true), keys: LIM.KEYS, labels: LIM.LABEL, cat: catalog() })));
+  app.get('/api/admin/plans', auth, admin, wrap((q, s) => s.json({ plans: plans(true), periods: periodsCfg(), keys: LIM.KEYS, labels: LIM.LABEL, cat: catalog() })));
   // المدير: إضافة ميزة، تعديل اسمها، إخفاء ميزة مدمجة من الأسعار، حذف ميزة مضافة
   app.put('/api/admin/features', auth, admin, wrap((q, s) => {
     const list = Array.isArray(q.body && q.body.list) ? q.body.list.slice(0, 60) : [], cur = new Map(catalog().map(x => [x.k, x])), keep = new Set();
@@ -221,38 +242,24 @@ create table if not exists error_logs(id integer primary key, at integer, method
   }));
   app.put('/api/admin/plans', auth, admin, wrap((q, s) => {
     const list = Array.isArray(q.body && q.body.plans) ? q.body.plans.slice(0, 20) : [];
-    const up = db.prepare('update plans set name=?, days=?, price=?, limits=?, active=?, sort=?, note=?, price_usd=?, free=?, features=? where id=?'), ins = db.prepare('insert into plans(name,days,price,limits,active,sort,note,price_usd,free,features) values(?,?,?,?,?,?,?,?,?,?)');
+    const up = db.prepare('update plans set name=?, days=?, price=?, limits=?, active=?, sort=?, note=?, price_usd=?, free=?, features=?, totals=? where id=?'), ins = db.prepare('insert into plans(name,days,price,limits,active,sort,note,price_usd,free,features,totals) values(?,?,?,?,?,?,?,?,?,?,?)');
     for (const p of list) {
       const name = str(p.name, 30), days = Math.max(1, Math.min(3650, Math.floor(+p.days || 30))), price = Math.max(0, Math.min(1e7, Math.floor(+p.price || 0)));
       if (!name) continue;
       const L = {}; for (const k of LIM.KEYS) { const v = Math.floor(+((p.limits || {})[k])); if (v > 0) L[k] = Math.min(1e6, v); }
       const pu = Math.max(0, Math.min(1e5, Math.round((+p.price_usd || 0) * 100) / 100)), fr = p.free ? 1 : 0, fe = JSON.stringify(Array.isArray(p.features) ? catKeys().filter(k => p.features.includes(k)) : catKeys());
-      if (p.id) up.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe, +p.id); else ins.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe);
+      const T = {}; for (const [m, v] of Object.entries(p.totals || {})) { const x = Math.floor(+v); if (/^\d+$/.test(m) && x > 0) T[m] = Math.min(1e8, x); }   // مبالغ يدوية لكل مدة (فارغ = حساب تلقائي بالخصم)
+      if (p.id) up.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe, JSON.stringify(T), +p.id); else ins.run(name, days, price, JSON.stringify(L), p.active ? 1 : 0, +p.sort || 0, str(p.note, 120), pu, fr, fe, JSON.stringify(T));
+    }
+    if (Array.isArray(q.body.periods)) {   // المدد وخصوماتها (مثلاً 3 أشهر −5٪)
+      const P = q.body.periods.map(x => ({ m: Math.floor(+x.m), off: Math.max(0, Math.min(90, Math.round(+x.off || 0))) })).filter(x => [1, 2, 3, 4, 6, 9, 12, 18, 24].includes(x.m));
+      const U = [...new Map(P.map(x => [x.m, x])).values()].sort((a, b) => a.m - b.m); if (U.length) CFG.set('billing_periods', JSON.stringify(U));
     }
     act && act(q.u.id, 'admin_plans', q, list.length + ' باقة');
-    s.json({ plans: plans(true) });
+    s.json({ plans: plans(true), periods: periodsCfg() });
   }));
 
-  /* ---------- المدير: لوحة الإحصائيات ---------- */
-  app.get('/api/admin/stats', auth, admin, wrap((q, s) => {
-    const t = now(), g = (sql, ...a) => db.prepare(sql).get(...a) || {}, mStart = new Date(new Date(t).toISOString().slice(0, 7) + '-01T00:00:00Z').getTime();
-    const months = []; for (let i = 11; i >= 0; i--) { const d = new Date(t); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - i); months.push(d.toISOString().slice(0, 7)); }
-    const rev = new Map(db.prepare("select strftime('%Y-%m', paid_at/1000, 'unixepoch') m, sum(amount) a, count(*) n from payments where status='paid' and coalesce(currency,'DZD')='DZD' and paid_at>=? group by m").all(t - 400 * DAY).map(r => [r.m, r]));
-    const day = new Date(t).toISOString().slice(0, 10), d30 = new Date(t - 30 * DAY).toISOString().slice(0, 10);
-    s.json({
-      users: g('select count(*) n from users').n, active: g("select count(*) n from users where role!='admin' and expires_at>?", t).n,
-      newMonth: g('select count(*) n from users where created_at>=?', mStart).n, expiring7: g("select count(*) n from users where role!='admin' and expires_at>? and expires_at<?", t, t + 7 * DAY).n,
-      expired30: g("select count(*) n from users where role!='admin' and expires_at<=? and expires_at>?", t, t - 30 * DAY).n,
-      revenueMonth: g("select coalesce(sum(amount),0) a from payments where status='paid' and coalesce(currency,'DZD')='DZD' and paid_at>=?", mStart).a,
-      revenueMonthUsd: Math.round(g("select coalesce(sum(amount),0) a from payments where status='paid' and currency='USD' and paid_at>=?", mStart).a * 100) / 100, pending: g("select count(*) n from payments where status='pending'").n,
-      revenue: months.map(m => ({ m, a: (rev.get(m) || {}).a || 0, n: (rev.get(m) || {}).n || 0 })),
-      plans: db.prepare("select plan, count(*) n from users where role!='admin' and expires_at>? group by plan order by n desc").all(t),
-      usage: { searchesToday: g('select coalesce(sum(searches),0) n from lib_usage where day=?', day).n, searches30: g('select coalesce(sum(searches),0) n from lib_usage where day>=?', d30).n,
-        aiMonth: g('select coalesce(sum(n),0) n from ai_usage where month=?', new Date(t).toISOString().slice(0, 7)).n, ads30: g("select coalesce(sum(ads),0) n from runs where source='adlib' and created_at>=?", t - 30 * DAY).n,
-        activeUsers7: g('select count(distinct user_id) n from activity where kind=? and at>=?', 'login', t - 7 * DAY).n },
-      errors: { day: g('select count(*) n from error_logs where at>=?', t - DAY).n, list: db.prepare('select at,method,path,status,msg,user_id from error_logs order by at desc limit 50').all() }
-    });
-  }));
+  // لوحة الإحصائيات الشاملة: adlib/stats.js
   app.delete('/api/admin/errors', auth, admin, wrap((q, s) => { db.prepare('delete from error_logs').run(); s.json({ ok: 1 }); }));
 
   /* ---------- المدير: «الربط والتكامل» (مفاتيح المنصة) ---------- */
