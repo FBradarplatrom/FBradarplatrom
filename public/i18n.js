@@ -37,6 +37,14 @@
       var m = /^([^؀-ۿ]*?)([؀-ۿ][\s\S]*[؀-ۿ«»؟!.)]|[؀-ۿ])([^؀-ۿ]*)$/.exec(k);
       if (m && (m[1] || m[3])) { var c = look(norm(m[2])); if (c == null && /[.؟!:،]$/.test(m[2])) { c = look(m[2].slice(0, -1)); if (c != null) c += m[2].slice(-1).replace('؟', '?').replace('،', ','); } if (c != null) r = m[1] + c + m[3]; if (r == null && m[1]) { c = look(k.slice(m[1].length)); if (c != null) r = m[1] + c; } }
     }
+    if (r == null) {                                             // نص بجانب أيقونة في نفس العنصر: المفتاح «{} نص» أو «نص {}»
+      var c2 = look('{} ' + k); if (c2 != null && c2.indexOf('{}') === 0 && !AR.test(c2)) r = c2.slice(2).replace(/^\s+/, '');
+      if (r == null) { c2 = look(k + ' {}'); if (c2 != null && /\{\}$/.test(c2) && !AR.test(c2)) r = c2.slice(0, -2).replace(/\s+$/, ''); }
+    }
+    if (r == null) {                                             // عدد بين قوسين في آخر النص: «باك مع منتجات مكمّلة (3)»
+      var mc = /^([\s\S]*?[؀-ۿ][\s\S]*?)\s*(\(\s*[\d٠-٩.,%+\s]+\))$/.exec(k);
+      if (mc) { var c3 = tr(mc[1]); if (c3 != null) r = c3 + ' ' + mc[2]; }
+    }
     if (r == null && SEP.test(k)) {                              // «تجريبي · باقي 7 يوم» ← ترجمة كل جزء
       var parts = k.split(SEP), hit = false;
       parts = parts.map(function (p, i) { if (i % 2) return p.replace('،', ','); if (!AR.test(p)) return p; var y = tr(p); if (y != null) { hit = true; return y; } return p; });

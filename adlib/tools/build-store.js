@@ -42,3 +42,5 @@ console.log('✔ store-build/listing-en.txt · listing-ar.txt · listing-fr.txt 
 
 // 3) الصور (اختياري): لقطات 1280×800 ولوحة ترويجية 440×280، من المنصة نفسها ببيانات تجريبية
 if (process.argv.includes('--shots')) require('./store-shots.js')(OUT).then(n => console.log('✔ ' + n + ' صور في store-build/')).catch(e => { console.error('الصور:', e.message); process.exitCode = 1; });
+// 4) دليل التعبئة بالعربية
+fs.copyFileSync(path.join(ROOT, 'extensions', 'store', 'GUIDE-ar.txt'), path.join(OUT, 'GUIDE-ar.txt'));

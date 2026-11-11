@@ -69,6 +69,8 @@ const RESULT = { product: { what: 'مصباح ليلي يسقط النجوم', j
     ok(/in a way nobody competes with/.test(await pe.innerText('.ed-hero')) && /Beat the competition/.test(await pe.innerText('.nv[data-v="edge"]')), 'القسم مترجم للإنجليزية');
     await pe.click('[data-ed="src"][data-m="new"]'); await pe.fill('#ed-name', 'Posture corrector'); await pe.click('#ed-form button[type=submit]'); await pe.waitForSelector('.ed-i', { timeout: 15000 });
     ok(/Write everything in English/.test(reqs[reqs.length - 1].messages[0].content), 'الأفكار بلغة الواجهة (English)');
+    const btns = await pe.$$eval('[data-ed="home"],[data-ed="copy"],[data-ed="more"],.ed-flt button', a => a.map(x => x.innerText.trim()).join(' | '));
+    ok(/All analyses/.test(btns) && /Copy all ideas/.test(btns) && /More ideas/.test(btns) && /Bundle with complementary products \(1\)/.test(btns) && !/[؀-ۿ]/.test(btns), 'أزرار بأيقونة ورقائق بعدد مترجمة: ' + btns);
     // البريد: حالة، تجربة إلى أي عنوان، فحص الدومين
     const mt = await (await pg.request.post(BASE + '/api/admin/mail-test', { data: { to: 'someone@gmail.com' } })).json();
     const ms = await (await pg.request.get(BASE + '/api/admin/mail-status')).json();
