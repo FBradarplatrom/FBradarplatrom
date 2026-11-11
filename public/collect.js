@@ -201,7 +201,7 @@
   }
   const extCard = () => {
     const old = B.ok && STATS && vlt(B.version, STATS.ext.min);
-    return `<div class="card"><div class="l-st"><span class="l-dot ${B.ok ? (old ? 'warn' : 'ok') : ''}"></span><div class="grow"><b>${B.ok ? (old ? 'الإضافة قديمة (v' + e(B.version) + ')' : 'الإضافة متصلة · v' + e(B.version)) : 'الإضافة غير مكتشفة'}</b>
+    return `<div class="card"><div class="l-st"><span class="l-dot ${B.ok ? (old ? 'warn' : 'ok') : ''}"></span><div class="grow"><b>${B.ok ? (old ? 'الإضافة قديمة' : 'الإضافة متصلة') + ' <small dir="ltr" class="muted">v' + e(B.version) + '</small>' : 'الإضافة غير مكتشفة'}</b>
       <div class="muted">${B.ok ? (old ? 'حدّث الإضافة لمتابعة الجمع: نزّل النسخة الجديدة من تبويب «الإضافة» واستبدلها.' : 'جاهزة للجمع من مكتبة إعلانات ميتا. اترك تبويب فيسبوك ظاهراً أثناء الجمع.') : 'ثبّت الإضافة مرة واحدة (Chrome على الحاسوب) ثم أعد تحميل هذه الصفحة.'}</div></div>
       ${B.ok && !old ? '' : '<button class="btn sm" data-lt="ext">تثبيت الإضافة</button>'}</div>${limitsBar()}</div>`;
   };
@@ -262,7 +262,7 @@
   function modeHint() {
     const { g, c, sc } = sampleKW(), m = P.mode || 'combo';
     const ex = m === 'gold' ? g : m === 'comp' ? c : MK.combine(g, c, sc, P.type === 'keyword_exact_phrase');
-    return 'مثال: «' + e(ex) + '»' + (m === 'combo' ? ' · الترتيب ثابت: الكلمة الذهبية أولاً ثم المكمّلة' : m === 'gold' ? ' · كل كلمة ذهبية مختارة بحث مستقل' : ' · كل مكمّلة مختارة بحث مستقل');
+    return '<span>مثال:</span> <bdi translate="no" dir="auto">«' + e(ex) + '»</bdi> <span>' + (m === 'combo' ? '· الترتيب ثابت: الكلمة الذهبية أولاً ثم المكمّلة' : m === 'gold' ? '· كل كلمة ذهبية مختارة بحث مستقل' : '· كل مكمّلة مختارة بحث مستقل') + '</span>';
   }
   const quickHint = () => { const { g, c, sc } = sampleKW(); return MK.combine(g, c, sc, false); };
   function libUrl(q, lang) {

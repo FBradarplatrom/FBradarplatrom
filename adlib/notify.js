@@ -120,7 +120,7 @@ create index if not exists notify_log_u on notify_log(user_id, id);`);
   const remind = () => { try {
     const t = now(); for (const u of db.prepare("select id,expires_at from users where role!='admin' and expires_at>? and expires_at<?").all(t, t + 3 * 864e5)) {
       if (kvGet(u.id, 'exp_note', 0) === u.expires_at) continue; kvSet(u.id, 'exp_note', u.expires_at);
-      fire(u.id, 'expiry', '⏰ اشتراكك ينتهي خلال ' + Math.max(1, Math.ceil((u.expires_at - t) / 864e5)) + ' يوم. جدّده الآن بضغطة من «الإعدادات ← الاشتراك» حتى لا يتوقف عملك.', '/settings');
+      fire(u.id, 'expiry', '⏰ اشتراكك ينتهي خلال ' + Math.max(1, Math.ceil((u.expires_at - t) / 864e5)) + ' يوم. جدّده الآن من «اشتراكي» حتى لا يتوقف عملك.', '/subscription');
     } } catch (e) {} };
   setTimeout(remind, 30e3).unref(); setInterval(remind, 6 * 36e5).unref();
   return { notify: fire, notifyNow: notify, notifyAdmins, remind };

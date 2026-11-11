@@ -26,10 +26,11 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.click('[data-acc="plans"]'); await pg.waitForSelector('.pay-m');
     const tx = await pg.innerText('.pay-m');
     ok(/BaridiMob أو CCP أو تحويل بنكي/.test(tx) && /يُفعَّل عرضك عند الاستلام/.test(tx) && tx.includes('CCP: 0011223344'), 'بطاقة التحويل: BaridiMob/CCP/بنك + معلومات التحويل');
-    await pg.click('[data-acc="wa"]'); await pg.waitForTimeout(400);
-    ok(/اسم متجرك/.test(await pg.innerText('#toast, .toast, body')), 'اسم المتجر مطلوب');
-    await pg.fill('#bm-store', 'Boutique Amine');
-    const [wa] = await Promise.all([U.waitForEvent('page'), pg.click('[data-acc="wa"]')]);
+    await pg.click('[data-acc="wa"]'); await pg.waitForSelector('#wa-store');   // نافذة الرسالة الجاهزة (يضبطها المدير)
+    await pg.click('[data-wa="go"]'); await pg.waitForTimeout(400);
+    ok(/اسم متجرك/.test(await pg.innerText('#toasts')), 'اسم المتجر مطلوب');
+    await pg.fill('#wa-store', 'Boutique Amine');
+    const [wa] = await Promise.all([U.waitForEvent('page'), pg.click('[data-wa="go"]')]);
     await wa.waitForURL(/wa\.me|whatsapp/, { timeout: 8000 }).catch(() => {});
     const url = decodeURIComponent(wa.url());
     ok(/wa\.me\/213664442637|phone=213664442637/.test(url) && url.includes('Boutique Amine') && url.includes('u@t.dz') && /2[.,٬\s]?500/.test(url), 'واتساب برسالة جاهزة: الرقم، المتجر، البريد، المبلغ');

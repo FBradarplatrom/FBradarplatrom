@@ -5,7 +5,6 @@
 // 3) الحكم: ثغرة مؤكدة · منافسة ضعيفة · جُرّب وتوقف · مشبع · يحتاج تحققك · غير حاسم. والثغرات تُراقَب أسبوعياً.
 const C = require('./core.js'), AI = require('./ai.js'), LIM = require('./limits.js'), NT = require('./notify.js'), MK = require('./lib/markets.js');
 
-const ENV = (k, d) => (process.env[k] !== undefined && process.env[k] !== '' ? process.env[k] : d);
 const WEEK = 7 * 864e5;
 const VERDICTS = ['new', 'gap', 'weak', 'tried', 'saturated', 'check', 'inconclusive'];
 

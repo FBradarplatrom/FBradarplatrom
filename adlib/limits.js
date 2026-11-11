@@ -7,7 +7,7 @@ const DEF = () => ({ searchesPerDay: NUM('LIB_MAX_SEARCHES_PER_DAY', 60), gapPro
 const KEYS = ['searchesPerDay', 'gapProducts', 'aiPerMonth', 'watchPages'];
 // مميزات تُفعَّل أو تُعطَّل لكل باقة من «العروض والمدفوعات ← العروض والمميزات» (البحث والتحليل متاحان لكل الباقات)
 const FEATS = ['gap', 'supplier', 'ai', 'watch', 'tiktok', 'profit', 'alerts', 'sheets'];
-const FLABEL = { gap: 'ثغرات السوق', supplier: 'إيجاد المورّد', ai: 'تحليل الإعلان بالذكاء الاصطناعي', watch: 'مراقبة المنافسين', tiktok: 'اتجاهات TikTok', profit: 'حاسبة الربح', alerts: 'التنبيهات (بريد/تيليغرام)', sheets: 'التصدير إلى Google Sheets' };
+const FLABEL = { gap: 'ثغرات السوق', supplier: 'إيجاد المورّد', ai: 'الذكاء الاصطناعي (تحليل الإعلان والخروج من المنافسة)', watch: 'مراقبة المنافسين', tiktok: 'اتجاهات TikTok', profit: 'حاسبة الربح', alerts: 'التنبيهات (بريد/تيليغرام)', sheets: 'التصدير إلى Google Sheets' };
 function featuresOf(u) {
   if (!u || u.role === 'admin') return FEATS.slice();
   let hidden = new Set();   // ميزة مدمجة أخفاها المدير من صفحة الأسعار: ليست جزءاً من العرض، فهي متاحة للجميع

@@ -18,6 +18,9 @@
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kpis div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}.kpis b{display:block;font-size:22px}.kpis span{font-size:12.5px;color:var(--mut)}
 .bars{display:flex;align-items:flex-end;gap:6px;height:140px;margin-top:10px}.bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:11px;color:var(--mut)}.bars i{display:block;width:100%;background:linear-gradient(180deg,#35ac74,#118553);border-radius:6px 6px 0 0;min-height:2px}
 .btn.wa{background:#25d366;color:#fff;border-color:#25d366;display:inline-flex;gap:8px;align-items:center}.btn.wa:hover{background:#1ebe5b}
+.wa-box{margin:14px 0 4px;padding:14px;border:1px solid #25d36655;background:#25d36612;border-radius:14px;display:flex;flex-direction:column;gap:6px}.wa-box>b{display:flex;gap:8px;align-items:center;color:#128c4b}.wa-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:860px){.grid3{grid-template-columns:1fr}}
+.wa-m{display:flex;flex-direction:column;gap:10px}.wa-m textarea{font:inherit;line-height:1.7}
 .sup-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.sup-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.sup-f button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .sup-t{margin-bottom:12px}.sup-t.new{border-inline-start:3px solid var(--brand)}.sup-h{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.sup-b{white-space:pre-wrap;margin:10px 0}.sup-r{background:var(--soft);border-radius:12px;padding:10px 12px;margin:0 0 10px}.sup-r p{margin:4px 0 0;white-space:pre-wrap}.sup-a{display:flex;gap:6px;flex-wrap:wrap}.btn.bad{color:var(--bad)}
 .pe-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.pe-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
@@ -37,12 +40,63 @@
     try { BL = await X.api('GET', '/billing'); } catch (x) { el.innerHTML = '<p class="sub">تعذّر تحميل الاشتراك.</p>'; return; }
     const me = X.me(), left = Math.ceil((BL.expires_at - Date.now()) / 864e5), adm = me.role === 'admin';
     el.innerHTML = `<h2>الاشتراك</h2><p style="margin:6px 0"><span class="pill ${me.active ? 'ok' : 'bad'}">${e(adm ? 'مدير' : BL.plan && BL.plan !== 'none' ? BL.plan : 'بلا باقة')}</span>
-${adm ? '<span class="sub"> حساب مدير، بلا انتهاء ولا حدود.</span>' : `<span class="sub"> ${me.active ? 'ينتهي في ' + X.fd(BL.expires_at) + ' (باقي ' + num(left) + ' يوم)' : 'منتهٍ'}</span>`}</p>
+${adm ? '<span class="sub"> حساب مدير، بلا انتهاء ولا حدود.</span>' : `<span class="sub"> ${me.active ? '<span>ينتهي في</span> ' + X.fd(BL.expires_at) + ' · <span>باقي ' + num(left) + ' يوم</span>' : 'منتهٍ'}</span>`}</p>
 ${!adm && me.active && left <= 5 ? '<div class="alert">⏰ اشتراكك ينتهي قريباً. جدّده الآن حتى لا يتوقف عملك.</div>' : ''}
 ${(() => { const U = { searchesPerDay: BL.usage.searchesToday, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth }, hot = adm ? [] : Object.keys(BL.labels).filter(k => { const mx = BL.limits[k]; return Number.isFinite(mx) && mx > 0 && mx < 1e9 && (U[k] || 0) / mx >= .8; }); return hot.length ? `<div class="alert" style="margin:8px 0">⚠️ اقتربت من حد عرضك في: ${hot.map(k => e(BL.labels[k])).join('، ')}. انتقل إلى عرض أعلى قبل أن يتوقف هذا الاستعمال.</div>` : ''; })()}${Object.keys(BL.labels).map(k => meter(BL.labels[k], ({ searchesPerDay: BL.usage.searchesToday, aiMonth: 0, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth })[k] || 0, BL.limits[k])).join('')}
+${adm ? '' : `<div class="wa-box"><b>${WAICON} تواصل معنا عبر واتساب</b><span class="sub">رسائل جاهزة بمعلومات حسابك: اختر ما تريد، راجع الرسالة واضغط إرسال.</span>
+<div class="wa-btns"><button class="btn wa sm" data-wac="pay">إرسال وصل الدفع</button>${me.active ? `<button class="btn ghost sm" data-wac="upgrade">ترقية أو تغيير العرض</button><button class="btn ghost sm" data-wac="renew">تجديد الاشتراك</button>` : ''}<button class="btn ghost sm" data-wac="billing">سؤال عن الدفع أو الاشتراك</button></div></div>`}
 ${adm ? '' : BL.plans.length ? `<p style="margin:10px 0 0"><button class="btn" data-acc="plans">${me.active ? '💳 الدفع أو تغيير العرض' : '💳 اشترك الآن'}</button></p>` : `<p class="sub">لا توجد عروض متاحة للشراء بعد.${me.contact ? ` <a href="${e(me.contact)}" target="_blank" rel="noopener">تواصل مع الإدارة</a>` : ''}</p>`}
 ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td></tr>`).join('')}</table></div></details>` : ''}`;
   }
+  /* ================= 💬 واتساب: رسائل جاهزة يضبطها المدير ================= */
+  let WA = null;
+  const waLoad = async () => (WA = WA || await X.api('GET', '/wa'));
+  const waFill = (k, v) => { const L = W.__LANG || 'ar', t = (WA.templates[k] || {})[L] || (WA.templates[k] || {}).ar || ''; return t.replace(/\{(\w+)\}/g, (m, n) => v[n] != null && v[n] !== '' ? String(v[n]) : '—'); };
+  const waUrl = text => 'https://wa.me/' + WA.number + '?text=' + encodeURIComponent(text);
+  const WAICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg>';
+  const WAT = { pay: 'إرسال وصل الدفع', upgrade: 'ترقية أو تغيير العرض', renew: 'تجديد الاشتراك', billing: 'سؤال عن الدفع أو الاشتراك', support: 'طلب مساعدة' };
+  // key: نوع الرسالة. o.plan: العرض المختار مسبقاً، o.topic: نوع طلب الدعم
+  async function waModal(key, o) {
+    o = o || {}; await waLoad(); const T = W.WPRTOOLS; if (!T) return;
+    if (!WA.number) return X.toast('رقم واتساب الدعم غير مضبوط بعد', 'err');
+    if (['pay', 'upgrade', 'renew', 'billing'].includes(key) && !BL) BL = await X.api('GET', '/billing');
+    const me = X.me(), paid = BL ? BL.plans.filter(x => x.price > 0 || x.price_usd > 0) : [], cur = BL ? (BL.plan && BL.plan !== 'none' ? BL.plan : '') : '';
+    const curPlan = paid.find(x => x.name === cur), others = key === 'upgrade' ? paid.filter(x => x.name !== cur) : paid;
+    let sel = o.plan || (key === 'renew' && curPlan ? curPlan.id : (others[0] || {}).id), dirty = false;
+    const TOP = { tech: 'مشكلة تقنية', billing: 'الدفع والعروض', usage: 'سؤال عن الاستعمال', idea: 'اقتراح', other: 'أخرى' };
+    const b = T.open(WAT[key], '');
+    const vars = () => { const p = paid.find(x => x.id === +sel) || {}, f = b.querySelector('#wa-store'), tp = b.querySelector('#wa-topic');
+      return { name: me.name || '', email: me.email, plan: p.name || '', days: p.days || '', amount: p.price > 0 ? dz(p.price) : p.price_usd > 0 ? '$' + Number(p.price_usd).toFixed(2) : '', current: cur || '—',
+        expires: BL && BL.expires_at ? X.fd(BL.expires_at) : '—', store: f ? f.value.trim() : '', request: '…', topic: tp ? (TOP[tp.value] || '') : '' }; };
+    const needPlan = ['pay', 'upgrade', 'renew'].includes(key);
+    b.innerHTML = `<div class="wa-m">${needPlan ? (others.length ? `<label class="fl">${key === 'upgrade' ? 'العرض الذي تريده' : 'العرض'}<select id="wa-plan">${others.map(x => `<option value="${x.id}"${x.id === +sel ? ' selected' : ''}>${e(x.name)} · ${priceOf(x)} · ${num(x.days)} يوماً</option>`).join('')}</select></label>` : '<div class="alert">لا توجد عروض مدفوعة بعد.</div>') : ''}
+${key === 'pay' ? `${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : ''}<label class="fl">اسم متجرك<input id="wa-store" maxlength="80" dir="auto" placeholder="مثال: Boutique Amine"></label>` : ''}
+${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">${Object.entries(TOP).map(([k, t]) => `<option value="${k}"${k === o.topic ? ' selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
+<label class="fl">الرسالة <small class="muted" style="font-weight:400">(يمكنك تعديلها قبل الإرسال)</small><textarea id="wa-text" rows="8" dir="auto"></textarea></label>
+<p style="margin:0"><button class="btn wa" data-wa="go">${WAICON} افتح واتساب وأرسل</button></p>
+<p class="sub" style="margin:0">${key === 'pay' ? 'يُسجَّل طلبك في المنصة، ثم يفتح واتساب بالرسالة: أرفق صورة الوصل واضغط إرسال. يُفعَّل عرضك عند المراجعة.' : 'يفتح واتساب بالرسالة جاهزة، فقط اضغط إرسال.'}</p></div>`;
+    const ta = b.querySelector('#wa-text'), upd = () => { if (!dirty) ta.value = waFill(key, vars()); };
+    upd(); ta.addEventListener('input', () => { dirty = true; });
+    b.addEventListener('input', ev => { if (ev.target.id === 'wa-store') upd(); });
+    b.addEventListener('change', ev => { if (ev.target.id === 'wa-plan') { sel = +ev.target.value; dirty = false; upd(); } if (ev.target.id === 'wa-topic') { dirty = false; upd(); } });
+    b.addEventListener('click', ev => {
+      if (!ev.target.closest('[data-wa="go"]')) return;
+      if (key === 'pay') {
+        const st = b.querySelector('#wa-store'); if (st.value.trim().length < 2) { st.focus(); return X.toast('اكتب اسم متجرك', 'err'); }
+        if (!sel) return;
+        const win = W.open('', '_blank');                         // يُفتح الآن (قبل الانتظار) حتى لا يمنعه المتصفح
+        const pr = X.api('POST', '/billing/baridi', { plan_id: +sel, via: 'whatsapp', store: st.value.trim() }).then(r => {
+          const url = waUrl(ta.value.split('#…').join('#' + r.id));
+          if (win) win.location.href = url; else location.href = url;
+          T.close(); X.toast('أرسل صورة الوصل في واتساب. يُفعَّل عرضك عند الاستلام.'); drawBilling();
+        }).catch(x => { if (win) win.close(); X.toast(x.message, 'err'); });
+        W.__btnBusy && W.__btnBusy(ev, pr); return;
+      }
+      W.open(waUrl(ta.value), '_blank', 'noopener'); T.close();
+    });
+  }
+  W.WPRWA = { open: (k, o) => waModal(k, o).catch(x => X.toast(x.message, 'err')), url: async t => { await waLoad(); return WA.number ? waUrl(t) : ''; } };
+
   function plansModal() {
     const T = W.WPRTOOLS; if (!T) return;
     let sel = BL.plans[0] && BL.plans[0].id;
@@ -58,9 +112,8 @@ ${BL.methods.paypal && p.price_usd > 0 ? `<div class="card" style="margin:8px 0"
 ${(BL.methods.baridi || BL.methods.whatsapp) && p.price > 0 ? `<div class="card pay-m" style="margin:8px 0"><b>📱 BaridiMob أو CCP أو تحويل بنكي</b>
 <p class="sub" style="margin:6px 0">حوّل <b>${dz(p.price)}</b> ثم أرسل الوصل مع اسم متجرك: يُفعَّل عرضك عند الاستلام.</p>
 ${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:8px 0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : '<p class="sub">اطلب معلومات التحويل عبر واتساب.</p>'}
-<label class="fl">اسم متجرك<input id="bm-store" maxlength="80" dir="auto" placeholder="مثال: Boutique Amine"></label>
 ${BL.methods.whatsapp ? `<p style="margin:10px 0 0"><button class="btn wa" data-acc="wa"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg> إرسال الوصل عبر واتساب</button></p>
-<p class="sub" style="margin:6px 0 0">يفتح واتساب برسالة جاهزة (العرض، المبلغ، اسم المتجر، بريد حسابك): أرفق صورة الوصل وأرسلها.</p>` : ''}
+<p class="sub" style="margin:6px 0 0">رسالة جاهزة (العرض، المبلغ، اسم متجرك، بريد حسابك): أرفق صورة الوصل وأرسلها.</p>` : ''}
 ${BL.methods.baridi ? `<details class="fx" style="margin:10px 0 0"><summary>أو أرفق الوصل هنا بدل واتساب</summary>
 <div class="grid2" style="gap:8px;margin:0"><label class="fl">رقم العملية<input id="bm-ref" dir="ltr"></label><label class="fl">صورة الوصل<input id="bm-img" type="file" accept="image/*"></label></div>
 <p style="margin:8px 0 12px"><button class="btn ghost" data-acc="baridi">أرسل طلب التفعيل</button></p></details>` : ''}</div>` : ''}
@@ -71,23 +124,7 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
         if (a === 'pick') { sel = +t.dataset.id; return draw(); }
         const run = f => { const pr = Promise.resolve().then(f); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => X.toast(x.message || 'خطأ', 'err')); };
         if (a === 'pay') run(async () => { const r = await X.api('POST', '/billing/checkout', { plan_id: sel, method: t.dataset.m }); location.href = r.url; });
-        if (a === 'wa') {
-          const store = b.querySelector('#bm-store').value.trim(); if (store.length < 2) { b.querySelector('#bm-store').focus(); return X.toast('اكتب اسم متجرك', 'err'); }
-          const win = W.open('', '_blank');                        // يُفتح الآن (قبل الانتظار) حتى لا يمنعه المتصفح
-          run(async () => {
-            try {
-              const p = BL.plans.find(x => x.id === sel), r = await X.api('POST', '/billing/baridi', { plan_id: sel, via: 'whatsapp', store });
-              const lg = W.__LANG || 'ar', me = X.me(), amount = dz(p.price);
-              const M = { ar: ['السلام عليكم 👋', 'أرسل لكم وصل الدفع لتفعيل عرضي في رادار المنتجات الرابحة:', '• العرض: ' + p.name + ' (' + p.days + ' يوماً)', '• المبلغ: ' + amount, '• اسم المتجر: ' + store, '• بريد الحساب: ' + me.email, '• رقم الطلب: #' + r.id, '📎 صورة الوصل مرفقة.'],
-                en: ['Hello 👋', 'Here is my payment receipt to activate my Winning Product Radar plan:', '• Plan: ' + p.name + ' (' + p.days + ' days)', '• Amount: ' + amount, '• Store name: ' + store, '• Account email: ' + me.email, '• Request: #' + r.id, '📎 Receipt photo attached.'],
-                fr: ['Bonjour 👋', 'Voici mon reçu de paiement pour activer mon offre Radar des produits gagnants :', '• Offre : ' + p.name + ' (' + p.days + ' jours)', '• Montant : ' + amount, '• Boutique : ' + store, '• E-mail du compte : ' + me.email, '• Demande : #' + r.id, '📎 Photo du reçu jointe.'] };
-              const url = 'https://wa.me/' + String(BL.methods.whatsapp).replace(/[^\d]/g, '') + '?text=' + encodeURIComponent((M[lg] || M.ar).join('\n'));
-              if (win) win.location.href = url; else location.href = url;
-              T.close(); X.toast('أرسل صورة الوصل في واتساب. يُفعَّل عرضك عند الاستلام.'); drawBilling();
-            } catch (x) { if (win) win.close(); throw x; }
-          });
-          return;
-        }
+        if (a === 'wa') { T.close(); return waModal('pay', { plan: sel }); }
         if (a === 'baridi') run(async () => {
           const ref = b.querySelector('#bm-ref').value.trim(), f = b.querySelector('#bm-img').files[0];
           const proof = f ? await shrink(f) : '';
@@ -117,7 +154,7 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     aover: [['stats', '']],
     abill: [['pay', 'طلبات الدفع'], ['plans', 'العروض والمميزات'], ['methods', 'طرق الدفع']],
     ainbox: [['msgs', '']],
-    aset: [['general', 'النشاط والتواصل'], ['ai', 'الذكاء الاصطناعي'], ['tg', 'التنبيهات'], ['legal', 'الصفحات القانونية'], ['backup', 'النسخ الاحتياطي'], ['err', 'سجل الأخطاء']]
+    aset: [['general', 'النشاط والتواصل'], ['wa', 'رسائل واتساب'], ['ai', 'الذكاء الاصطناعي'], ['tg', 'التنبيهات'], ['legal', 'الصفحات القانونية'], ['backup', 'النسخ الاحتياطي'], ['err', 'سجل الأخطاء']]
   };
   const ABASE = { aover: '/admin', abill: '/payments', ainbox: '/support-inbox', aset: '/platform' };
   let AVIEW = 'aover', ATAB = 'stats', MF = 'new';
@@ -145,13 +182,13 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     const el = $('#x-' + AVIEW); if (!el) return; el.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>';
     if (['methods', 'general', 'ai', 'tg'].includes(ATAB)) {
       const c = cfgUI(await X.api('GET', '/admin/config').catch(() => null));
-      const intro = { methods: 'الطرق التي يراها المشترك عند الدفع أو تغيير العرض. تظهر كل طريقة فقط بعد ضبطها.', general: 'معلومات نشاطك وطرق التواصل: تظهر في الصفحات القانونية وصفحة المساعدة وزر واتساب.', ai: 'يُستعمل في تحليل الإعلان، التعرّف على المنتج من صورته، واقتراح عبارات البحث.', tg: 'بوت تيليغرام يرسل التنبيهات للمشتركين. البريد يُضبط في إعدادات الخادم (SMTP).' }[ATAB];
+      const intro = { methods: 'الطرق التي يراها المشترك عند الدفع أو تغيير العرض. تظهر كل طريقة فقط بعد ضبطها.', general: 'معلومات نشاطك وطرق التواصل: تظهر في الصفحات القانونية وصفحة المساعدة وزر واتساب.', ai: 'يُستعمل في تحليل الإعلان، «الخروج من المنافسة»، التعرّف على المنتج من صورته، واقتراح عبارات البحث.', tg: 'بوت تيليغرام يرسل التنبيهات للمشتركين. البريد يُضبط في إعدادات الخادم (SMTP).' }[ATAB];
       const pick = { methods: ['baridi', 'satim', 'stripe', 'paypal'], general: ['biz', 'platform', 'analytics'], ai: ['ai'], tg: ['tg'] }[ATAB];
       const mail = ATAB === 'tg' ? `<div class="card" id="mail-c"><h2>البريد (SMTP)</h2><p class="sub">يرسل رسائل استعادة كلمة المرور والتنبيهات. يُضبط في ملف <code>.env</code> على الخادم: SMTP_HOST، SMTP_PORT، SMTP_USER، SMTP_PASS، MAIL_FROM.</p>
 <div id="mail-st" class="sub">…</div>
 <div class="row" style="align-items:flex-end;margin-top:10px"><label class="grow">أرسل بريداً تجريبياً إلى<input id="mail-to" type="email" dir="ltr" placeholder="you@gmail.com"></label><button class="btn sm" data-int="mailtest">إرسال</button><button class="btn ghost sm" data-int="maildns">فحص إعدادات الدومين</button></div>
 <p class="sub" style="margin-top:6px">جرّب بريداً على Gmail: إن وصل إلى بريد الدومين ولم يصل إلى Gmail فالسبب غالباً SPF/DKIM، وإشعار الرفض يصل إلى صندوق بريد الإرسال نفسه (Webmail).</p><div id="mail-r"></div></div>` : '';
-      el.innerHTML = `<p class="sub" style="margin:0 0 12px">${intro} المفاتيح السرية تُحفظ مشفّرة ولا تظهر كاملة بعد الحفظ.</p><div class="int-g">${pick.map(k => c[k]).join('')}${mail}</div>`;
+      el.innerHTML = `<p class="sub" style="margin:0 0 12px"><span>${intro}</span> <span>المفاتيح السرية تُحفظ مشفّرة ولا تظهر كاملة بعد الحفظ.</span></p><div class="int-g">${pick.map(k => c[k]).join('')}${mail}</div>`;
       if (mail) mailStatus();
       return;
     }
@@ -202,6 +239,15 @@ ${m.user_id && !m.reply ? `<label class="fl">الرد (يصل إلى المشت�
 <div class="sup-a">${m.user_id && !m.reply ? `<button class="btn sm" data-adm="mreply" data-id="${m.id}">إرسال الرد</button>` : ''}<a class="btn ghost sm" href="mailto:${e(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}">رد بالبريد</a>${m.status === 'new' ? `<button class="btn ghost sm" data-adm="mdone" data-id="${m.id}">✓ تمت المعالجة</button>` : `<button class="btn ghost sm" data-adm="mnew" data-id="${m.id}">إرجاع كجديدة</button>`}<button class="btn ghost sm bad" data-adm="mdel" data-id="${m.id}">حذف</button></div></div>`).join('') || '<div class="card"><p class="sub">لا رسائل هنا.</p></div>'}`;
       return;
     }
+    if (ATAB === 'wa') {
+      const r = await X.api('GET', '/admin/wa'), L3 = [['ar', 'العربية'], ['en', 'English'], ['fr', 'Français']];
+      el.innerHTML = `<div class="card"><h2>رسائل واتساب الجاهزة</h2><p class="sub"><span>تظهر للمشترك في «اشتراكي» و«المساعدة والدعم»: يختار الموقف فتُفتح هذه الرسالة في واتساب بمعلومات حسابه، ويستطيع تعديلها قبل الإرسال.</span> <span>تُرسل إلى رقم واتساب الدعم:</span> ${r.number ? `<b dir="ltr">+${e(r.number)}</b>` : '<b>(غير مضبوط: أضفه في «النشاط والتواصل»)</b>'}</p>
+<p class="sub" style="margin:6px 0 0">الكلمات بين {} تُملأ تلقائياً: ${Object.entries(r.vars).map(([k, v]) => `<code dir="ltr">{${k}}</code> ${e(v)}`).join(' · ')}</p></div>
+${Object.entries(r.keys).map(([k, [t, vs]]) => `<div class="card" style="margin-top:14px"><h2>${e(t)}</h2><p class="sub" style="margin:0 0 8px">المتاح هنا: ${vs.map(v => `<code dir="ltr">{${v}}</code>`).join(' ')}</p>
+<div class="grid3" style="margin:0">${L3.map(([l, n]) => `<label class="fl">${n}<textarea rows="8" data-wat="${k}" data-l="${l}" dir="${l === 'ar' ? 'rtl' : 'ltr'}" style="font:inherit;font-size:13.5px;line-height:1.7">${e(r.templates[k][l])}</textarea>${r.templates[k][l] !== r.defaults[k][l] ? '<small class="muted">معدّلة</small>' : ''}</label>`).join('')}</div></div>`).join('')}
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0"><button class="btn" data-adm="wasave">حفظ الرسائل</button><button class="btn ghost" data-adm="wareset">استرجاع الرسائل الأصلية</button></p>`;
+      return;
+    }
     if (ATAB === 'legal') {
       const [r] = await Promise.all([X.api('GET', '/admin/legal'), loadLegal()]), k = LG.lang + ':' + LG.doc, cu = r.docs[k], T = { terms: 'شروط الاستخدام', privacy: 'سياسة الخصوصية', refund: 'الاسترداد والإلغاء', contact: 'اتصل بنا' };
       el.innerHTML = `<div class="card"><h2>تعديل الصفحات القانونية</h2><p class="sub">اختر الصفحة واللغة، عدّل النص ثم احفظ. السطر الذي يبدأ بـ <code>#</code> هو عنوان الصفحة، والذي يبدأ بـ <code>##</code> عنوان فقرة، وما تحته نصها. هذه الكلمات تُستبدل تلقائياً: <code>{name}</code> اسم النشاط، <code>{email}</code> بريد الدعم، <code>{wa_line}</code> واتساب، <code>{country}</code> البلد، <code>{days}</code> مدة الاسترداد، <code>{address_line}</code> العنوان (من «الربط والتكامل ← معلومات النشاط والدعم»). ننصح بمراجعتها مع مختص قانوني.</p>
@@ -234,6 +280,11 @@ ${m.user_id && !m.reply ? `<label class="fl">الرد (يصل إلى المشت�
     if (a === 'mf') { MF = b.dataset.f; return drawAdmin(); }
     if (a === 'mreply') { const t = X.root.querySelector(`[data-reply="${b.dataset.id}"]`), v = t ? t.value.trim() : ''; if (v.length < 2) return X.toast('اكتب الرد', 'err'); await X.api('POST', '/admin/messages/' + b.dataset.id + '/reply', { reply: v }); X.toast('✅ أُرسل الرد إلى المشترك'); return drawAdmin(); }
     if (a === 'mdone' || a === 'mnew' || a === 'mdel') { if (a === 'mdel' && !confirm('حذف الرسالة؟')) return; await X.api('POST', '/admin/messages/' + b.dataset.id + '/' + ({ mdone: 'done', mnew: 'new', mdel: 'delete' })[a], {}); return drawAdmin(); }
+    if (a === 'wasave' || a === 'wareset') {
+      if (a === 'wareset' && !confirm('استرجاع كل الرسائل الأصلية؟ ستُحذف تعديلاتك.')) return;
+      const t = {}; if (a === 'wasave') X.root.querySelectorAll('[data-wat]').forEach(x => { (t[x.dataset.wat] = t[x.dataset.wat] || {})[x.dataset.l] = x.value; });
+      await X.api('PUT', '/admin/wa', { templates: t }); WA = null; X.toast(a === 'wasave' ? 'حُفظت الرسائل' : 'استُرجعت الرسائل الأصلية'); return drawAdmin();
+    }
     if (a === 'lgsave') { await X.api('PUT', '/admin/legal', Object.assign({ body: $('#lg-body').value }, LG)); X.toast('حُفظت الصفحة، وتظهر الآن للزوار'); return drawAdmin(); }
     if (a === 'lgreset') { if (!confirm('استرجاع النص الأصلي لهذه الصفحة؟ سيُحذف تعديلك.')) return; await X.api('PUT', '/admin/legal', Object.assign({ body: '' }, LG)); X.toast('عاد النص الأصلي'); return drawAdmin(); }
     if (a === 'clearerr') { await X.api('DELETE', '/admin/errors'); return drawAdmin(); }
@@ -366,6 +417,7 @@ ${d.log.length ? `<details class="fx" style="margin-top:8px"><summary>آخر ا�
       X.root.addEventListener('click', ev => {
         const cur = X.cur(), fn = AV[cur] ? (e => e.target.closest('[data-int]') ? onInt(e) : onAdmin(e)) : cur === 'integrations' ? onInt : null;
         const acc = ev.target.closest('[data-acc="plans"]'); if (acc) { plansModal(); return; }
+        const wac = ev.target.closest('[data-wac]'); if (wac) { W.WPRWA.open(wac.dataset.wac, { topic: wac.dataset.topic }); return; }
         if (!fn) return; const pr = Promise.resolve().then(() => fn(ev)); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => { if (x && x.message !== 'auth') X.toast(x.message || 'حدث خطأ', 'err'); });
       });
       afterReturn();

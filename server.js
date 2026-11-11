@@ -8,6 +8,7 @@ const express = require('express'), bcrypt = require('bcryptjs'),
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET || SECRET.length < 24) { console.error('JWT_SECRET (24+ chars) is required'); process.exit(1); }
 const ADMIN = (process.env.ADMIN_EMAIL || '').toLowerCase(), DAY = 864e5, now = () => Date.now();
+const contactUrl = () => { const w = String(require('./adlib/config.js').get('support_whatsapp') || '').replace(/[^\d]/g, ''); return process.env.CONTACT_URL || (w ? 'https://wa.me/' + w : '') || (process.env.ADMIN_EMAIL ? 'mailto:' + process.env.ADMIN_EMAIL : ''); };   // واتساب هو قناة التواصل الأساسية
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const zlib = require('zlib');
 // الأداء: ضغط gzip لكل رد نصي (الصفحة، السكربتات، JSON). دفعة 5000 إعلان: 4.5 ميغا → نحو 0.4 ميغا.
@@ -161,7 +162,7 @@ app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
 // تسجيل الخروج من كل الأجهزة
 app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
 app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
-app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: process.env.CONTACT_URL || '', totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
+app.get('/api/me', auth, (q, s) => s.json({ email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: contactUrl(), totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
@@ -314,7 +315,7 @@ app.post('/api/forgot', async (q, s, n) => { try {
   const f = fgot.get(q.ip); if (f && f.n >= 5 && now() - f.t < 9e5) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
   fgot.set(q.ip, { n: (f && now() - f.t < 9e5 ? f.n : 0) + 1, t: now() });
   const tr = transport();
-  if (!tr) return s.json({ ok: 1, manual: true, contact: process.env.CONTACT_URL || '' });   // لا بريد مضبوط: يراسل المدير
+  if (!tr) return s.json({ ok: 1, manual: true, contact: contactUrl() });   // لا بريد مضبوط: يراسل المدير
   const u = db.prepare('select * from users where email=? or username=?').get(String(q.body.email || '').toLowerCase().trim(), String(q.body.email || '').toLowerCase().trim());
   if (u) {
     const t = crypto.randomBytes(24).toString('hex'), url = (process.env.APP_URL || q.protocol + '://' + q.get('host')).replace(/\/$/, '') + '/reset?t=' + t;
@@ -361,8 +362,8 @@ app.post('/api/img/keep', auth, active, async (q, s) => {   // يحفظ نسخة
 
 // ---------- جمع الإعلانات (الإضافة ← الواردة + قاموس كلمات البحث) ----------
 // مميزات الباقة: ما لم يُفعَّل في باقة المشترك يُرفض برسالة واضحة (المدير بلا قيود)
-{ const LIM = require('./adlib/limits.js'), F = { '/api/gap': 'gap', '/api/sup': 'supplier', '/api/ai': 'ai', '/api/watch': 'watch', '/api/tt': 'tiktok', '/api/profit': 'profit', '/api/sheets': 'sheets' };
-  for (const [pre, k] of Object.entries(F)) app.use(pre, (q, s, n) => auth(q, s, () => LIM.has(q.u, k) ? n() : s.status(403).json({ error: 'غير متاح في باقتك: ' + LIM.FLABEL[k] + '. رقِّ باقتك من «الإعدادات ← الاشتراك».', feature: k }))); }
+{ const LIM = require('./adlib/limits.js'), F = { '/api/gap': 'gap', '/api/sup': 'supplier', '/api/ai': 'ai', '/api/edge': 'ai', '/api/watch': 'watch', '/api/tt': 'tiktok', '/api/profit': 'profit', '/api/sheets': 'sheets' };
+  for (const [pre, k] of Object.entries(F)) app.use(pre, (q, s, n) => auth(q, s, () => LIM.has(q.u, k) ? n() : s.status(403).json({ error: 'غير متاح في باقتك: ' + LIM.FLABEL[k] + '. رقِّ باقتك من «اشتراكي».', feature: k }))); }
 require('./adlib')(app, { db, auth, active, admin, wrap, now, DAY, addRun, fpOf });
 require('./adlib/gap.js')(app, { db, auth, active, wrap, now });   // ثغرات السوق الجزائري
 // صورة كـ data URL للذكاء الاصطناعي (النسخة المحفوظة أولاً، وإلا تُجلب عبر الوكيل الآمن)
@@ -376,13 +377,13 @@ const BX = { db, auth, active, admin, wrap, now, act, blocked, fail, optUser, DA
 Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport(), sendMail: ML.send }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
 require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
 require('./adlib/backup.js')(app, BX);   // 💾 نسخة احتياطية يومية لقاعدة البيانات
-require('./adlib/support.js')(app, BX);  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
+require('./adlib/support.js')(app, BX);
+require('./adlib/wa.js')(app, BX);       // 💬 رسائل واتساب الجاهزة (يضبطها المدير، تظهر للمشترك)  // ✉️ نموذج «اتصل بنا» + رسائل المدير + نصوص الصفحات القانونية المعدّلة
 // المورّد، تحليل الإعلان، Google Sheets، مراقبة المنافسين، TikTok
 
 ML.routes(app, BX);   // المدير: حالة البريد، بريد تجريبي إلى أي عنوان، فحص SPF/DKIM
 // ---------- الصفحات ----------
-const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8')
-  .replace(/\{\{CONTACT\}\}/g, process.env.CONTACT_URL || 'mailto:' + (process.env.ADMIN_EMAIL || ''));
+const LANDING = fs.readFileSync(path.join(__dirname, 'views', 'landing.html'), 'utf8');
 // قياس الزيارات في الصفحات العامة فقط (الرئيسية، التسجيل، الصفحات القانونية): Google Analytics و Meta Pixel من «الربط والتكامل».
 // المعرّفات تُتحقق بصيغة صارمة لأنها تدخل في سكربت مضمَّن. لا شيء من هذا داخل المنصة بعد الدخول.
 function analytics() {

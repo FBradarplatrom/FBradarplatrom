@@ -32,10 +32,12 @@ create table if not exists error_logs(id integer primary key, at integer, method
     db.prepare('insert into plans(name,days,price,limits,active,sort,free,note) values(?,?,0,?,1,0,1,?)').run('تجربة مجانية', 7, JSON.stringify({ searchesPerDay: 10, gapProducts: 5, aiPerMonth: 10, watchPages: 3 }), 'لتجربة المنصة');
   // كتالوج مميزات الباقات: 8 مدمجة (تُطبَّق فعلاً) + مميزات يضيفها المدير (للعرض في الأسعار). الاسم بثلاث لغات
   db.exec('create table if not exists plan_features(k text primary key, ar text, en text, fr text, builtin integer default 0, shown integer default 1, sort integer default 0)');
-  { const EN = { gap: 'Market gaps', supplier: 'Supplier finder', ai: 'AI ad analysis', watch: 'Competitor tracking', tiktok: 'TikTok trends', profit: 'Profit calculator', alerts: 'Alerts (email/Telegram)', sheets: 'Export to Google Sheets' },
-      FR = { gap: 'Opportunités de marché', supplier: 'Recherche de fournisseur', ai: 'Analyse IA de la publicité', watch: 'Suivi des concurrents', tiktok: 'Tendances TikTok', profit: 'Calculateur de profit', alerts: 'Alertes (e-mail/Telegram)', sheets: 'Export vers Google Sheets' };
+  { const EN = { gap: 'Market gaps', supplier: 'Supplier finder', ai: 'AI: ad analysis & beat the competition', watch: 'Competitor tracking', tiktok: 'TikTok trends', profit: 'Profit calculator', alerts: 'Alerts (email/Telegram)', sheets: 'Export to Google Sheets' },
+      FR = { gap: 'Opportunités de marché', supplier: 'Recherche de fournisseur', ai: 'IA : analyse des pubs et sortir de la concurrence', watch: 'Suivi des concurrents', tiktok: 'Tendances TikTok', profit: 'Calculateur de profit', alerts: 'Alertes (e-mail/Telegram)', sheets: 'Export vers Google Sheets' };
     const ins = db.prepare('insert or ignore into plan_features(k,ar,en,fr,builtin,shown,sort) values(?,?,?,?,1,1,?)');
-    LIM.FEATS.forEach((k, i) => ins.run(k, LIM.FLABEL[k], EN[k], FR[k], i)); }
+    LIM.FEATS.forEach((k, i) => ins.run(k, LIM.FLABEL[k], EN[k], FR[k], i));
+    // الاسم القديم لميزة الذكاء الاصطناعي (قبل «الخروج من المنافسة») يُحدَّث، إلا إن غيّره المدير
+    db.prepare("update plan_features set ar=?, en=?, fr=? where k='ai' and ar='تحليل الإعلان بالذكاء الاصطناعي'").run(LIM.FLABEL.ai, EN.ai, FR.ai); }
   const catalog = () => db.prepare('select k,ar,en,fr,builtin,shown,sort from plan_features order by sort, rowid').all().map(x => ({ k: x.k, ar: x.ar || '', en: x.en || '', fr: x.fr || '', builtin: !!x.builtin, shown: !!x.shown, sort: x.sort }));
   const catKeys = () => catalog().map(x => x.k);
   const planView = p => ({ id: p.id, name: p.name, days: p.days, price: p.price, price_usd: +p.price_usd || 0, free: !!p.free, features: (() => { const f = J(p.features, null), all = catKeys(); return Array.isArray(f) ? all.filter(k => f.includes(k)) : all; })(), limits: Object.assign(LIM.DEF(), J(p.limits, {})), active: !!p.active, sort: p.sort, note: p.note || '' });

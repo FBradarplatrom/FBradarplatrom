@@ -63,7 +63,6 @@
     const r = MK() ? MK().RATES_DZD[c] : 0;
     return { v, c, dzd: r ? Math.round(v * r) : 0 };
   };
-  const ikey = x => (x.market || 'ali') + ':' + x.id;
   async function supRank(k, items, p) {
     if (!G() || !p || !p.images.length) return items;
     const ph = []; for (const u of p.images.slice(0, 4)) { const h = await G().hashImage(img(u)); if (h) ph.push(...h); }
