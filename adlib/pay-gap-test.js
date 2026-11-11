@@ -24,7 +24,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await pg.goto(BASE + '/subscription'); await pg.waitForSelector('[data-acc="plans"]');
     ok((await pg.innerText('[data-acc="plans"]')).includes('الدفع أو تغيير العرض'), 'زر «الدفع أو تغيير العرض»');
     await pg.click('[data-acc="plans"]'); await pg.waitForSelector('.pay-m');
-    await pg.click('.per-t [data-acc="per"][data-m="1"]'); await pg.locator('.plan-g [data-acc="pick"]', { hasText: paid.name }).click(); await pg.waitForSelector('.plan-g .plan.on:has-text("' + paid.name + '")');   // شهر واحد، الباقة الأولى
+    await pg.click('.per-t [data-acc="per"][data-m="3"]'); await pg.locator('.plan-g [data-acc="pick"]', { hasText: paid.name }).click(); await pg.waitForSelector('.plan-g .plan.on:has-text("' + paid.name + '")');   // شهر واحد، الباقة الأولى
     const tx = await pg.innerText('.pay-m');
     ok(/BaridiMob أو CCP أو تحويل بنكي/.test(tx) && /يُفعَّل عرضك عند الاستلام/.test(tx) && tx.includes('CCP: 0011223344'), 'بطاقة التحويل: BaridiMob/CCP/بنك + معلومات التحويل');
     await pg.click('[data-acc="wa"]'); await pg.waitForSelector('#wa-store');   // نافذة الرسالة الجاهزة (يضبطها المدير)
@@ -34,7 +34,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const [wa] = await Promise.all([U.waitForEvent('page'), pg.click('[data-wa="go"]')]);
     await wa.waitForURL(/wa\.me|whatsapp/, { timeout: 8000 }).catch(() => {});
     const url = decodeURIComponent(wa.url());
-    ok(/wa\.me\/213664442637|phone=213664442637/.test(url) && url.includes('Boutique Amine') && url.includes('u@t.dz') && /2[.,٬\s]?500/.test(url), 'واتساب برسالة جاهزة: الرقم، المتجر، البريد، المبلغ');
+    ok(/wa\.me\/213664442637|phone=213664442637/.test(url) && url.includes('Boutique Amine') && url.includes('u@t.dz') && /7[.,٬\s]?100/.test(url), 'واتساب برسالة جاهزة: الرقم، المتجر، البريد، المبلغ');
     const P = (await (await a.get(BASE + '/api/admin/payments')).json());
     const req = P.find(p => p.email === 'u@t.dz');
     ok(req && req.status === 'pending' && req.method === 'baridi' && /WhatsApp · Boutique Amine/.test(req.ref), 'الطلب ظاهر للمدير (قيد المراجعة) باسم المتجر');

@@ -2298,4 +2298,6 @@ window.I18N_DICT=[["⏹️ توقف بعد نجاح","⏹️ Stopped after succe
 ["لا توجد عروض متاحة للشراء بعد.","No plans available for purchase yet.","Aucune offre disponible à l’achat pour le moment."],
 ["الدفع والتجديد","Payment and renewal","Paiement et renouvellement"],
 ["ادفع إلكترونياً أو بالتحويل، واختر المدة التي تناسبك.","Pay online or by transfer, and choose the period that suits you.","Payez en ligne ou par virement, et choisissez la durée qui vous convient."],
-["{} عبر واتساب: رسالة جاهزة بمعلومات حسابك","{} Via WhatsApp: a ready message with your account details","{} Via WhatsApp : un message prêt avec les infos de votre compte"]];
+["{} عبر واتساب: رسالة جاهزة بمعلومات حسابك","{} Via WhatsApp: a ready message with your account details","{} Via WhatsApp : un message prêt avec les infos de votre compte"],
+["اكتب لنا بالتفصيل، ويصلك الرد هنا وبالبريد.","Write to us in detail; the reply arrives here and by email.","Écrivez-nous en détail ; la réponse arrive ici et par e-mail."],
+["صف المشكلة باختصار، وأرفق ما يساعدنا (اسم القسم، ما ضغطت عليه). يصلك الرد في «طلباتي» وبالتنبيهات.","Describe the problem briefly and add what helps us (section name, what you clicked). The reply arrives in “My requests” and in your alerts.","Décrivez brièvement le problème et ajoutez ce qui nous aide (nom de la section, ce que vous avez cliqué). La réponse arrive dans « Mes demandes » et dans vos alertes."]];

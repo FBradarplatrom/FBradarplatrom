@@ -61,5 +61,6 @@
  "update plans set active=0 where name in ('شهري','ربع سنوي','سنوي') and coalesce(free,0)=0",
  "البداية",
  "النمو",
- "الاحتراف"
+ "الاحتراف",
+ "select name from plans where coalesce(free,0)=0 and active=1 and name not in ('شهري','ربع سنوي','سنوي') order by sort, id limit 1"
 ]

@@ -31,7 +31,7 @@ h1{font-size:26px;margin:0;line-height:1.3;letter-spacing:-.2px}h2{font-size:18p
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--sh)}
 .card h2{display:flex;align-items:center;gap:8px}.card.pad0{padding:0;overflow:hidden}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:16px}
-.kps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:16px}
+
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:2px}
 .kpi b{font-size:28px;line-height:1.2;letter-spacing:-.5px}.kpi span{color:var(--mut);font-size:13px}.kpi .ic{width:38px;height:38px;border-radius:11px;background:var(--soft);color:var(--brand);display:grid;place-items:center;margin-bottom:8px}.kpi .ic svg{width:20px;height:20px}
 #sum{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:14px 0}@media(max-width:900px){#sum{grid-template-columns:repeat(3,1fr)}}@media(max-width:420px){#sum{grid-template-columns:repeat(2,1fr)}}#sum .kpi b{font-size:24px}
@@ -139,23 +139,23 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
  .btn.sm{min-height:36px}
  .tbw{margin-inline:-4px;-webkit-overflow-scrolling:touch}
  .ph{align-items:flex-start}.ph .acts{width:100%}.ph .acts .btn{flex:1}
- .card{padding:16px}.kps{grid-template-columns:repeat(2,1fr)}
+ .card{padding:16px}
  #toasts{inset-inline:12px;bottom:calc(12px + env(safe-area-inset-bottom))}
  .nv.on::before{display:none}
 }
-@media(max-width:480px){.kps{grid-template-columns:1fr 1fr;gap:10px}.kpi b{font-size:23px}.pc-body{padding:14px}.grid{gap:14px}}
+@media(max-width:480px){.kpi b{font-size:23px}.pc-body{padding:14px}.grid{gap:14px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
-.onb{border:2px solid var(--brand);padding:0 20px 20px;overflow:hidden}.onh{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 -20px;padding:18px 20px;background:linear-gradient(135deg,#118553,#0a7040);color:#fff}.onh h2{margin:2px 0;color:#fff;font-size:21px}.onh p{margin:0;opacity:.9;font-size:14px}.onh .btn{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)}.onic{font-size:34px;width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}.ontag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.3px;background:#fbbf24;color:#3b2a00;border-radius:99px;padding:2px 10px}
-.lng{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:0 6px;color:var(--mut);font-size:13px}.lng select{flex:1;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--card);color:var(--ink);font:inherit;font-size:13px}
+.onb{border:2px solid var(--brand);padding:0 20px 20px;overflow:hidden}.onic{font-size:34px;width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
+
 .hc-hero{text-align:center;padding:28px 20px;margin-bottom:16px;background:linear-gradient(135deg,var(--brand-h),var(--brand));color:#fff;border:0}.hc-hero h2{color:#fff;font-size:24px;margin:0 0 14px}
 .hc-s{display:flex;align-items:center;gap:8px;max-width:560px;margin:0 auto;background:var(--card);border-radius:12px;padding:4px 14px;color:var(--mut)}.hc-s svg{width:18px;height:18px;flex:none}.hc-s input{border:0;background:none;box-shadow:none;padding:10px 0;width:100%;color:var(--ink);font:inherit}
 .hc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}.hc-c{display:flex;flex-direction:column;gap:6px;text-align:start;cursor:pointer;color:var(--ink);text-decoration:none;font:inherit;transition:.15s}.hc-c:hover{border-color:var(--brand);text-decoration:none}.hc-c small{color:var(--mut);font-size:13px}
-.hc-i{width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--brand);display:grid;place-items:center}.hc-i svg{width:20px;height:20px}.hc-i.wa{background:#25d366;color:#fff}.hc-g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.hc-wa{margin-bottom:16px;scroll-margin-top:80px;transition:box-shadow .3s}.hc-wa.hl{box-shadow:0 0 0 3px var(--soft)}.hc-wh{display:flex;gap:12px;align-items:center;margin-bottom:12px}.hc-wh h2{margin:0}.hc-wh small{color:var(--mut)}
+.hc-i{width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--brand);display:grid;place-items:center}.hc-i svg{width:20px;height:20px}.hc-i.wa{background:#25d366;color:#fff}.hc-sec{margin-bottom:16px;scroll-margin-top:80px;border-top:3px solid var(--brand);transition:box-shadow .3s}.hc-sec.hl{box-shadow:0 0 0 4px var(--soft)}.hc-wh{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}.hc-wh .hc-i{flex:none}.hc-wh h2{margin:0 0 2px;color:var(--brand)}.hc-wh small{color:var(--mut);line-height:1.7;display:block}
 .hc-t{padding:10px 0;border-bottom:1px solid var(--line)}.hc-t:last-child{border:0}.hc-t .sup-r{margin:8px 0 0}.hc-legal{text-align:center;font-size:13px}.hc-legal a{color:var(--mut)}
 .sup-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.sup-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.sup-f button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .sup-h{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.sup-r{background:var(--soft);border-radius:12px;padding:10px 12px}.sup-r p{margin:4px 0 0;white-space:pre-wrap}
-.onb.onb-s{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:16px 20px;border:1px solid var(--brand);margin-bottom:16px}.onb-s h2{margin:0 0 6px;font-size:17px}.onb-s .onbar{margin:6px 0;max-width:420px}.onb-s .onic{background:var(--soft);color:var(--brand);width:44px;height:44px;border-radius:12px;font-size:0}.onb-s .onic svg{width:22px;height:22px}
-.onx{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px;padding:6px;border-radius:8px}.onx:hover{background:var(--card2);color:var(--ink)}.onb-n{font-size:20px;color:var(--brand)}
+.onb.onb-s{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:16px 20px;border:1px solid var(--brand);margin-bottom:16px}.onb-s h2{margin:0 0 6px;font-size:17px}.onb-s .onic{background:var(--soft);color:var(--brand);width:44px;height:44px;border-radius:12px;font-size:0}.onb-s .onic svg{width:22px;height:22px}
+.onx{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px;padding:6px;border-radius:8px}.onx:hover{background:var(--card2);color:var(--ink)}
 .dsum{background:linear-gradient(135deg,#085a33,#118553);color:#fff;border:0;margin-bottom:16px}.dsum h2{color:#fff;margin:0}.dsum small{opacity:.85}
 .dsum-h{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.dper{display:flex;gap:4px;background:rgba(255,255,255,.12);border-radius:10px;padding:3px}.dper button{border:0;background:none;color:#fff;font:inherit;font-size:13px;padding:5px 12px;border-radius:8px;cursor:pointer;opacity:.85}.dper button.on{background:#fff;color:#085a33;opacity:1;font-weight:700}
 .dsum-g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.dsum-g button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px;color:#fff;text-align:start;cursor:pointer;font:inherit;transition:.15s}.dsum-g button:hover{background:rgba(255,255,255,.18)}.dsum-g b{display:block;font-size:26px;line-height:1.2}.dsum-g span{font-size:13px;opacity:.9}
@@ -168,7 +168,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 .sec-qr{width:200px;margin:8px auto;background:#fff;padding:8px;border-radius:12px}.sec-qr svg{width:100%;height:auto;display:block}.sec-st{margin:0 0 6px;padding-inline-start:20px;line-height:1.9;color:var(--mut)}
 .sec-codes{display:grid;grid-template-columns:1fr 1fr;gap:6px}.sec-codes code{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center;font-size:15px;direction:ltr}
 .sec-dev{display:grid;gap:6px;margin-top:10px}.sec-d{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px}.sec-di{font-size:20px}.sec-d b{display:block;font-size:14px}
-.onbar{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin:12px 0}.onbar i{display:block;height:100%;background:linear-gradient(90deg,#118553,#0a7040)}.onl{display:grid;gap:8px}.onr{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px}.onr.ok{opacity:.6}.onr.ok b{text-decoration:line-through}.onn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--soft);color:var(--brand);flex:none}.onr.ok .onn{background:#059669;color:#fff}
+
 
 /* ----- القائمة: مجموعات + طيّ + قائمة الحساب ----- */
 .nvs{display:flex;flex-direction:column;gap:2px}.nv{padding:8px 12px}
@@ -184,6 +184,19 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 #wpr-app.sbmini .nvh{display:block;height:1px;background:var(--line);margin:10px 6px;font-size:0}#wpr-app.sbmini .me{justify-content:center;padding:8px}#wpr-app.sbmini .am{inset-inline-end:auto;width:220px}}
 @media(max-width:960px){.sbc{display:none}}
 [dir=ltr] .gd-flow i{display:inline-block;transform:scaleX(-1)}
+
+/* الحركة والتأثيرات: لطيفة وسريعة، وتُلغى لمن فعّل «تقليل الحركة» في جهازه */
+.btn{transition:transform .15s ease,box-shadow .2s ease,background .15s,border-color .15s,color .15s}
+.btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 18px -10px rgba(17,133,83,.55)}.btn.ghost:not(:disabled):hover{box-shadow:0 6px 14px -10px rgba(18,25,22,.35)}
+.btn:not(:disabled):active{transform:translateY(0) scale(.98)}
+.hc-c,.wa-i,.plan,.ed-hc,.ed-tc,.wt-c,.g-card,.pc,.kpis>div,.dsum .kpis>div,.hc-sec .wa-i{transition:transform .2s ease,box-shadow .25s ease,border-color .2s}
+.hc-c:hover,.wa-i:hover,.plan:hover,.ed-hc:hover,.ed-tc:hover,.wt-c:hover,.g-card:hover,.pc:hover{transform:translateY(-3px);box-shadow:0 18px 34px -22px rgba(18,25,22,.35)}
+.nv{transition:background .15s,color .15s,padding .2s}.nv:hover svg{transform:scale(1.08)}.nv svg{transition:transform .2s}
+.view:not([hidden]){animation:vin .28s ease}@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{transition:box-shadow .25s ease}
+.tm{animation:min .22s ease}@keyframes min{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.toast{animation:tin .25s ease}@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style><script data-fab src="/theme.js"></script><script src="/icons.js"></script></head><body><div id="wpr-app" dir="rtl" lang="ar">
 <header class="top"><button id="burger" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><div class="brand"><i>📡</i>رادار المنتجات</div></header>
 <div class="scrim" id="scrim"></div>
@@ -901,13 +914,14 @@ async function rHelp(){
  const faqHtml=()=>FAQ.filter(x=>HFQ==='all'||x[0]===HFQ).map(x=>`<details class="fx hf-q" data-q="${e((x[1]+' '+x[2]).toLowerCase())}"><summary>${x[1]}</summary><p style="margin:0 0 14px;line-height:1.8">${x[2]}</p></details>`).join('');
  $('#x-help').innerHTML=`${adm?`<div class="alert info" style="margin-bottom:16px">أنت المدير: هذه الصفحة يراها المشتركون. رسائلهم تصلك في <a href="/support-inbox" data-v="ainbox">صندوق الدعم</a> وتردّ عليها من هناك.</div>`:''}
 <div class="card hc-hero"><h2>كيف نساعدك؟</h2><div class="hc-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="hc-q" type="search" placeholder="ابحث في الأسئلة: الدفع، الإضافة، TikTok…" autocomplete="off"></div></div>
-<div class="hc-g hc-g2">
+<div class="hc-g">
 <button class="card hc-c" data-v="guide"><span class="hc-i">${ICO.book}</span><b>دليل الاستخدام</b><small>كل خطوات المنصة بالصور، بالترتيب.</small></button>
 <button class="card hc-c" data-a="hcpay"><span class="hc-i">${ICO.rocket}</span><b>الدفع والاشتراك</b><small>وصل الدفع، تغيير العرض أو التجديد عبر واتساب.</small></button>
+<button class="card hc-c" data-a="hcform"><span class="hc-i">${ICO.mail}</span><b>رسالة مكتوبة</b><small>اكتب لنا بالتفصيل، ويصلك الرد هنا وبالبريد.</small></button>
 </div>
-${wa?`<div class="card hc-wa" id="hc-wa"><div class="hc-wh"><span class="hc-i">${ICO.chat}</span><div><h2>تحدّث معنا على واتساب</h2><small>اختر الموضوع: تظهر الرسالة جاهزة بمعلومات حسابك، راجعها واضغط إرسال.</small></div></div>
+${wa?`<div class="card hc-sec" id="hc-wa"><div class="hc-wh"><span class="hc-i">${ICO.chat}</span><div><h2>تحدّث معنا على واتساب</h2><small>اختر الموضوع: تظهر الرسالة جاهزة بمعلومات حسابك، راجعها واضغط إرسال.</small></div></div>
 <div class="wa-lg">${[['support','tech','مشكلة تقنية','شيء لا يعمل كما يجب'],['support','usage','سؤال عن الاستعمال','كيف أستعمل قسماً أو ميزة'],['support','idea','اقتراح','فكرة لتحسين المنصة'],['pay','','إرسال وصل الدفع','بعد التحويل عبر BaridiMob أو CCP'],['upgrade','','ترقية أو تغيير العرض','انتقل إلى باقة أخرى'],['renew','','تجديد الاشتراك','مدّد اشتراكك الحالي'],['billing','','سؤال عن الدفع أو الاشتراك','نجيبك في أقرب وقت']].filter(x=>!adm||x[0]==='support').map(([k,t,a,h])=>`<button type="button" class="wa-i" data-wac="${k}"${t?` data-topic="${t}"`:''}><b>${a}</b><small>${h}</small></button>`).join('')}</div></div>`:''}
-<div class="card" id="hc-form" style="margin-bottom:16px"><h2>رسالة مكتوبة</h2><p class="sub"><span>صف المشكلة باختصار، وأرفق ما يساعدنا (اسم القسم، ما ضغطت عليه). يصلك الرد في «طلباتي» أعلاه وبالتنبيهات.</span>${em?` <span>أو راسلنا على</span> <a href="mailto:${e(em)}" dir="ltr">${e(em)}</a>`:''}</p>
+<div class="card hc-sec" id="hc-form"><div class="hc-wh"><span class="hc-i">${ICO.mail}</span><div><h2>رسالة مكتوبة</h2><small><span>صف المشكلة باختصار، وأرفق ما يساعدنا (اسم القسم، ما ضغطت عليه). يصلك الرد في «طلباتي» وبالتنبيهات.</span>${em?` <span>أو راسلنا على</span> <a href="mailto:${e(em)}" dir="ltr">${e(em)}</a>`:''}</small></div></div>
 <form id="hf" onsubmit="return false" style="display:grid;gap:10px;margin-top:8px"><div class="grid2" style="margin:0"><label class="fl">نوع الطلب<select id="hf-c">${Object.entries(SUPC).map(([k,t])=>`<option value="${k}">${t}</option>`).join('')}</select></label><label class="fl">الموضوع<input id="hf-s" maxlength="150" placeholder="مثال: مشكلة في الجمع"></label></div><label class="fl">رسالتك<textarea id="hf-m" rows="4" maxlength="4000" placeholder="صف المشكلة باختصار…"></textarea></label><p style="margin:0"><button class="btn" data-a="hsend">إرسال الرسالة</button></p></form></div>
 ${mine.length?`<div class="card" style="margin-bottom:16px"><h2>طلباتي</h2>${mine.map(m=>`<div class="hc-t"><div class="sup-h"><div class="grow"><b dir="auto">${e(m.subject)}</b><div class="muted">${SUPC[m.category]||SUPC.other} · ${fd(m.created_at)}</div></div><span class="pill ${m.reply?'ok':'warn'}">${m.reply?'تم الرد':'قيد المراجعة'}</span></div>${m.reply?`<div class="sup-r"><small>ردّ فريق الدعم · ${fd(m.replied_at)}</small><p dir="auto">${e(m.reply)}</p></div>`:''}</div>`).join('')}</div>`:''}
 <div class="card" style="margin-bottom:16px"><h2>الأسئلة الشائعة</h2><div class="sup-f">${[['all','الكل']].concat(Object.entries(FAQC)).map(([k,t])=>`<button data-a="hcf" data-f="${k}" class="${HFQ===k?'on':''}">${t}</button>`).join('')}</div><div id="hc-faq">${faqHtml()}</div><p class="muted" id="hc-none" hidden>لا نتائج. راسلنا وسنجيبك.</p></div>
@@ -1001,6 +1015,7 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='2fa-done'){SEC2={};return rSec()}
  if(a==='dper'){DPER=+b.dataset.d;return rDash()}
  if(a==='hcf'){HFQ=b.dataset.f;R.querySelectorAll('[data-a="hcf"]').forEach(x=>x.classList.toggle('on',x===b));$('#hc-faq').innerHTML=FAQ.filter(x=>HFQ==='all'||x[0]===HFQ).map(x=>`<details class="fx hf-q" data-q="${e((x[1]+' '+x[2]).toLowerCase())}"><summary>${x[1]}</summary><p style="margin:0 0 14px;line-height:1.8">${x[2]}</p></details>`).join('');return}
+ if(a==='hcform'){ev.preventDefault();const f=$('#hc-form');f.scrollIntoView({behavior:'smooth',block:'start'});f.classList.add('hl');setTimeout(()=>f.classList.remove('hl'),1600);setTimeout(()=>$('#hf-m').focus({preventScroll:true}),500);return}
  if(a==='hcpay'){ev.preventDefault();const w=$('#hc-wa');if(w){w.scrollIntoView({behavior:'smooth',block:'start'});w.classList.add('hl');setTimeout(()=>w.classList.remove('hl'),1600)}else show('sub');return}
 
  if(a==='onbhide'){try{localStorage.setItem('wpr_onb_hide','1')}catch(x){}return rDash()}

@@ -42,9 +42,9 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(/سؤال عن اشتراكي/.test(await up.inputValue('#wa-text')) && !(await up.$('#wa-plan')), 'سؤال الدفع: رسالة بلا اختيار عرض');
     await up.keyboard.press('Escape');
     // 3) المساعدة: واتساب أولاً
-    await up.goto(BASE + '/help'); await up.waitForSelector('.hc-wa');
+    await up.goto(BASE + '/help'); await up.waitForSelector('#hc-wa');
     const order = await up.evaluate(() => { const g = document.querySelector('.hc-g'), w = document.querySelector('#hc-wa'), f = document.querySelector('#hc-form'), q = document.querySelector('#hc-faq'); return !!(g.compareDocumentPosition(w) & 4) && !!(w.compareDocumentPosition(f) & 4) && !!(f.compareDocumentPosition(q) & 4); });
-    ok(order && (await up.innerText('#hc-form h2')).trim() === 'رسالة مكتوبة' && (await up.$$('.hc-g .hc-c')).length === 2, 'المساعدة: البطاقات ← واتساب ← رسالة مكتوبة ← الأسئلة، بلا تكرار ولا «(بديل واتساب)»');
+    ok(order && (await up.innerText('#hc-form h2')).trim() === 'رسالة مكتوبة' && (await up.$$('.hc-g .hc-c')).length === 3, 'المساعدة: البطاقات ← واتساب ← رسالة مكتوبة ← الأسئلة، بلا تكرار ولا «(بديل واتساب)»');
     await up.click('.hc-g [data-a="hcpay"]'); await up.waitForFunction(() => document.querySelector('#hc-wa').classList.contains('hl')); ok(true, 'بطاقة «الدفع والاشتراك» تنزل إلى قسم واتساب');
     await up.click('#hc-wa [data-wac="support"][data-topic="tech"]'); await up.waitForSelector('#wa-topic');
 

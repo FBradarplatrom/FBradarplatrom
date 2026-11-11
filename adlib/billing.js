@@ -40,6 +40,18 @@ create table if not exists error_logs(id integer primary key, at integer, method
       } } catch (e) {} });
     CFG.set('pricing_names_v3', '1');
   }
+  // 13.10: حذف مدة «شهر» (التجربة المجانية تكفي للبداية)، وحذف الباقات القديمة حسب المدة نهائياً
+  // (من كان عليها يُنقل إلى «الأساسية» بنفس تاريخ انتهائه؛ المدفوعات القديمة تبقى في السجل باسمها)
+  if (!CFG.get('pricing_v4')) {
+    try { const P = JSON.parse(CFG.get('billing_periods') || 'null'); if (Array.isArray(P)) { const Q = P.filter(x => +x.m !== 1); CFG.set('billing_periods', Q.length ? JSON.stringify(Q) : ''); } } catch (e) {}
+    const base = db.prepare("select name from plans where coalesce(free,0)=0 and active=1 and name not in ('شهري','ربع سنوي','سنوي') order by sort, id limit 1").get();
+    for (const o of ['شهري', 'ربع سنوي', 'سنوي']) {
+      const r = db.prepare('select id, active from plans where name=?').get(o); if (!r || r.active) continue;   // باقة قديمة ما زالت مفعّلة (غيّرها المدير) تبقى
+      if (base) db.prepare('update users set plan=? where plan=?').run(base.name, o);
+      db.prepare('delete from plans where id=?').run(r.id);
+    }
+    CFG.set('pricing_v4', '1');
+  }
   // الباقة المجانية لتجربة المنصة: تُمنح تلقائياً عند التسجيل (المدة والحدود يعدّلها المدير)
   if (!db.prepare('select count(*) n from plans where free=1').get().n)
     db.prepare('insert into plans(name,days,price,limits,active,sort,free,note) values(?,?,0,?,1,0,1,?)').run('تجربة مجانية', 7, JSON.stringify({ searchesPerDay: 10, gapProducts: 5, aiPerMonth: 10, watchPages: 3 }), 'لتجربة المنصة');
@@ -54,7 +66,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
   const catalog = () => db.prepare('select k,ar,en,fr,builtin,shown,sort from plan_features order by sort, rowid').all().map(x => ({ k: x.k, ar: x.ar || '', en: x.en || '', fr: x.fr || '', builtin: !!x.builtin, shown: !!x.shown, sort: x.sort }));
   const catKeys = () => catalog().map(x => x.k);
   // المدد المتاحة وخصم كل مدة (يعدّلها المدير). 12 شهراً = 365 يوماً
-  const PER_DEF = [{ m: 1, off: 0 }, { m: 3, off: 5 }, { m: 6, off: 8 }, { m: 12, off: 15 }];
+  const PER_DEF = [{ m: 3, off: 5 }, { m: 6, off: 8 }, { m: 12, off: 15 }];   // بلا «شهر»: التجربة المجانية هي بداية كل مشترك
   const periodsCfg = () => { let a = null; try { a = JSON.parse(CFG.get('billing_periods') || 'null'); } catch (e) {} return Array.isArray(a) && a.length ? a : PER_DEF; };
   const perLabel = m => m === 1 ? 'شهر' : m === 12 ? '12 شهراً' : m + ' أشهر';
   // سعر الباقة لمدة: المبلغ اليدوي إن ضبطه المدير، وإلا السعر الشهري × الأشهر − الخصم (مقرّب لأقرب 100 دج)
@@ -100,7 +112,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
   }));
   // الباقة + المدة المختارة (months: 1، 3، 6، 12). السعر والأيام من المدة
   const getPlan = (id, months) => { const p = db.prepare('select * from plans where id=? and active=1 and coalesce(free,0)=0').get(+id); if (!p) throw bad('الباقة غير متاحة');
-    const per = priceFor(p, +months || 1); if (!per) throw bad('المدة غير متاحة'); return Object.assign({}, p, { per }); };
+    const per = priceFor(p, +months || +(periodsCfg()[0] || {}).m || 1); if (!per) throw bad('المدة غير متاحة'); return Object.assign({}, p, { per }); };
   /* ---------- الدفع الإلكتروني: SATIM (CIB/الذهبية) · Stripe · PayPal ---------- */
   const newPay = (u, p, method, amount, currency) => Number(db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,currency,method,status,created_at) values(?,?,?,?,?,?,?,'pending',?)")
     .run(u.id, p.id, p.name + ' · ' + p.per.label, p.per.days, amount, currency, method, now()).lastInsertRowid);
