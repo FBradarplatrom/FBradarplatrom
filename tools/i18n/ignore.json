@@ -58,5 +58,8 @@
  "أحتاج مساعدة في رادار المنتجات الرابحة:",
  "• نوع الطلب: {topic}",
  "المشكلة:",
- "update plans set active=0 where name in ('شهري','ربع سنوي','سنوي') and coalesce(free,0)=0"
+ "update plans set active=0 where name in ('شهري','ربع سنوي','سنوي') and coalesce(free,0)=0",
+ "البداية",
+ "النمو",
+ "الاحتراف"
 ]

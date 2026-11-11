@@ -15,9 +15,9 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     // prices for the pricing section
     const A = await b.newPage(); await A.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
     // الأسعار الافتراضية: 3 باقات بسعر شهري × مدد بخصم (مثل عرض الأسعار المعتمد)
-    const pub0 = await (await fetch(BASE + '/api/plans/public')).json(), st = pub0.plans.find(p => p.name === 'البداية');
+    const pub0 = await (await fetch(BASE + '/api/plans/public')).json(), st = pub0.plans.find(p => p.name === 'الأساسية');
     ok(pub0.plans.length === 4 && pub0.periods.map(x => x.m + ':' + x.off).join(',') === '1:0,3:5,6:8,12:15', 'تجربة مجانية + 3 باقات، والمدد 1/3/6/12 بخصم 0/5/8/15٪');
-    ok(st.price === 3900 && st.periods.find(x => x.m === 6).dzd === 21500 && st.periods.find(x => x.m === 6).monthly === 3583 && st.periods.find(x => x.m === 6).save === 1900, 'البداية: 3900 شهرياً، 6 أشهر = 21500 (3583 للشهر، توفير 1900)');
+    ok(st.price === 3900 && st.periods.find(x => x.m === 6).dzd === 21500 && st.periods.find(x => x.m === 6).monthly === 3583 && st.periods.find(x => x.m === 6).save === 1900, 'الأساسية: 3900 شهرياً، 6 أشهر = 21500 (3583 للشهر، توفير 1900)');
     { const pg0 = await b.newPage(); await pg0.goto(BASE + '/?lang=ar'); await pg0.waitForSelector('#plans .plan');
       const t0 = await pg0.locator('#plans').innerText();
       ok((await pg0.$$('#plans .plan')).length === 3 && (await pg0.$$('.ptabs [data-per]')).length === 4 && await pg0.getAttribute('.ptabs .on', 'data-per') === '6' && /21[.,٬\s]?500/.test(t0) && /3[.,٬\s]?583/.test(t0) && await pg0.isVisible('.ptrial'), 'الأسعار: أزرار المدد (6 أشهر افتراضياً)، 3 بطاقات، والتجربة المجانية');

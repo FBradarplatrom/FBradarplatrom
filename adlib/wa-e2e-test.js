@@ -24,12 +24,12 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const U = await mk(), up = await U.newPage(), uerr = []; up.on('pageerror', e => uerr.push(e.message));
     await up.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
     const AP = (await (await ap.request.get(BASE + '/api/admin/plans')).json()).plans;
-    await ap.request.put(BASE + '/api/admin/plans', { data: { plans: AP.map(p => Object.assign({}, p, { price: p.name === 'البداية' ? 2900 : p.price, features: undefined })) } });
+    await ap.request.put(BASE + '/api/admin/plans', { data: { plans: AP.map(p => Object.assign({}, p, { price: p.name === 'الأساسية' ? 2900 : p.price, features: undefined })) } });
     ok((await (await up.request.get(BASE + '/api/billing')).json()).plans.some(p => p.price === 2900), 'باقة مدفوعة');
-    await up.goto(BASE + '/subscription'); await up.waitForSelector('.wa-box');
-    const btns = await up.$$eval('.wa-box [data-wac]', a => a.map(x => x.dataset.wac));
+    await up.goto(BASE + '/subscription'); await up.waitForSelector('.pay-sec');
+    const btns = await up.$$eval('.pay-sec [data-wac]', a => a.map(x => x.dataset.wac));
     ok(btns.join(',') === 'pay,upgrade,renew,billing', 'اشتراكي: أزرار واتساب (الوصل، الترقية، التجديد، سؤال)');
-    await up.click('.wa-box [data-wac="pay"]'); await up.waitForSelector('#wa-text');
+    await up.click('.pay-sec [data-wac="pay"]'); await up.waitForSelector('#wa-text');
     ok(/CCP 0012345/.test(await up.innerText('.tm')) && /u@t\.dz/.test(await up.inputValue('#wa-text')), 'نافذة الوصل: معلومات التحويل + الرسالة ببريد الحساب');
     await up.fill('#wa-store', 'Boutique Amine'); ok(/متجري هو Boutique Amine وشكراً/.test(await up.inputValue('#wa-text')), 'الرسالة تتحدث باسم المتجر (نص المدير المعدّل)');
     const [pop] = await Promise.all([up.waitForEvent('popup'), up.click('[data-wa="go"]')]); await pop.waitForURL(/wa\.me/, { timeout: 8000 });
@@ -38,14 +38,16 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(/^https:\/\/wa\.me\/213664442637\?text=/.test(pop.url()) && pid && url.includes('#' + pid) && /Boutique Amine/.test(url), 'يفتح واتساب برقم الدعم + طلب دفع مسجّل برقمه في الرسالة');
     await pop.close();
     // ترقية: العرض الحالي مستثنى
-    await up.waitForSelector('.wa-box'); await up.click('.wa-box [data-wac="billing"]'); await up.waitForSelector('#wa-text');
+    await up.waitForSelector('.pay-sec'); await up.click('.pay-sec [data-wac="billing"]'); await up.waitForSelector('#wa-text');
     ok(/سؤال عن اشتراكي/.test(await up.inputValue('#wa-text')) && !(await up.$('#wa-plan')), 'سؤال الدفع: رسالة بلا اختيار عرض');
     await up.keyboard.press('Escape');
     // 3) المساعدة: واتساب أولاً
     await up.goto(BASE + '/help'); await up.waitForSelector('.hc-wa');
-    const order = await up.evaluate(() => { const w = document.querySelector('.hc-wa'), g = document.querySelector('.hc-g'), f = document.querySelector('#hc-form'); return !!(w.compareDocumentPosition(g) & 4) && !!(w.compareDocumentPosition(f) & 4); });
-    ok(order && /بديل واتساب/.test(await up.innerText('#hc-form h2')), 'المساعدة: واتساب في الأعلى، والرسالة المكتوبة بديل');
-    await up.click('.hc-wa [data-wac="support"]'); await up.waitForSelector('#wa-topic'); await up.selectOption('#wa-topic', 'tech');
+    const order = await up.evaluate(() => { const g = document.querySelector('.hc-g'), w = document.querySelector('#hc-wa'), f = document.querySelector('#hc-form'), q = document.querySelector('#hc-faq'); return !!(g.compareDocumentPosition(w) & 4) && !!(w.compareDocumentPosition(f) & 4) && !!(f.compareDocumentPosition(q) & 4); });
+    ok(order && (await up.innerText('#hc-form h2')).trim() === 'رسالة مكتوبة' && (await up.$$('.hc-g .hc-c')).length === 2, 'المساعدة: البطاقات ← واتساب ← رسالة مكتوبة ← الأسئلة، بلا تكرار ولا «(بديل واتساب)»');
+    await up.click('.hc-g [data-a="hcpay"]'); await up.waitForFunction(() => document.querySelector('#hc-wa').classList.contains('hl')); ok(true, 'بطاقة «الدفع والاشتراك» تنزل إلى قسم واتساب');
+    await up.click('#hc-wa [data-wac="support"][data-topic="tech"]'); await up.waitForSelector('#wa-topic');
+
     ok(/مشكلة تقنية/.test(await up.inputValue('#wa-text')), 'رسالة الدعم بنوع الطلب');
     await up.keyboard.press('Escape');
     // 4) الإشعارات: لا تكرار، 3 على الأكثر، تختفي بسرعة

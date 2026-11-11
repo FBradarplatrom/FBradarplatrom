@@ -23,14 +23,22 @@ create table if not exists error_logs(id integer primary key, at integer, method
   ['alter table plans add column totals text', 'alter table plans add column features text', 'alter table plans add column price_usd real default 0', 'alter table plans add column free integer default 0', "alter table payments add column currency text default 'DZD'", 'alter table payments add column ext text']
     .forEach(x => { try { db.exec(x); } catch (e) {} });
   // الباقات: مستويات بسعر شهري، والمشترك يختار المدة (شهر، 3، 6، 12 شهراً) بخصم. المبالغ الافتراضية من عرض الأسعار المعتمد.
-  const TIERS = [['البداية', 3900, 29, { searchesPerDay: 20, gapProducts: 20, aiPerMonth: 30, watchPages: 5 }, { 6: 21500 }, ''],
-    ['النمو', 6900, 49, { searchesPerDay: 60, gapProducts: 80, aiPerMonth: 120, watchPages: 20 }, { 6: 38000 }, 'الأكثر طلباً'],
-    ['الاحتراف', 10900, 79, { searchesPerDay: 200, gapProducts: 300, aiPerMonth: 400, watchPages: 60 }, { 6: 60100 }, '']];
+  const TIERS = [['الأساسية', 3900, 29, { searchesPerDay: 20, gapProducts: 20, aiPerMonth: 30, watchPages: 5 }, { 6: 21500 }, ''],
+    ['المتقدمة', 6900, 49, { searchesPerDay: 60, gapProducts: 80, aiPerMonth: 120, watchPages: 20 }, { 6: 38000 }, 'الأكثر طلباً'],
+    ['الاحترافية', 10900, 79, { searchesPerDay: 200, gapProducts: 300, aiPerMonth: 400, watchPages: 60 }, { 6: 60100 }, '']];
   if (!CFG.get('pricing_v2')) {
     db.prepare("update plans set active=0 where name in ('شهري','ربع سنوي','سنوي') and coalesce(free,0)=0").run();   // الباقات القديمة (حسب المدة) تبقى للسجل فقط
     const ins = db.prepare('insert or ignore into plans(name,days,price,price_usd,limits,active,sort,note,totals) values(?,30,?,?,?,1,?,?,?)');
     TIERS.forEach(([n, pr, us, L, t, note], i) => ins.run(n, pr, us, JSON.stringify(L), i + 1, note, JSON.stringify(t)));
     CFG.set('pricing_v2', '1');
+  }
+  // أسماء الباقات الخاصة بالمنصة (الإصدار 13.8 استعمل أسماء أخرى مؤقتاً): تُعاد تسميتها مع المشتركين ومدفوعاتهم، إلا إن غيّرها المدير
+  if (!CFG.get('pricing_names_v3')) {
+    [['البداية', 'الأساسية'], ['النمو', 'المتقدمة'], ['الاحتراف', 'الاحترافية']].forEach(([o, n]) => { try {
+      if (!db.prepare('select 1 from plans where name=?').get(n) && db.prepare('update plans set name=? where name=?').run(n, o).changes) {
+        db.prepare('update users set plan=? where plan=?').run(n, o); db.prepare("update payments set plan_name=? || substr(plan_name, length(?)+1) where plan_name=? or plan_name like ? || ' · %'").run(n, o, o, o);
+      } } catch (e) {} });
+    CFG.set('pricing_names_v3', '1');
   }
   // الباقة المجانية لتجربة المنصة: تُمنح تلقائياً عند التسجيل (المدة والحدود يعدّلها المدير)
   if (!db.prepare('select count(*) n from plans where free=1').get().n)
