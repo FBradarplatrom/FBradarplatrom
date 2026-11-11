@@ -241,7 +241,7 @@ ${m.user_id && !m.reply ? `<label class="fl">الرد (يصل إلى المشت�
     }
     if (ATAB === 'wa') {
       const r = await X.api('GET', '/admin/wa'), L3 = [['ar', 'العربية'], ['en', 'English'], ['fr', 'Français']];
-      el.innerHTML = `<div class="card"><h2>رسائل واتساب الجاهزة</h2><p class="sub"><span>تظهر للمشترك في «اشتراكي» و«المساعدة والدعم»: يختار الموقف فتُفتح هذه الرسالة في واتساب بمعلومات حسابه، ويستطيع تعديلها قبل الإرسال.</span> <span>تُرسل إلى رقم واتساب الدعم:</span> ${r.number ? `<b dir="ltr">+${e(r.number)}</b>` : '<b>(غير مضبوط: أضفه في «النشاط والتواصل»)</b>'}</p>
+      el.innerHTML = `<div class="card"><h2>رسائل واتساب الجاهزة</h2><p class="sub"><span>تظهر للمشترك في «اشتراكي» و«المساعدة والدعم»: يختار الموقف فتُفتح هذه الرسالة في واتساب بمعلومات حسابه، ويستطيع تعديلها قبل الإرسال.</span> <span>تُرسل إلى رقم واتساب الدعم:</span> ${r.number ? `<b><bdi dir="ltr">+${e(r.number)}</bdi></b>` : '<b>(غير مضبوط: أضفه في «النشاط والتواصل»)</b>'}</p>
 <p class="sub" style="margin:6px 0 0">الكلمات بين {} تُملأ تلقائياً: ${Object.entries(r.vars).map(([k, v]) => `<code dir="ltr">{${k}}</code> ${e(v)}`).join(' · ')}</p></div>
 ${Object.entries(r.keys).map(([k, [t, vs]]) => `<div class="card" style="margin-top:14px"><h2>${e(t)}</h2><p class="sub" style="margin:0 0 8px">المتاح هنا: ${vs.map(v => `<code dir="ltr">{${v}}</code>`).join(' ')}</p>
 <div class="grid3" style="margin:0">${L3.map(([l, n]) => `<label class="fl">${n}<textarea rows="8" data-wat="${k}" data-l="${l}" dir="${l === 'ar' ? 'rtl' : 'ltr'}" style="font:inherit;font-size:13.5px;line-height:1.7">${e(r.templates[k][l])}</textarea>${r.templates[k][l] !== r.defaults[k][l] ? '<small class="muted">معدّلة</small>' : ''}</label>`).join('')}</div></div>`).join('')}
