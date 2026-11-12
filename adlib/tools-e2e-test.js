@@ -61,8 +61,8 @@ const NOW = Math.floor(Date.now() / 1000);
     await pg.click('[data-tool="sup"][data-k="p1"]'); await pg.waitForSelector('#sup-q');
     ok((await pg.inputValue('#sup-q')) === 'star projector night light', 'AI turns the product into an English AliExpress query');
     // 🖼️ البحث بالصورة: زر لكل سوق + تنبيه العبارة الصينية + بلا إضافة حديثة: يُفتح السوق وتُنزَّل الصورة
-    ok(await pg.$$eval('.tm [data-imgs]', b => b.map(x => x.dataset.imgs).join()) === '1688,ali,alibaba,taobao,pdd', 'supplier window has direct image search for the 5 markets');
-    ok(/تبحث بالصينية/.test(await pg.textContent('.tm')), 'warns that the Chinese markets need a Chinese phrase (none yet)');
+    ok(await pg.$$eval('.tm [data-imgs]', b => b.map(x => x.dataset.imgs).join()) === '1688,ali,alibaba,taobao', 'supplier window has direct image search for the 4 markets');
+    ok(/تبحثان بالصينية/.test(await pg.textContent('.tm')), 'warns that the Chinese markets need a Chinese phrase (none yet)');
     await pg.context().route('https://www.1688.com/**', r => r.fulfill({ contentType: 'text/html', body: '<h1>1688</h1>' }));
     const [pop, dl] = await Promise.all([pg.context().waitForEvent('page'), pg.waitForEvent('download'), pg.click('.tm [data-imgs="1688"]')]);
     await pop.waitForURL('https://www.1688.com/**'); ok(dl.suggestedFilename().endsWith('.jpg'), 'old extension: 1688 opens and the product photo is downloaded to upload'); await pop.close();

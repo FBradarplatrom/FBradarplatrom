@@ -193,11 +193,11 @@ function render(){var t=T[L];document.documentElement.lang=L;document.documentEl
  document.getElementById('faqs').innerHTML=t.faqs.map(function(f){return'<details><summary>'+esc(f[0])+'</summary><p>'+esc(f[1])+'</p></details>'}).join('');
  document.getElementById('mk').innerHTML=MK.map(function(f){return'<span>'+f+'</span>'}).join('')+'<span>+ 20</span>';
  document.getElementById('yr').textContent=new Date().getFullYear();drawPlans()}
-var PER=null,PSEL=0;
+var PER=null,PSEL=0,HIDE=false;
 function perName(m,t){return m===1?t.tab1:m===12?t.y12:t.mon.replace('{n}',m)}
 function drawPlans(){var t=T[L],el=document.getElementById('plans');if(!PL)return;
  if(!PL.length){el.innerHTML='<div class="c" style="grid-column:1/-1;text-align:center"><p>'+esc(t.no_plans)+'</p></div>';return}
- var cur=function(n){return num(n)+' '+t.cur},paid=PL.filter(function(p){return!p.free&&p.periods&&p.periods.length}),free=PL.filter(function(p){return p.free})[0];
+ var cur=function(n){return num(n)+' '+t.cur},lim=function(v){return+v<0?esc(L==='ar'?'بلا حد':L==='fr'?'illimité':'unlimited'):num(v)},paid=PL.filter(function(p){return!p.free&&p.periods&&p.periods.length}),free=PL.filter(function(p){return p.free})[0];
  var ms=(PER||[]).map(function(x){return+x.m}).filter(function(m){return paid.some(function(p){return p.periods.some(function(z){return z.m===m})})});
  if(!PSEL||ms.indexOf(PSEL)<0)PSEL=ms.indexOf(6)>=0?6:ms[0];
  var hot=paid.filter(function(p){return p.note})[0]||(paid.length>2?paid[1]:null);
@@ -209,7 +209,7 @@ function drawPlans(){var t=T[L],el=document.getElementById('plans');if(!PL)retur
   return'<div class="plan'+(p===hot?' hot':'')+'">'+(p===hot?'<span class="tag ptag">'+esc((t.n&&t.n[p.note])||p.note||t.popular)+'</span>':'')+'<h3>'+esc(nm)+'</h3>'
   +'<div class="pcur"><span class="pr">'+num(x.monthly)+'</span><small>'+esc(t.pm)+'</small>'+(x.off?'<s>'+num(p.price)+'</s>':'')+'</div>'
   +'<div class="ptot">'+(x.m>1?'<b>'+esc(t.tot)+': '+cur(x.dzd)+'</b><br>'+esc(t.once.replace('{p}',pn))+(x.save?'<br><span class="sv">'+esc(t.save.replace('{a}',cur(x.save)).replace('{p}',pn))+'</span>':''):'<b>'+cur(x.dzd)+'</b><br>'+esc(t.once1))+(x.usd&&PM&&(PM.stripe||PM.paypal)?'<br><span class="us">'+esc(t.intl.replace('{u}','$'+x.usd.toFixed(2)))+'</span>':'')+'</div>'
-  +'<ul><li>'+esc(t.core)+'</li><li>'+num(Lm.searchesPerDay)+' '+esc(t.per_day)+'</li>'+(FE||[]).map(function(f){var k=f.k,on=(p.features||[]).indexOf(k)>=0,ex=k==='gap'?' · '+num(Lm.gapProducts):k==='ai'?' · '+num(Lm.aiPerMonth)+'/'+(L==='ar'?'شهر':L==='fr'?'mois':'mo'):k==='watch'?' · '+num(Lm.watchPages):'';return'<li class="'+(on?'':'off')+'">'+esc(f[L]||f.ar||f.en||f.fr)+(on?ex:'')+'</li>'}).join('')+'</ul>'
+  +'<ul><li>'+esc(t.core)+'</li>'+(+Lm.searchesPerDay===0?'':'<li>'+lim(Lm.searchesPerDay)+' '+esc(t.per_day)+'</li>')+(FE||[]).map(function(f){var k=f.k,on=(p.features||[]).indexOf(k)>=0,ex=k==='gap'?' · '+lim(Lm.gapProducts):k==='ai'?' · '+lim(Lm.aiPerMonth)+(+Lm.aiPerMonth<0?'':'/'+(L==='ar'?'شهر':L==='fr'?'mois':'mo')):k==='watch'?' · '+lim(Lm.watchPages):'';if(!on&&HIDE)return'';return'<li class="'+(on?'':'off')+'">'+esc(f[L]||f.ar||f.en||f.fr)+(on?ex:'')+'</li>'}).join('')+'</ul>'
   +'<a class="btn '+(p===hot?'p':'g')+'" href="/register?lang='+L+'">'+esc(t.start_free)+'</a></div>'}).join('');
  if(window.__rv)window.__rv();
  var m=[];if(PM){if(PM.baridi)m.push('BaridiMob','CCP',t.bank);if(PM.satim)m.push('CIB / Edahabia');if(PM.stripe)m.push('Visa / Mastercard');if(PM.paypal)m.push('PayPal')}
@@ -225,7 +225,7 @@ render();
 (function(){if(!('IntersectionObserver'in window))return;var io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting){var el=x.target;el.classList.add('in');io.unobserve(el);setTimeout(function(){el.classList.remove('rv','in');el.style.transitionDelay=''},1000)}})},{rootMargin:'0px 0px -8% 0px'});
  window.__rv=function(){document.querySelectorAll('section .sh, section .c, #plans .plan, .faq details, .band').forEach(function(el,i){if(el.dataset.rv)return;el.dataset.rv=1;el.classList.add('rv');el.style.transitionDelay=(i%3)*0.08+'s';io.observe(el)})};window.__rv()})();
 document.getElementById('plans').addEventListener('click',function(e){var b=e.target.closest('[data-per]');if(!b)return;PSEL=+b.dataset.per;drawPlans()});
-fetch('/api/plans/public').then(function(r){return r.json()}).then(function(j){PL=j.plans||[];PER=j.periods||[];PM=j.methods||{};FE=j.features||[];drawPlans()}).catch(function(){PL=[];drawPlans()});
+fetch('/api/plans/public').then(function(r){return r.json()}).then(function(j){PL=j.plans||[];PER=j.periods||[];PM=j.methods||{};FE=j.features||[];HIDE=j.missing==='hide';drawPlans()}).catch(function(){PL=[];drawPlans()});
 })();
 </script>
 </body>

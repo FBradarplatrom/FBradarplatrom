@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "إضافة جمع الإعلانات – رادار المنتجات الرابحة",
   "short_name": "جمع الإعلانات",
-  "version": "1.7.4",
-  "description": "تجمع إعلانات مكتبة ميتا، ونتائج البحث في AliExpress وAlibaba و1688 وTaobao وPinduoduo (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
+  "version": "1.7.5",
+  "description": "تجمع إعلانات مكتبة ميتا، ونتائج البحث في AliExpress وAlibaba و1688 وTaobao (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
@@ -22,7 +22,6 @@
     "https://*.1688.com/*",
     "https://*.taobao.com/*",
     "https://*.tmall.com/*",
-    "https://mobile.yangkeduo.com/*",
     "https://YOUR-PLATFORM-DOMAIN/*"
   ],
   "background": {
@@ -98,8 +97,7 @@
       "matches": [
         "https://www.alibaba.com/trade/search*",
         "https://s.1688.com/selloffer/*",
-        "https://s.taobao.com/search*",
-        "https://mobile.yangkeduo.com/search_result*"
+        "https://s.taobao.com/search*"
       ],
       "js": [
         "shop-collector.js"

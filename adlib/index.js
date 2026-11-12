@@ -26,6 +26,7 @@ module.exports = function mount(app, X) {
   let EXT_VERSION = '1.0.0';
   try { EXT_VERSION = JSON.parse(fs.readFileSync(path.join(EXT_DIR, 'manifest.json'), 'utf8')).version; } catch (e) {}
   const EXT_MIN = ENV('LIB_BRIDGE_MIN_VERSION', '1.0.0');
+  const CFG_STORE = () => require('./config.js').get('ext_store_url') || '';   // رابط الإضافة في متجر Chrome (من «الربط والتكامل»)
 
   /* ---------- الجداول ---------- */
   db.exec(`
@@ -230,7 +231,7 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
     s.json({
       limits: { maxBatch: CFG.maxBatch, maxDay: dayMax(q.u), usedToday: usedToday(q.u.id), maxAdsPerSearch: CFG.maxAdsPerSearch, allowFast: CFG.allowFast, maxAdsPerRun: CFG.maxAdsPerRun },
       retention: { days: CFG.retentionDays }, lastRun: lastRun || null,
-      ext: { latest: EXT_VERSION, min: EXT_MIN, hosts: q.u.role === 'admin' ? extHosts(q) : undefined }     // الدومينات للمدير فقط
+      ext: { latest: EXT_VERSION, min: EXT_MIN, store: CFG_STORE(), hosts: q.u.role === 'admin' ? extHosts(q) : undefined }     // الدومينات للمدير فقط
     });
   }));
   // فحص قبل بدء دفعة (لا يستهلك شيئاً) ثم نقرة لكل بحث يبدأ فعلاً

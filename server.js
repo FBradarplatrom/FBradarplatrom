@@ -245,9 +245,12 @@ app.delete('/api/saved', auth, active, wrap((q, s) => { db.prepare('delete from 
 app.get('/api/admin/users', auth, admin, wrap((q, s) => s.json(db.prepare('select id,email,name,username,role,plan,expires_at,created_at from users order by created_at desc').all())));
 app.get('/api/admin/activity', auth, admin, wrap((q, s) => s.json(db.prepare('select a.kind,a.ip,a.ua,a.detail,a.at,u.email from activity a left join users u on u.id=a.user_id order by a.at desc limit 300').all())));
 app.post('/api/admin/users/:id', auth, admin, wrap((q, s) => {
-  const u = db.prepare('select expires_at from users where id=?').get(q.params.id); if (!u) return s.sendStatus(404);
-  const d = Math.max(-3650, Math.min(3650, +q.body.days || 0));
-  db.prepare('update users set expires_at=?, plan=? where id=?').run(Math.max(now(), u.expires_at) + d * DAY, String(q.body.plan || 'paid').slice(0, 30), q.params.id); act(q.u.id, 'admin_grant', q, '#' + q.params.id + ' ' + d + ' يوم'); s.json({ ok: 1 });
+  const u = db.prepare('select plan, expires_at from users where id=?').get(q.params.id); if (!u) return s.sendStatus(404);
+  const d = Math.max(-3650, Math.min(3650, +q.body.days || 0)), LIM = require('./adlib/limits.js'), t = now();
+  // باقة حقيقية دائماً: المختارة، وإلا باقته الحالية إن وُجدت، وإلا أول باقة مدفوعة (كانت «paid» فيأخذ الحدود الافتراضية وكل المميزات)
+  const real = n => n && db.prepare('select 1 from plans where name=?').get(n) ? n : '';
+  const plan = real(String(q.body.plan || '').slice(0, 30)) || real(u.plan) || ((db.prepare('select name from plans where coalesce(free,0)=0 and active=1 order by sort, id limit 1').get() || {}).name) || 'paid';
+  db.prepare('update users set expires_at=?, plan=? where id=?').run(t + LIM.carryOver(u, plan, t) + d * DAY, plan, q.params.id); act(q.u.id, 'admin_grant', q, '#' + q.params.id + ' ' + d + ' يوم'); s.json({ ok: 1 });
 }));
 
 

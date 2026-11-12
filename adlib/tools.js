@@ -33,8 +33,8 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
   const cleanSup = it => ({
     id: str(it && it.id, 24).replace(/\D/g, ''), title: str(it.title, 300), img: /^https?:\/\//.test(it.img || '') ? str(it.img, 600) : '', price: str(it.price, 40), currency: str(it.currency, 4),
     sold: str(it.sold, 40), rating: str(it.rating, 6), moq: str(it.moq, 40), shop: str(it.shop, 80),
-    market: ['ali', 'alibaba', '1688', 'taobao', 'pdd'].includes(it.market) ? it.market : 'ali',
-    url: /^https:\/\/([a-z0-9-]+\.)*(aliexpress\.(com|us)|alibaba\.com|1688\.com|taobao\.com|tmall\.com|yangkeduo\.com|pinduoduo\.com)\//.test(it.url || '') ? str(it.url, 400) : ''
+    market: ['ali', 'alibaba', '1688', 'taobao'].includes(it.market) ? it.market : 'ali',
+    url: /^https:\/\/([a-z0-9-]+\.)*(aliexpress\.(com|us)|alibaba\.com|1688\.com|taobao\.com|tmall\.com)\//.test(it.url || '') ? str(it.url, 400) : ''
   });
   app.get('/api/sup', auth, active, wrap((q, s) => {
     const r = db.prepare('select q,items,updated_at from sup_results where user_id=? and k=?').get(q.u.id, str(q.query.k, 300));
@@ -69,7 +69,7 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
         '{"product":"short English name","q":"English search query for AliExpress/Alibaba, 3-7 words: product type + the 2-3 features that make it this exact item (shape, material, mechanism), no brand, no marketing words","zh":"the same query in Simplified Chinese as a 1688/Taobao seller would title it, 4-12 characters","features":["visual details to recognise it"]}' +
         '\nAd name: ' + name + '\nKeyword: ' + kw + '\nAd text:\n' + texts.join('\n---\n');
       const user = data ? [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: data, detail: 'low' } }] : prompt;
-      const r = await AI.chatJSON('You are an expert product sourcing agent for Chinese marketplaces (AliExpress, Alibaba, 1688, Taobao, Pinduoduo).', user, { timeout: 40000 });
+      const r = await AI.chatJSON('You are an expert product sourcing agent for Chinese marketplaces (AliExpress, Alibaba, 1688, Taobao).', user, { timeout: 40000 });
       const d = r.data || {};
       s.json({ q: str(d.q, 90).toLowerCase() || simple, zh: str(d.zh, 40), product: str(d.product, 80), features: (d.features || []).map(x => str(x, 60)).slice(0, 6), vision: !!data, ai: true });
     })().catch(n);

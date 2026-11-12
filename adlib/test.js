@@ -73,7 +73,11 @@ create table lib_ads(user_id integer, ad_id text, page_id text, page_name text, 
     eq((await U('GET', '/api/me')).body.plan, 'تجربة مجانية', 'a new account starts on the free trial plan');
     await A('POST', '/api/admin/users/' + uid, { days: -30, plan: 'تجربة مجانية' });
     eq((await U('GET', '/api/lib/stats')).status, 402, 'inactive user is blocked');
-    await A('POST', '/api/admin/users/' + uid, { days: 30, plan: 'شهري' });
+    // عرض بحد 4 عمليات بحث في اليوم (المنح بباقة غير موجودة يبقي المشترك على باقته الحالية)
+    await A('PUT', '/api/admin/plans', { plans: [{ name: 'شهري', price: 1000, active: true, limits: { searchesPerDay: 4 } }] });
+    await A('POST', '/api/admin/users/' + uid, { days: 30, plan: 'باقة-غير-موجودة' });
+    eq((await U('GET', '/api/me')).body.plan, 'تجربة مجانية', 'granting an unknown plan keeps the current real plan');
+    await A('POST', '/api/admin/users/' + uid, { days: 0, plan: 'شهري' });
     ok((await U('GET', '/api/lib/stats')).status === 200, 'active user ok');
 
     // ---------- الجمع يذهب إلى «الواردة» ----------

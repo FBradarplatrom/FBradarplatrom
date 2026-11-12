@@ -1,4 +1,4 @@
-// إضافة الجمع – صفحات بحث الأسواق الصينية (إيجاد المورّد): Alibaba · 1688 · Taobao · Pinduoduo.
+// إضافة الجمع – صفحات بحث الأسواق الصينية (إيجاد المورّد): Alibaba · 1688 · Taobao.
 // تعمل فقط عندما تفتحها المنصة لمهمة بحث. تقرأ المنتجات من بيانات الصفحة (JSON المضمّن) ثم من البطاقات، وتمرّر لتحميل المزيد.
 // المطابقة بصورة منتجك والترتيب والتحويل إلى الدينار تتم في المنصة.
 (() => {
@@ -8,15 +8,14 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const send = (msg) => { try { return chrome.runtime.sendMessage(msg).catch(() => null); } catch (_) { return Promise.resolve(null); } };
   const H = location.hostname;
-  const M = /alibaba\.com$/.test(H) ? 'alibaba' : /1688\.com$/.test(H) ? '1688' : /(taobao|tmall)\.com$/.test(H) ? 'taobao' : /(yangkeduo|pinduoduo)\.com$/.test(H) ? 'pdd' : '';
+  const M = /alibaba\.com$/.test(H) ? 'alibaba' : /1688\.com$/.test(H) ? '1688' : /(taobao|tmall)\.com$/.test(H) ? 'taobao' : '';
   if (!M) return;
   const CUR = M === 'alibaba' ? 'USD' : 'CNY';
   // روابط صفحة المنتج في كل سوق: [نمط المعرّف، بناء الرابط]
   const LINK = {
     alibaba: [/\/product-detail\/[^"'?#\s]*?_(\d{6,})\.html/, (id, h) => h || 'https://www.alibaba.com/product-detail/_' + id + '.html'],
     '1688': [/detail\.1688\.com\/offer\/(\d{6,})\.html/, (id) => 'https://detail.1688.com/offer/' + id + '.html'],
-    taobao: [/(?:item\.taobao\.com\/item\.htm|detail\.tmall\.com\/item\.htm)\?[^"'\s]*?\bid=(\d{6,})/, (id) => 'https://item.taobao.com/item.htm?id=' + id],
-    pdd: [/goods\d?\.html\?[^"'\s]*?goods_id=(\d{5,})/, (id) => 'https://mobile.yangkeduo.com/goods.html?goods_id=' + id]
+    taobao: [/(?:item\.taobao\.com\/item\.htm|detail\.tmall\.com\/item\.htm)\?[^"'\s]*?\bid=(\d{6,})/, (id) => 'https://item.taobao.com/item.htm?id=' + id]
   }[M];
   const found = new Map();
   let settings = { maxAds: 60 }, running = false;
@@ -29,7 +28,7 @@
     o.market = M; o.currency = o.currency || CUR; o.url = o.url || LINK[1](o.id); found.set(o.id, o);
   }
   // 1) بيانات الصفحة: معرّف المنتج ثم الحقول حوله (الأسماء تختلف بين الأسواق)
-  const ID_KEYS = { alibaba: ['productId', 'id'], '1688': ['offerId', 'id'], taobao: ['nid', 'itemId', 'item_id'], pdd: ['goods_id', 'goodsId'] }[M];
+  const ID_KEYS = { alibaba: ['productId', 'id'], '1688': ['offerId', 'id'], taobao: ['nid', 'itemId', 'item_id'] }[M];
   function fromScripts() {
     for (const sc of document.querySelectorAll('script')) {
       const t = sc.textContent || '';

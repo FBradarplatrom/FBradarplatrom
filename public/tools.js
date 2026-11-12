@@ -51,14 +51,13 @@
     ali: { n: 'AliExpress', url: q => 'https://www.aliexpress.com/wholesale?SearchText=' + encodeURIComponent(q) + '&SortType=total_tranpro_desc', zh: false, note: 'تجزئة، شحن للجزائر' },
     alibaba: { n: 'Alibaba', url: q => 'https://www.alibaba.com/trade/search?SearchText=' + encodeURIComponent(q), zh: false, note: 'جملة، حد أدنى للكمية' },
     '1688': { n: '1688', url: q => 'https://s.1688.com/selloffer/offer_search.htm?keywords=' + encodeURIComponent(q) + '&charset=utf8', zh: true, note: 'أرخص سعر صيني (جملة محلية)' },
-    taobao: { n: 'Taobao', url: q => 'https://s.taobao.com/search?q=' + encodeURIComponent(q), zh: true, note: 'يتطلب تسجيل الدخول' },
-    pdd: { n: 'Pinduoduo', url: q => 'https://mobile.yangkeduo.com/search_result.html?search_key=' + encodeURIComponent(q), zh: true, note: 'يتطلب تسجيل الدخول برقم الهاتف' }
+    taobao: { n: 'Taobao', url: q => 'https://s.taobao.com/search?q=' + encodeURIComponent(q), zh: true, note: 'يتطلب تسجيل الدخول' }
   };
   /* ---------- 🖼️ البحث بصورة المنتج مباشرة في كل سوق ----------
      مع الإضافة (1.7.4+): تفتح الإضافة السوق وتضع صورة المنتج في «البحث بالصورة» تلقائياً.
-     بدونها: يُفتح السوق وتُنزَّل الصورة لترفعها من أيقونة الكاميرا. Pinduoduo لا يتيح البحث بالصورة إلا في تطبيقه. */
+     بدونها: يُفتح السوق وتُنزَّل الصورة لترفعها من أيقونة الكاميرا. */
   const IMS = { ali: ['AliExpress', 'https://www.aliexpress.com/'], alibaba: ['Alibaba', 'https://www.alibaba.com/'], '1688': ['1688', 'https://www.1688.com/'],
-    taobao: ['Taobao', 'https://www.taobao.com/'], pdd: ['Pinduoduo', 'https://mobile.yangkeduo.com/', 1] };
+    taobao: ['Taobao', 'https://www.taobao.com/'] };
   const IMG_MIN = '1.7.4';
   const vlt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; };
   const toast = (m, t) => (X ? X.toast(m, t) : W.__toast && W.__toast(m, t));
@@ -74,7 +73,6 @@
   function imageSearch(m, u) {
     const M = IMS[m]; if (!M || !u) return;
     const b = W.WPRLIB && W.WPRLIB.bridge;
-    if (M[2]) { saveImg(u).catch(() => {}); return toast('Pinduoduo لا يتيح البحث بالصورة في موقعه، بل في تطبيقه فقط. نزّلنا لك الصورة: افتح تطبيق Pinduoduo على هاتفك واضغط أيقونة الكاميرا وارفعها.'); }
     if (b && b.ok() && !vlt(b.version(), IMG_MIN)) {
       toast(`تفتح الإضافة ${M[0]} وتضع صورة المنتج في البحث بالصورة…`);
       return jpegOf(u).then(image => b.send('imgsearch', { market: m, image }, 60000)).then(r => {
@@ -112,6 +110,7 @@
   }
   let SUPF = '';
   function supCards(items) {
+    items = items.filter(x => MKS[x.market || 'ali']);                      // نتائج قديمة من سوق حُذف (Pinduoduo) لا تُعرض
     const q = items.filter(x => !SUPF || (x.market || 'ali') === SUPF).map(x => Object.assign({}, x, { pp: parsePrice(x.price, x.currency) }));
     q.sort((a, b) => ((b.sim || 0) >= 84) - ((a.sim || 0) >= 84) || (b.sim || 0) - (a.sim || 0) || ((a.pp && a.pp.dzd) || 9e9) - ((b.pp && b.pp.dzd) || 9e9));
     const matches = items.map(x => Object.assign({}, x, { pp: parsePrice(x.price, x.currency) })).filter(x => (x.sim || 0) >= 84 && x.pp).sort((a, b) => a.pp.dzd - b.pp.dzd);
@@ -134,13 +133,13 @@ ${Object.keys(by).length > 1 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;
     const im = p.images[0], sel = selMk();
     const draw = items => { const el = body(); if (!el) return;
       // الأسواق الصينية تبحث بالصينية: عبارة بلا حروف صينية تعطي نتائج قليلة أو لا شيء
-      const zhWarn = Q.zh && /[\u4e00-\u9fff]/.test(Q.zh) ? '' : `<p class="sub" style="margin:4px 0;color:var(--warn,#b45309)">⚠️ 1688 وTaobao وPinduoduo تبحث بالصينية. اكتب العبارة بالصينية في خانتها، أو ابحث فيها بالصورة أدناه.${Q.q ? ` <a href="https://translate.google.com/?sl=auto&tl=zh-CN&text=${encodeURIComponent(Q.q)}" target="_blank" rel="noopener">ترجمة Google ↗</a>` : ''}</p>`; el.innerHTML = `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${im ? `<img src="${e(img(im))}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">` : '<div></div>'}<div>
+      const zhWarn = Q.zh && /[\u4e00-\u9fff]/.test(Q.zh) ? '' : `<p class="sub" style="margin:4px 0;color:var(--warn,#b45309)">⚠️ 1688 وTaobao تبحثان بالصينية. اكتب العبارة بالصينية في خانتها، أو ابحث فيها بالصورة أدناه.${Q.q ? ` <a href="https://translate.google.com/?sl=auto&tl=zh-CN&text=${encodeURIComponent(Q.q)}" target="_blank" rel="noopener">ترجمة Google ↗</a>` : ''}</p>`; el.innerHTML = `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${im ? `<img src="${e(img(im))}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">` : '<div></div>'}<div>
 <p class="sub" style="margin-top:0">${Q.vision ? '🧠 تعرّف الذكاء الاصطناعي على المنتج من <b>صورته</b>' + (Q.product ? ': <b>' + e(Q.product) + '</b>' : '') + '.' : 'عبارة البحث من اسم المنتج. أضف OPENAI_API_KEY من «الربط والتكامل» ليتعرّف على المنتج من صورته.'}${(Q.features || []).length ? ' علاماته: ' + Q.features.map(e).join('، ') : ''}</p>
-<div class="grid2" style="gap:8px;margin:0"><label class="fl">بالإنجليزية (AliExpress، Alibaba)<input id="sup-q" dir="ltr" value="${e(Q.q || '')}" placeholder="e.g. star projector night light"></label><label class="fl">بالصينية (1688، Taobao، Pinduoduo)<input id="sup-zh" dir="auto" value="${e(Q.zh || '')}" placeholder="مثل: 星空投影小夜灯"></label></div>
+<div class="grid2" style="gap:8px;margin:0"><label class="fl">بالإنجليزية (AliExpress، Alibaba)<input id="sup-q" dir="ltr" value="${e(Q.q || '')}" placeholder="e.g. star projector night light"></label><label class="fl">بالصينية (1688، Taobao)<input id="sup-zh" dir="auto" value="${e(Q.zh || '')}" placeholder="مثل: 星空投影小夜灯"></label></div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0">${Object.keys(MKS).map(m => `<label class="fl chk" style="margin:0" title="${e(MKS[m].note)}"><input type="checkbox" data-sm="${m}"${sel.includes(m) ? ' checked' : ''}> ${e(MKS[m].n)} <small>(${e(MKS[m].note)})</small></label>`).join('')}</div>
 ${zhWarn}
 <p style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 0"><button class="btn" data-tm="sup-go">🔎 ابحث بالكلمة في الأسواق المختارة</button></p>
-<p class="sub" style="margin:4px 0 0">تفتح الإضافة كل سوق في تبويب، تقرأ النتائج وتعود، ثم تقارن المنصة صورة كل نتيجة بصورة منتجك وتحوّل السعر (يوان/دولار) إلى الدينار. Taobao وPinduoduo يحتاجان أن تكون مسجّلاً فيهما على Chrome (وPinduoduo يطلب رقم هاتف).</p>
+<p class="sub" style="margin:4px 0 0">تفتح الإضافة كل سوق في تبويب، تقرأ النتائج وتعود، ثم تقارن المنصة صورة كل نتيجة بصورة منتجك وتحوّل السعر (يوان/دولار) إلى الدينار. Taobao يحتاج أن تكون مسجّلاً فيه على Chrome.</p>
 ${im ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><b>🖼️ ابحث بصورة المنتج مباشرة</b><p class="sub" style="margin:2px 0 6px">تفتح الإضافة السوق وترفع صورة المنتج في «البحث بالصورة» تلقائياً.</p>
 <div style="display:flex;gap:6px;flex-wrap:wrap">${imgBtns(im)}<a class="btn ghost sm" target="_blank" rel="noopener" href="https://lens.google.com/uploadbyurl?url=${encodeURIComponent(im)}">Google Lens ↗</a><a class="btn ghost sm" target="_blank" rel="noopener" href="https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(im)}">Yandex ↗</a></div></div>` : ''}</div></div>
 ${items.length ? supCards(items) : '<p class="sub" style="margin-top:12px">لا نتائج بعد.</p>'}${prev.updated_at ? `<p class="sub" style="margin-top:8px">آخر بحث: ${X.fd(prev.updated_at)} · ${num(items.length)} نتيجة</p>` : ''}`; };
@@ -165,7 +164,7 @@ ${items.length ? supCards(items) : '<p class="sub" style="margin-top:12px">لا 
     async done(ev, ctx) {
       const r = await X.api('GET', '/sup?k=' + encodeURIComponent(ctx.k)), p = productOf(ctx.k, ctx.saved);
       await supRank(ctx.k, r.items || [], p);
-      X.toast(r.items && r.items.length ? 'وُجدت ' + num(r.items.length) + ' نتيجة في الأسواق الصينية' : 'لم تُقرأ نتائج. جرّب عبارة أخرى أو تأكد أنك ترى نتائج في التبويب (وأنك مسجّل في Taobao/Pinduoduo).', r.items && r.items.length ? '' : 'err');
+      X.toast(r.items && r.items.length ? 'وُجدت ' + num(r.items.length) + ' نتيجة في الأسواق الصينية' : 'لم تُقرأ نتائج. جرّب عبارة أخرى أو تأكد أنك ترى نتائج في التبويب (وأنك مسجّل في Taobao).', r.items && r.items.length ? '' : 'err');
       if (p) openSupplier(ctx.k, ctx.saved);
     }
   };

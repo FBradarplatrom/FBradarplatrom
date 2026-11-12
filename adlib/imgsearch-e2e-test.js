@@ -15,18 +15,27 @@ mf.content_scripts.forEach(c => { if (c.js.includes('relay.js')) c.matches = ['*
 mf.host_permissions = mf.host_permissions.filter(x => !x.includes('YOUR-PLATFORM-DOMAIN')).concat(['*://127.0.0.1/*']);
 fs.writeFileSync(path.join(EXT, 'manifest.json'), JSON.stringify(mf, null, 2));
 
-// صفحات الأسواق المحاكاة: كل رفع ناجح يكتب نوع الملف وحجمه في العنوان
-const GOT = `function got(i){i.addEventListener('change',()=>{const f=i.files[0];document.title='GOT:'+f.type+':'+f.size+':'+f.name})}`;
+// صفحات الأسواق المحاكاة على شكل الصفحات الحقيقية (لقطات 11/2026). كل استلام للصورة يكتب نوعها وحجمها واسمها في العنوان
+const GOT = `function gotF(f,how){document.title='GOT:'+f.type+':'+f.size+':'+f.name+':'+how}function got(i){i.addEventListener('change',()=>gotF(i.files[0],'file'))}`;
 const PAGES = {
-  // أيقونة كاميرا تُنشئ خانة الرفع عند الضغط (مثل AliExpress)
-  'www.aliexpress.com': `<header><input placeholder="search"><span class="search--picSearch--x1" title="Search by image" style="display:inline-block;width:24px;height:24px">📷</span></header>
-<script>${GOT};document.querySelector('.search--picSearch--x1').onclick=()=>{if(document.querySelector('input[type=file]'))return;const p=document.createElement('div');p.innerHTML='<div class="upload-box">Drop image<input type="file" accept="image/*" style="display:none"></div>';document.body.appendChild(p);got(p.querySelector('input'))}</script>`,
-  // خانة الرفع موجودة مسبقاً ومخفية (مثل 1688)
-  'www.1688.com': `<div class="search"><input name="keywords"><label class="img-search-upload"><i class="camera"></i><input type="file" accept=".jpg,.jpeg,.png" hidden></label></div><script>${GOT};got(document.querySelector('input[type=file]'))</script>`,
-  // أيقونة بالصينية في title (مثل Alibaba/Taobao بعناوين مختلفة)
-  'www.alibaba.com': `<div><button title="以图搜款" style="width:30px;height:30px">◎</button></div><script>${GOT};document.querySelector('button').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);got(i)}</script>`,
-  // صفحة دخول بلا بحث بالصورة (مثل Taobao لغير المسجّل)
-  'www.taobao.com': `<h1>请登录</h1><input type="password">`
+  // AliExpress: أيقونة كاميرا داخل خانة البحث ← نافذة «Search by image»: منطقة سحب + زر «Upload a photo» (خانة الرفع تُنشأ عند الضغط)
+  'www.aliexpress.com': `<header><input placeholder="99 Cents For 3 Items" style="width:380px"><span class="search--picSearch--3aeyGeH" style="display:inline-block;width:24px;height:24px"><svg width="20" height="20"></svg></span></header>
+<script>${GOT};document.querySelector('.search--picSearch--3aeyGeH').onclick=()=>{const p=document.createElement('div');p.innerHTML='<b>Search by image</b><div class="drop" style="width:280px;height:120px">Drag an image here<br>or<button>Upload a photo</button></div>';document.body.appendChild(p);const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';p.appendChild(i);got(i)}</script>`,
+  // 1688: زر نصّي «以图搜款» ← لوحة سحب وإفلات فقط (بلا خانة رفع ظاهرة)
+  'www.1688.com': `<div><input placeholder="全球热销" style="width:500px"><button style="width:140px;height:40px">搜索</button><div class="btn-img" style="display:inline-block;width:140px;height:40px"><i></i>以图搜款</div></div>
+<script>${GOT};document.querySelector('.btn-img').onclick=()=>{const z=document.createElement('div');z.style.cssText='width:500px;height:200px';z.textContent='拖放文件到此处 点击上传或按 Ctrl+V 粘贴';z.addEventListener('dragover',e=>e.preventDefault());z.addEventListener('drop',e=>{e.preventDefault();gotF(e.dataTransfer.files[0],'drop')});document.body.appendChild(z)}</script>`,
+  // Alibaba (بالفرنسية): «Recherche par image» تحت خانة البحث (وكلمة Dropshipping في القائمة لا تُخلط بمنطقة السحب)
+  'www.alibaba.com': `<nav><a>Toutes les catégories</a> <a>Dropshipping</a></nav><div><input placeholder="climatiseur portable" style="width:600px"><div class="sb"><span><i></i></span><span>Recherche par image</span></div></div>
+<script>${GOT};document.querySelector('.sb').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);got(i)}</script>`,
+  // Taobao: زر «搜同款» بجانب البحث
+  'www.taobao.com': `<div><input value="海报" style="width:500px"><button>搜索</button><div class="tb-img" style="display:inline-block;width:100px;height:40px">搜同款</div></div>
+<script>${GOT};document.querySelector('.tb-img').onclick=()=>{const i=document.createElement('input');i.type='file';i.style.display='none';document.body.appendChild(i);got(i)}</script>`
+};
+const VARIANT = {
+  // AliExpress دون أيقونة معروفة: يقبل لصق الصورة (Ctrl+V) في خانة البحث
+  'ali-paste': `<input placeholder="search" style="width:400px"><script>${GOT};document.querySelector('input').addEventListener('paste',e=>gotF(e.clipboardData.files[0],'paste'))</script>`,
+  // Taobao لغير المسجّل: صفحة دخول بلا بحث بالصورة
+  'taobao-login': `<h1>请登录</h1><input type="password">`
 };
 
 (async () => {
@@ -38,6 +47,7 @@ const PAGES = {
     args: ['--headless=new', '--disable-extensions-except=' + EXT, '--load-extension=' + EXT] });
   try {
     for (const h of Object.keys(PAGES)) await ctx.route('https://' + h + '/**', r => r.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><body>' + PAGES[h] + '</body>' }));
+    const got = async (p) => { await p.waitForFunction(() => document.title.startsWith('GOT:'), null, { timeout: 15000 }); return (await p.title()).split(':'); };
     // صورة المنتج كما يعيدها وكيل الصور في المنصة
     let png = null;
     await ctx.route('**/api/img?**', r => r.fulfill({ contentType: 'image/png', body: png }));
@@ -61,30 +71,31 @@ const PAGES = {
       const res = nextToast('أُرسلت|لم نجد|تعذّر');
       const [p, out] = await Promise.all([tab, res]); return { p, out };
     };
-    // 1) AliExpress: أيقونة الكاميرا تُضغط، تظهر خانة الرفع، وتوضع الصورة
-    let { p, out } = await run('ali', 'www.aliexpress.com');
-    await p.waitForFunction(() => document.title.startsWith('GOT:'), null, { timeout: 15000 });
-    const t1 = (await p.title()).split(':');
-    ok(t1[1] === 'image/jpeg' && +t1[2] > 1000 && t1[3] === 'product.jpg' && /أُرسلت/.test(out.msg), 'AliExpress: camera icon clicked and the product photo (JPEG) uploaded to image search');
-    // 2) 1688: خانة رفع موجودة مخفية
-    ({ p, out } = await run('1688', 'www.1688.com'));
-    await p.waitForFunction(() => document.title.startsWith('GOT:'), null, { timeout: 15000 });
-    ok(/أُرسلت/.test(out.msg), '1688: hidden upload field filled with the product photo');
-    // 3) Alibaba: أيقونة بعنوان صيني «以图搜款»
-    ({ p, out } = await run('alibaba', 'www.alibaba.com'));
-    await p.waitForFunction(() => document.title.startsWith('GOT:'), null, { timeout: 15000 });
-    ok(/أُرسلت/.test(out.msg), 'Alibaba: image-search button found by its Chinese title, photo uploaded');
-    // 4) Taobao بلا تسجيل دخول: لا خانة رفع → لوحة بالصورة داخل الصفحة + رسالة واضحة
+    // 1) AliExpress: أيقونة الكاميرا ← نافذة البحث بالصورة ← الصورة في خانة الرفع
+    let { p, out } = await run('ali', 'www.aliexpress.com'), t = await got(p);
+    ok(t[1] === 'image/jpeg' && +t[2] > 1000 && t[3] === 'product.jpg' && t[4] === 'file' && /أُرسلت/.test(out.msg), 'AliExpress: camera icon opens "Search by image" and the product photo (JPEG) is uploaded');
+    await p.close();
+    // 2) 1688: زر «以图搜款» ← لوحة سحب وإفلات
+    ({ p, out } = await run('1688', 'www.1688.com')); t = await got(p);
+    ok(t[4] === 'drop' && /أُرسلت/.test(out.msg), '1688: «以图搜款» button, photo dropped into the drag-and-drop area'); await p.close();
+    // 3) Alibaba بالفرنسية: «Recherche par image» (ولا يُخلط بـ Dropshipping)
+    ({ p, out } = await run('alibaba', 'www.alibaba.com')); t = await got(p);
+    ok(t[4] === 'file' && /أُرسلت/.test(out.msg), 'Alibaba (French UI): «Recherche par image» found by its text, photo uploaded'); await p.close();
+    // 4) Taobao: «搜同款»
+    ({ p, out } = await run('taobao', 'www.taobao.com')); t = await got(p);
+    ok(t[4] === 'file' && /أُرسلت/.test(out.msg), 'Taobao: «搜同款» button, photo uploaded'); await p.close();
+    // 5) AliExpress بلا أيقونة معروفة: لصق الصورة في خانة البحث (Ctrl+V)
+    PAGES['www.aliexpress.com'] = VARIANT['ali-paste'];
+    ({ p, out } = await run('ali', 'www.aliexpress.com')); t = await got(p);
+    ok(t[4] === 'paste' && t[1] === 'image/jpeg', 'AliExpress fallback: photo pasted into the search box (like Ctrl+V)'); await p.close();
+    // 6) Taobao بلا تسجيل دخول: لوحة بالصورة داخل الصفحة + رسالة واضحة
+    PAGES['www.taobao.com'] = VARIANT['taobao-login'];
     ({ p, out } = await run('taobao', 'www.taobao.com'));
     ok(out.k === 'err' && /لم نجد زر البحث بالصورة/.test(out.msg), 'Taobao login page: the user is told to upload it from the camera icon');
     await p.waitForSelector('a[download="product.jpg"]', { timeout: 10000 });
     ok(/الكاميرا/.test(await p.evaluate(() => document.documentElement.textContent)), 'a panel with the product photo and a save button is shown on the market page');
-    // 5) Pinduoduo: لا بحث بالصورة في موقعه → تنزيل الصورة + شرح التطبيق، دون فتح تبويب
-    const dl = pg.waitForEvent('download', { timeout: 10000 });
-    await pg.evaluate(() => window.WPRIMG.search('pdd', 'https://cdn.example.test/p.png'));
-    const pdd = (await nextToast('Pinduoduo')).msg;
-    ok(/تطبيقه فقط/.test(pdd) && (await dl).suggestedFilename().endsWith('.jpg'), 'Pinduoduo: explained (image search is app-only) and the photo is downloaded');
-    // 6) الإضافة ترفض صورة غير صالحة وسوقاً غير معروف
+    ok(!(await pg.evaluate(() => window.WPRIMG.markets.pdd)), 'Pinduoduo is no longer offered');
+    // 7) الإضافة ترفض صورة غير صالحة وسوقاً غير معروف
     const bad = await pg.evaluate(async () => [await window.WPRLIB.bridge.send('imgsearch', { market: 'ali', image: 'javascript:alert(1)' }, 5000), await window.WPRLIB.bridge.send('imgsearch', { market: 'evil', image: 'data:image/jpeg;base64,AAAA' }, 5000)]);
     ok(bad[0].ok === false && bad[0].error === 'image' && bad[1].error === 'market', 'extension refuses non-image data and unknown markets');
     ok(!errs.length, 'no page errors ' + errs.join(' | '));

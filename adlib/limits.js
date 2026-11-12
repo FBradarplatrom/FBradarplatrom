@@ -27,7 +27,7 @@ function limitsOf(u) {
   if (u.role === 'admin') return Object.fromEntries(KEYS.map(k => [k, Infinity]));
   let L = {};
   try { const p = db && db.prepare('select limits from plans where name=?').get(u.plan); if (p) L = JSON.parse(p.limits || '{}'); } catch (e) {}
-  const d = DEF(); for (const k of KEYS) { const v = Number(L[k]); if (Number.isFinite(v) && v > 0) d[k] = v; }
+  const d = DEF(); for (const k of KEYS) { if (L[k] == null || L[k] === '') continue; const v = Number(L[k]); if (v === -1) d[k] = Infinity; else if (Number.isFinite(v) && v >= 0) d[k] = v; }   // −1 = بلا حد، 0 = غير متاح
   return d;
 }
 const err = (m) => Object.assign(new Error(m), { status: 429 });
@@ -43,6 +43,7 @@ function usage(u) {
 // يُستدعى قبل كل طلب ذكاء اصطناعي: يرفض إن نفد الرصيد الشهري، وإلا يحتسبه
 function useAI(u) {
   const L = limitsOf(u), m = month(), r = db.prepare('select n from ai_usage where user_id=? and month=?').get(u.id, m), n = r ? r.n : 0;
+  if (!L.aiPerMonth) throw err('الذكاء الاصطناعي غير متاح في باقتك. رقِّ باقتك من «اشتراكي».');
   if (n >= L.aiPerMonth) throw err(`بلغت حد باقتك من طلبات الذكاء الاصطناعي هذا الشهر (${L.aiPerMonth}). رقِّ باقتك من «اشتراكي».`);
   db.prepare('insert into ai_usage(user_id,month,n) values(?,?,1) on conflict(user_id,month) do update set n=n+1').run(u.id, m);
 }
@@ -50,6 +51,17 @@ function useAI(u) {
 function refundAI(uid) { try { db.prepare('update ai_usage set n=max(0,n-1) where user_id=? and month=?').run(uid, month()); } catch (e) {} }
 function check(u, key, current) {
   const L = limitsOf(u);
+  if (!L[key]) throw err(`${LABEL[key]}: غير متاح في باقتك. رقِّ باقتك من «اشتراكي».`);
   if (current >= L[key]) throw err(`بلغت حد باقتك: ${LABEL[key]} (${L[key]}). رقِّ باقتك من «اشتراكي».`);
 }
-module.exports = { init, limitsOf, usage, useAI, refundAI, check, KEYS, LABEL, DEF, FEATS, FLABEL, featuresOf, has };
+// الوقت المتبقي عند تغيير الباقة: يُحوَّل بنسبة السعر الشهري (20 يوماً في باقة بـ3900 = 11 يوماً في باقة بـ6900)،
+// فلا تتحول أيام الباقة الأرخص إلى أيام كاملة في الأغلى. نفس الباقة أو التجربة المجانية أو باقة بلا سعر: يبقى كما هو.
+function carryOver(u, newPlan, t) {
+  const left = Math.max(0, (u.expires_at || 0) - t); if (!left || !newPlan || u.plan === newPlan) return left;
+  try {
+    const a = db.prepare('select price, free from plans where name=?').get(u.plan), b = db.prepare('select price from plans where name=?').get(newPlan);
+    if (!a || !b || a.free || !(a.price > 0) || !(b.price > 0)) return left;
+    return Math.round(left * a.price / b.price);
+  } catch (e) { return left; }
+}
+module.exports = { init, carryOver, limitsOf, usage, useAI, refundAI, check, KEYS, LABEL, DEF, FEATS, FLABEL, featuresOf, has };

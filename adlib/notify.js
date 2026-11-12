@@ -122,8 +122,15 @@ create index if not exists notify_log_u on notify_log(user_id, id);`);
       if (kvGet(u.id, 'exp_note', 0) === u.expires_at) continue; kvSet(u.id, 'exp_note', u.expires_at);
       fire(u.id, 'expiry', '⏰ اشتراكك ينتهي خلال ' + Math.max(1, Math.ceil((u.expires_at - t) / 864e5)) + ' يوم. جدّده الآن من «اشتراكي» حتى لا يتوقف عملك.', '/subscription');
     } } catch (e) {} };
-  setTimeout(remind, 30e3).unref(); setInterval(remind, 6 * 36e5).unref();
-  return { notify: fire, notifyNow: notify, notifyAdmins, remind };
+  // عند الانتهاء نفسه (خلال يومين بعده): تنبيه واحد «انتهى اشتراكك»
+  const ended = () => { try {
+    const t = now(); for (const u of db.prepare("select id,expires_at from users where role!='admin' and expires_at>0 and expires_at<=? and expires_at>?").all(t, t - 2 * 864e5)) {
+      if (kvGet(u.id, 'exp_done', 0) === u.expires_at) continue; kvSet(u.id, 'exp_done', u.expires_at);
+      fire(u.id, 'expiry', '⛔ انتهى اشتراكك، فتوقفت أدوات البحث والتحليل. بياناتك محفوظة كما هي: جدّد من «اشتراكي» لتعود فوراً.', '/subscription');
+    } } catch (e) {} };
+  const tick = () => { remind(); ended(); };
+  setTimeout(tick, +process.env.REMIND_FIRST_MS || 30e3).unref(); setInterval(tick, 6 * 36e5).unref();
+  return { notify: fire, notifyNow: notify, notifyAdmins, remind, ended };
 };
 module.exports.EV = EV;
 module.exports.fire = (...a) => { if (db) notifyFire(...a); };

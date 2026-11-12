@@ -416,17 +416,24 @@ ${ALL_SCRIPTS.filter(sc => n.comps[sc]).map(sc => `<div class="l-sub">${SCN[sc]}
   async function drawExt() {
     if (!STATS) await loadStats();
     const admin = X.me().role === 'admin', hosts = (STATS.ext && STATS.ext.hosts) || [];
+    const store = STATS.ext && STATS.ext.store;
+    // التثبيت اليدوي (ملف ZIP): الطريقة الوحيدة قبل النشر في المتجر، وبديل بعده (نسخة تجريبية أو دومين آخر)
+    const manual = `<ol class="l-steps"><li><a class="btn sm" href="/api/lib/extension.zip" download>⬇️ نزّل الإضافة</a> وفُكّ الضغط في مجلد دائم (لا تحذفه بعد التثبيت).</li>
+<li>افتح <code>chrome://extensions</code> وفعّل <b>وضع المطوّر</b>.</li><li>اضغط <b>تحميل إضافة غير مضغوطة</b> واختر المجلد <code>radar-ad-collector</code>.</li>
+<li>افتح هذه الصفحة: تتحول الحالة إلى «الإضافة متصلة» (وإن لم تتحول اضغط F5).</li>
+<li>عند تحديث الإضافة لاحقاً: نزّل الجديدة، استبدل المجلد، اضغط أيقونة التحديث في chrome://extensions ثم F5 هنا.</li></ol>`;
     $('#l-body').innerHTML = `${extCard()}<div class="card" style="margin-top:14px"><h2>تثبيت الإضافة (مرة واحدة)</h2>
 <p class="sub">الإضافة صغيرة مهمتها فتح مكتبة إعلانات ميتا وتمريرها والتقاط الإعلانات وإرسالها إلى حسابك هنا. كل الواجهة والتحليل في المنصة. لا تحمل مفاتيح ولا كلمات مرور.</p>
-<ol class="l-steps"><li><a class="btn sm" href="/api/lib/extension.zip" download>⬇️ نزّل الإضافة</a> وفُكّ الضغط في مجلد دائم (لا تحذفه بعد التثبيت).</li>
-<li>افتح <code>chrome://extensions</code> وفعّل <b>وضع المطوّر</b>.</li><li>اضغط <b>تحميل إضافة غير مضغوطة</b> واختر المجلد <code>radar-ad-collector</code>.</li>
-<li>افتح هذه الصفحة: تتحول الحالة إلى «الإضافة متصلة» (وإن لم تتحول اضغط F5).</li><li>اضغط أيقونة الإضافة في Chrome لترى تقدّم الجمع وتتحكم في الإرسال.</li>
-<li>عند تحديث الإضافة لاحقاً: نزّل الجديدة، استبدل المجلد، اضغط أيقونة التحديث في chrome://extensions ثم F5 هنا.</li></ol></div>
+${store ? `<ol class="l-steps"><li><a class="btn sm" href="${e(store)}" target="_blank" rel="noopener">🧩 الإضافة في متجر Chrome ↗</a></li><li>في المتجر اضغط «إضافة إلى Chrome» (Add to Chrome) ثم «إضافة الإضافة».</li>
+<li>ثبّتها في شريط Chrome: اضغط أيقونة قطعة البازل 🧩 أعلى المتصفح، ثم الدبوس 📌 بجانب «Winning Product Radar».</li>
+<li>عد إلى هذه الصفحة واضغط F5: تتحول الحالة إلى «الإضافة متصلة».</li><li>اضغط أيقونة الإضافة في Chrome لترى تقدّم الجمع وتتحكم في الإرسال.</li>
+<li>التحديثات تصل تلقائياً من المتجر، فلا تحتاج لتنزيل شيء بعد اليوم.</li></ol>
+<details class="fx" style="margin-top:10px"><summary>تثبيت يدوي من ملف (بديل)</summary>${manual}</details>` : manual}</div>
 <div class="card" style="margin-top:14px"><h2>ملاحظات مهمة</h2><ul class="l-steps"><li>تعمل على <b>Chrome للحاسوب</b> (116 فأحدث). النتائج والتحليل تعمل من الجوال بعد الجمع.</li>
 <li>أثناء الجمع <b>اترك تبويب فيسبوك ظاهراً</b> وصفحة المنصة مفتوحة في تبويب آخر. فيسبوك لا يحمّل المزيد في تبويب مخفي.</li>
 <li>يجب أن تكون مسجلاً الدخول إلى فيسبوك. لا تقرأ الإضافة شيئاً خارج مكتبة الإعلانات.</li>
 <li>الحدود لحماية حسابك: ${STATS ? num(STATS.limits.maxBatch) + ' بحثاً في الدفعة و' + num(STATS.limits.maxDay) + ' في اليوم' : 'حدود يومية'}، وسرعة عادية أو بطيئة. شروط ميتا تقيّد الجمع الآلي وتبعته عليك.</li></ul>
-${B.ok ? '' : '<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَّلة في <code>chrome://extensions</code>، ثم أعد تحميل هذه الصفحة (F5). وإن كانت لديك نسخة قديمة فاحذفها ونزّل الجديدة.</p>'}</div>
+${B.ok ? '' : `<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَّلة في <code>chrome://extensions</code>، ثم أعد تحميل هذه الصفحة (F5).</p><p class="sub">${store ? 'وإن كانت لديك نسخة يدوية قديمة فاحذفها وثبّتها من المتجر.' : 'وإن كانت لديك نسخة قديمة فاحذفها ونزّل الجديدة.'}</p>`}</div>
 ${admin ? `<div class="card" style="margin-top:14px"><h2>للمدير</h2><p class="sub">تُربط الإضافة المنزَّلة بهذه الدومينات: ${hosts.map(h => `<code>${e(h)}</code>`).join('، ') || '—'}.
 ${hosts.includes(location.hostname) ? 'عنوانك الحالي ضمنها.' : '<b style="color:var(--bad)">عنوانك الحالي <code>' + e(location.hostname) + '</code> ليس ضمنها: اضبط BRIDGE_ORIGINS في إعدادات الخادم ثم أعد التنزيل.</b>'}</p></div>` : ''}`;
   }
