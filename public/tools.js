@@ -76,15 +76,20 @@
     if (b && b.ok() && !vlt(b.version(), IMG_MIN)) {
       toast(`تفتح الإضافة ${M[0]} وتضع صورة المنتج في البحث بالصورة…`);
       return jpegOf(u).then(image => b.send('imgsearch', { market: m, image }, 60000)).then(r => {
-        if (r && r.ok) return toast(`✅ أُرسلت صورة المنتج إلى البحث بالصورة في ${M[0]}. النتائج في التبويب المفتوح.`);
-        toast(r && r.error === 'no_input' ? `لم نجد زر البحث بالصورة في ${M[0]} تلقائياً (قد يطلب تسجيل الدخول). وضعنا الصورة في أعلى صفحته: اضغط أيقونة الكاميرا وارفعها.` : `تعذّر إرسال الصورة إلى ${M[0]} (قد يكون حوّلك إلى صفحة أخرى). نزّلنا الصورة لترفعها من أيقونة الكاميرا.`, 'err');
-        if (!r || r.error !== 'no_input') saveImg(u).catch(() => {});
+        if (r && r.ok) return toast(`✅ بحث ${M[0]} بصورة المنتج: النتائج في التبويب المفتوح.`);
+        const E = r && r.error;
+        if (E === 'login') return toast(`${M[0]} يطلب تسجيل الدخول للبحث بالصورة. سجّل دخولك مرة واحدة من «الربط والتكامل ← حسابات الأسواق» ثم أعد المحاولة.`, 'err');
+        if (E === 'no_effect' || E === 'no_input') return toast(`لم يكتمل البحث بالصورة في ${M[0]} تلقائياً. وضعنا الصورة في أعلى صفحته: اضغط أيقونة الكاميرا وارفعها. إن تكرر، اضغط «نسخ تقرير للدعم» فيها وأرسله لنا.`, 'err');
+        toast(`تعذّر إرسال الصورة إلى ${M[0]} (قد يكون حوّلك إلى صفحة أخرى). نزّلنا الصورة لترفعها من أيقونة الكاميرا.`, 'err');
+        saveImg(u).catch(() => {});
       }).catch(x => toast(x.message === 'timeout' ? 'لم تردّ الإضافة. أعد تحميل الصفحة وجرّب مجدداً.' : x.message, 'err'));
     }
     W.open(M[1], '_blank', 'noopener');
     saveImg(u).then(() => toast(b && b.ok() ? `نزّلنا الصورة: اضغط أيقونة الكاميرا في ${M[0]} وارفعها. حدّث الإضافة إلى ${IMG_MIN} لتُرفع تلقائياً.` : `نزّلنا الصورة: اضغط أيقونة الكاميرا في ${M[0]} وارفعها. ثبّت الإضافة لتُرفع تلقائياً.`)).catch(x => toast(x.message, 'err'));
   }
-  W.WPRIMG = { search: imageSearch, markets: IMS };
+  // حالة تسجيل الدخول في الأسواق (من الإضافة 1.7.6): {ali, alibaba, 1688, taobao: true/false} أو null
+  const marketStatus = async () => { const b = W.WPRLIB && W.WPRLIB.bridge; if (!b || !b.ok() || vlt(b.version(), '1.7.6')) return null; try { const r = await b.send('mk_status', {}, 5000); return r && r.ok ? r.status : null; } catch (x) { return null; } };
+  W.WPRIMG = { search: imageSearch, markets: IMS, status: marketStatus };
   const imgBtns = u => Object.keys(IMS).map(m => `<button type="button" class="btn ghost sm" data-imgs="${m}" data-img="${e(u)}">${e(IMS[m][0])}</button>`).join('');
 
   const SK = 'wpr_sup_mk_v1', selMk = () => { try { return JSON.parse(localStorage.getItem(SK)) || ['ali', '1688', 'alibaba']; } catch (x) { return ['ali', '1688', 'alibaba']; } };
@@ -140,7 +145,7 @@ ${Object.keys(by).length > 1 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;
 ${zhWarn}
 <p style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 0"><button class="btn" data-tm="sup-go">🔎 ابحث بالكلمة في الأسواق المختارة</button></p>
 <p class="sub" style="margin:4px 0 0">تفتح الإضافة كل سوق في تبويب، تقرأ النتائج وتعود، ثم تقارن المنصة صورة كل نتيجة بصورة منتجك وتحوّل السعر (يوان/دولار) إلى الدينار. Taobao يحتاج أن تكون مسجّلاً فيه على Chrome.</p>
-${im ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><b>🖼️ ابحث بصورة المنتج مباشرة</b><p class="sub" style="margin:2px 0 6px">تفتح الإضافة السوق وترفع صورة المنتج في «البحث بالصورة» تلقائياً.</p>
+${im ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)"><b>🖼️ ابحث بصورة المنتج مباشرة</b><p class="sub" style="margin:2px 0 6px">تفتح الإضافة السوق وترفع صورة المنتج في «البحث بالصورة» تلقائياً. 1688 وTaobao يشترطان تسجيل الدخول: <a href="/integrations">الربط والتكامل ← حسابات الأسواق</a>.</p>
 <div style="display:flex;gap:6px;flex-wrap:wrap">${imgBtns(im)}<a class="btn ghost sm" target="_blank" rel="noopener" href="https://lens.google.com/uploadbyurl?url=${encodeURIComponent(im)}">Google Lens ↗</a><a class="btn ghost sm" target="_blank" rel="noopener" href="https://yandex.com/images/search?rpt=imageview&url=${encodeURIComponent(im)}">Yandex ↗</a></div></div>` : ''}</div></div>
 ${items.length ? supCards(items) : '<p class="sub" style="margin-top:12px">لا نتائج بعد.</p>'}${prev.updated_at ? `<p class="sub" style="margin-top:8px">آخر بحث: ${X.fd(prev.updated_at)} · ${num(items.length)} نتيجة</p>` : ''}`; };
     let ITEMS = prev.items || [];

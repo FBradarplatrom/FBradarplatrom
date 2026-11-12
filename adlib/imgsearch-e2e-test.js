@@ -16,7 +16,7 @@ mf.host_permissions = mf.host_permissions.filter(x => !x.includes('YOUR-PLATFORM
 fs.writeFileSync(path.join(EXT, 'manifest.json'), JSON.stringify(mf, null, 2));
 
 // صفحات الأسواق المحاكاة على شكل الصفحات الحقيقية (لقطات 11/2026). كل استلام للصورة يكتب نوعها وحجمها واسمها في العنوان
-const GOT = `function gotF(f,how){document.title='GOT:'+f.type+':'+f.size+':'+f.name+':'+how}function got(i){i.addEventListener('change',()=>gotF(i.files[0],'file'))}`;
+const GOT = `function gotF(f,how){document.title='GOT:'+f.type+':'+f.size+':'+f.name+':'+how;if(!window.NOOP)setTimeout(()=>{location.hash='results'},300)}function got(i){i.addEventListener('change',()=>gotF(i.files[0],'file'))}`;
 const PAGES = {
   // AliExpress: أيقونة كاميرا داخل خانة البحث ← نافذة «Search by image»: منطقة سحب + زر «Upload a photo» (خانة الرفع تُنشأ عند الضغط)
   'www.aliexpress.com': `<header><input placeholder="99 Cents For 3 Items" style="width:380px"><span class="search--picSearch--3aeyGeH" style="display:inline-block;width:24px;height:24px"><svg width="20" height="20"></svg></span></header>
@@ -34,9 +34,12 @@ const PAGES = {
 const VARIANT = {
   // AliExpress دون أيقونة معروفة: يقبل لصق الصورة (Ctrl+V) في خانة البحث
   'ali-paste': `<input placeholder="search" style="width:400px"><script>${GOT};document.querySelector('input').addEventListener('paste',e=>gotF(e.clipboardData.files[0],'paste'))</script>`,
-  // Taobao لغير المسجّل: صفحة دخول بلا بحث بالصورة
-  'taobao-login': `<h1>请登录</h1><input type="password">`
+  // Taobao لغير المسجّل: يحوّل فوراً إلى صفحة الدخول
+  'taobao-login': `<script>location.href='https://login.taobao.com/member/login.jhtml'</script>`,
+  // Alibaba يستلم الصورة ولا يفتح أي نتائج (تغيّر في الموقع): يجب ألا يُعدّ نجاحاً
+  'alibaba-noop': `<script>window.NOOP=1</script>` + PAGES['www.alibaba.com']
 };
+PAGES['login.taobao.com'] = `<h1>密码登录</h1><input type="password">`;
 
 (async () => {
   const env = Object.assign({}, process.env, { PORT, JWT_SECRET: 'x'.repeat(40), ADMIN_EMAIL: 'a@t.dz', DB_FILE: path.join(DIR, 'd.db'), NODE_ENV: 'test', BACKUP_DISABLE: '1' });
@@ -68,32 +71,47 @@ const VARIANT = {
     const run = async (m, host) => {
       const tab = ctx.waitForEvent('page', { timeout: 20000 }).then(async p => { await p.waitForURL('https://' + host + '/**', { timeout: 15000 }); return p; });
       await pg.evaluate(m => window.WPRIMG.search(m, 'https://cdn.example.test/p.png'), m);
-      const res = nextToast('أُرسلت|لم نجد|تعذّر');
+      const res = nextToast('النتائج في التبويب|لم يكتمل|يطلب تسجيل|تعذّر');
       const [p, out] = await Promise.all([tab, res]); return { p, out };
     };
     // 1) AliExpress: أيقونة الكاميرا ← نافذة البحث بالصورة ← الصورة في خانة الرفع
     let { p, out } = await run('ali', 'www.aliexpress.com'), t = await got(p);
-    ok(t[1] === 'image/jpeg' && +t[2] > 1000 && t[3] === 'product.jpg' && t[4] === 'file' && /أُرسلت/.test(out.msg), 'AliExpress: camera icon opens "Search by image" and the product photo (JPEG) is uploaded');
+    ok(t[1] === 'image/jpeg' && +t[2] > 1000 && t[3] === 'product.jpg' && t[4] === 'file' && /النتائج في التبويب/.test(out.msg), 'AliExpress: camera icon opens "Search by image" and the product photo (JPEG) is uploaded');
     await p.close();
     // 2) 1688: زر «以图搜款» ← لوحة سحب وإفلات
     ({ p, out } = await run('1688', 'www.1688.com')); t = await got(p);
-    ok(t[4] === 'drop' && /أُرسلت/.test(out.msg), '1688: «以图搜款» button, photo dropped into the drag-and-drop area'); await p.close();
+    ok(t[4] === 'drop' && /النتائج في التبويب/.test(out.msg), '1688: «以图搜款» button, photo dropped into the drag-and-drop area'); await p.close();
     // 3) Alibaba بالفرنسية: «Recherche par image» (ولا يُخلط بـ Dropshipping)
     ({ p, out } = await run('alibaba', 'www.alibaba.com')); t = await got(p);
-    ok(t[4] === 'file' && /أُرسلت/.test(out.msg), 'Alibaba (French UI): «Recherche par image» found by its text, photo uploaded'); await p.close();
+    ok(t[4] === 'file' && /النتائج في التبويب/.test(out.msg), 'Alibaba (French UI): «Recherche par image» found by its text, photo uploaded'); await p.close();
     // 4) Taobao: «搜同款»
     ({ p, out } = await run('taobao', 'www.taobao.com')); t = await got(p);
-    ok(t[4] === 'file' && /أُرسلت/.test(out.msg), 'Taobao: «搜同款» button, photo uploaded'); await p.close();
+    ok(t[4] === 'file' && /النتائج في التبويب/.test(out.msg), 'Taobao: «搜同款» button, photo uploaded'); await p.close();
     // 5) AliExpress بلا أيقونة معروفة: لصق الصورة في خانة البحث (Ctrl+V)
     PAGES['www.aliexpress.com'] = VARIANT['ali-paste'];
     ({ p, out } = await run('ali', 'www.aliexpress.com')); t = await got(p);
     ok(t[4] === 'paste' && t[1] === 'image/jpeg', 'AliExpress fallback: photo pasted into the search box (like Ctrl+V)'); await p.close();
-    // 6) Taobao بلا تسجيل دخول: لوحة بالصورة داخل الصفحة + رسالة واضحة
+    // 6) Taobao بلا تسجيل دخول: يُكتشف التحويل إلى صفحة الدخول، ورسالة تدلّه على «حسابات الأسواق»
     PAGES['www.taobao.com'] = VARIANT['taobao-login'];
-    ({ p, out } = await run('taobao', 'www.taobao.com'));
-    ok(out.k === 'err' && /لم نجد زر البحث بالصورة/.test(out.msg), 'Taobao login page: the user is told to upload it from the camera icon');
-    await p.waitForSelector('a[download="product.jpg"]', { timeout: 10000 });
-    ok(/الكاميرا/.test(await p.evaluate(() => document.documentElement.textContent)), 'a panel with the product photo and a save button is shown on the market page');
+    ({ p, out } = await run('taobao', 'login.taobao.com'));
+    ok(out.k === 'err' && /يطلب تسجيل الدخول/.test(out.msg) && /حسابات الأسواق/.test(out.msg), 'Taobao login page detected: the user is sent to «Integrations ← market accounts»');
+    await p.waitForSelector('#wpr-img-panel', { timeout: 10000 });
+    ok(/سجّل دخولك/.test(await p.textContent('#wpr-img-panel')), 'the market page shows a panel explaining the login is needed'); await p.close();
+    // 7) الصورة وُضعت لكن الموقع لم يفتح نتائج: لا يُعدّ نجاحاً، ولوحة فيها الصورة + تقرير للدعم
+    PAGES['www.alibaba.com'] = VARIANT['alibaba-noop'];
+    ({ p, out } = await run('alibaba', 'www.alibaba.com'));
+    ok(out.k === 'err' && /لم يكتمل البحث بالصورة/.test(out.msg), 'photo accepted but no results opened: reported as not finished (no false success)');
+    await p.waitForSelector('#wpr-img-panel a[download="product.jpg"]', { timeout: 10000 });
+    ok(/نسخ تقرير للدعم/.test(await p.textContent('#wpr-img-panel')), 'the panel offers «copy report for support»'); await p.close();
+    // 8) حالة الحسابات من الإضافة + بطاقة «حسابات الأسواق» في «الربط والتكامل»
+    let st = await pg.evaluate(() => window.WPRIMG.status());
+    ok(st && st.taobao === false && st['1688'] === false, 'market accounts: not logged in at first');
+    await ctx.addCookies([{ name: 'unb', value: '2200000000', domain: '.taobao.com', path: '/', secure: true }, { name: '__cn_logon__', value: 'true', domain: '.1688.com', path: '/', secure: true }]);
+    st = await pg.evaluate(() => window.WPRIMG.status());
+    ok(st.taobao === true && st['1688'] === true && st.ali === false, 'after logging in to Taobao and 1688 the extension sees it (cookie presence only)');
+    await pg.goto(BASE + '/integrations'); await pg.waitForSelector('#x-mk table');
+    const mk = await pg.textContent('#x-mk');
+    ok(/Taobao[^]*مسجّل الدخول/.test(mk) && /AliExpress[^]*غير مسجّل/.test(mk) && (await pg.$$('#x-mk a[href^="https://login."]')).length === 2, 'Integrations shows each market account and a login button for the missing ones');
     ok(!(await pg.evaluate(() => window.WPRIMG.markets.pdd)), 'Pinduoduo is no longer offered');
     // 7) الإضافة ترفض صورة غير صالحة وسوقاً غير معروف
     const bad = await pg.evaluate(async () => [await window.WPRLIB.bridge.send('imgsearch', { market: 'ali', image: 'javascript:alert(1)' }, 5000), await window.WPRLIB.bridge.send('imgsearch', { market: 'evil', image: 'data:image/jpeg;base64,AAAA' }, 5000)]);

@@ -409,13 +409,22 @@ ${field('ga_id', 'Google Analytics 4 (Measurement ID)', 'G-XXXXXXXXXX')}${field(
     el.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>';
     const me = X.me(), adm = me.role === 'admin', br = W.WPRLIB && W.WPRLIB.bridge;
     const [sheets, cfg, notif] = await Promise.all([X.api('GET', '/sheets').catch(() => ({})), null, X.api('GET', '/notify').catch(() => null)]);
-    const tt = br && br.ok() && W.WPRJOB ? await W.WPRJOB.ttStatus() : null;
     const S = (ok, t) => `<span class="int-s"><i class="${ok ? 'ok' : ''}"></i>${t}</span>`;
+    for (let i = 0; i < 10 && br && !br.ok(); i++) await new Promise(r => setTimeout(r, 200));   // الإضافة تتصل بعد تحميل الصفحة بلحظات
+    const [tt, mk] = await Promise.all([br && br.ok() && W.WPRJOB ? W.WPRJOB.ttStatus() : null, W.WPRIMG ? W.WPRIMG.status() : null]);
+    // حسابات أسواق المورّدين: البحث بالصورة يستعمل جلستك في Chrome (1688 وTaobao يشترطان الدخول)
+    const MKA = [['1688', '1688', 'https://login.1688.com/member/signin.htm', 1], ['taobao', 'Taobao', 'https://login.taobao.com/', 1], ['ali', 'AliExpress', 'https://login.aliexpress.com/', 0], ['alibaba', 'Alibaba', 'https://login.alibaba.com/', 0]];
+    const mkCard = `<div class="card" style="grid-column:1/-1" id="x-mk"><h2>حسابات أسواق المورّدين (للبحث بالصورة)</h2>
+<p class="sub">البحث بصورة المنتج يتم في متصفحك بحسابك أنت. سجّل الدخول مرة واحدة في Chrome، فيعمل البحث بالصورة مباشرة. 1688 وTaobao يشترطان الدخول، والدخول في AliExpress وAlibaba اختياري. يمكنك الدخول إلى 1688 بحساب Taobao نفسه.</p>
+${mk ? `<div class="tbw"><table class="tb">${MKA.map(([k, n, url, need]) => `<tr><td><b>${n}</b> <small class="muted">${need ? '(يشترط الدخول)' : '(اختياري)'}</small></td><td>${S(!!mk[k], mk[k] ? 'مسجّل الدخول' : 'غير مسجّل')}</td><td>${mk[k] ? '' : `<a class="btn sm${need ? '' : ' ghost'}" href="${url}" target="_blank" rel="noopener">سجّل الدخول ↗</a>`}</td></tr>`).join('')}</table></div>
+<p style="margin:8px 0 0"><button class="btn ghost sm" data-int="mkcheck">↻ تحقق مجدداً بعد الدخول</button></p>`
+  : `<p class="sub">${br && br.ok() ? 'حدّث الإضافة إلى الإصدار 1.7.6 أو أحدث لرؤية حالة الحسابات هنا.' : 'ثبّت الإضافة أولاً لرؤية حالة الحسابات.'}</p><div style="display:flex;gap:6px;flex-wrap:wrap">${MKA.map(([k, n, url]) => `<a class="btn ghost sm" href="${url}" target="_blank" rel="noopener">${n}: سجّل الدخول ↗</a>`).join('')}</div>`}</div>`;
     const C = cfg ? cfg.config : {};
     const field = (k, label, ph, type) => `<label class="fl">${label}${C[k] && C[k].source === 'env' ? ' <small>(من إعدادات الخادم)</small>' : ''}<input data-cfg="${k}" ${type === 'secret' ? 'type="password" autocomplete="off"' : ''} dir="ltr" value="${e(C[k] ? C[k].value : '')}" placeholder="${e(ph || '')}"></label>`;
     el.innerHTML = `<div class="int-g">
 <div class="card"><h2>إضافة Chrome</h2>${S(br && br.ok(), br && br.ok() ? 'متصلة · الإصدار ' + e(br.version()) : 'غير متصلة')}<p class="sub">تجمع إعلانات مكتبة ميتا، وتبحث عن المورّد في الأسواق الصينية، وتبحث في TikTok.</p><button class="btn ghost sm" data-v="collect" data-int="ext">التثبيت والتحديث</button></div>
 <div class="card"><h2>TikTok</h2>${S(tt === true, tt === true ? 'مربوط (مسجّل الدخول في Chrome)' : tt === false ? 'غير مربوط' : 'غير معروف (الإضافة غير متصلة)')}<p class="sub">سجّل الدخول في TikTok على نفس المتصفح مرة واحدة: تبحث الإضافة بجلستك دون نافذة التسجيل.</p><a class="btn ghost sm" href="https://www.tiktok.com/login" target="_blank" rel="noopener">🔑 سجّل الدخول في TikTok</a></div>
+${mkCard}
 <div class="card" style="grid-column:1/-1"><h2>Google Sheets</h2>${S(!!sheets.url, sheets.url ? 'مربوط' : 'غير مربوط')}<p class="sub">أرسل نتائج التحليل والمنتجات المحفوظة إلى جدولك مباشرة بزر «📤 إلى Google Sheets». الربط مرة واحدة:</p>
 <ol class="sub" style="line-height:2"><li>افتح جدولاً جديداً في Google Sheets، ثم <b>Extensions ← Apps Script</b>.</li><li>امسح ما فيه والصق الكود أدناه، وغيّر <code>TOKEN</code> إلى رمز سري من اختيارك.</li><li><b>Deploy ← New deployment ← Web app</b>: Execute as <b>Me</b> و Who has access <b>Anyone</b>، ثم <b>Deploy</b> ووافق على الأذونات.</li><li>انسخ رابط <b>Web app</b> (ينتهي بـ /exec) والصقه هنا مع نفس الرمز السري.</li></ol>
 <div style="display:flex;gap:8px;margin:6px 0"><button class="btn ghost sm" data-a="gcopy">نسخ كود Apps Script</button></div>
@@ -430,6 +439,7 @@ ${notif ? `<div class="card" id="x-notif"></div>` : ''}
     const b = ev.target.closest('[data-int]'); if (!b) return;
     const a = b.dataset.int;
     if (['tglink', 'tgcheck', 'tgoff', 'ntest'].includes(a)) return onNotify(a, b);
+    if (a === 'mkcheck') return drawIntegrations();
     if (a === 'ext') { localStorage.setItem('wpr_collect_prefs_v1', JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('wpr_collect_prefs_v1') || '{}'), { tab: 'ext' }))); return; }
     if (a === 'save') { const body = {}; b.closest('.card').querySelectorAll('[data-cfg]').forEach(i => { body[i.dataset.cfg] = i.value; }); await X.api('PUT', '/admin/config', body); X.toast('حُفظت الإعدادات'); return X.cur() === 'integrations' ? drawIntegrations() : drawAdmin(); }
     if (a === 'mailtest') { const r = $('#mail-r'); r.innerHTML = '<p class="sub">جارٍ الإرسال…</p>'; try { const j = await X.api('POST', '/admin/mail-test', { to: ($('#mail-to') || {}).value || '' }); r.innerHTML = `<div class="alert ok" style="margin-top:10px">أُرسل إلى ${e(j.to)} من ${e(j.from)}. ردّ الخادم: <code dir="ltr">${e(j.response || '')}</code><br>افحص صندوق الوارد والرسائل غير المرغوبة. إن لم يصل خلال دقائق فاضغط «فحص إعدادات الدومين».</div>`; }

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "إضافة جمع الإعلانات – رادار المنتجات الرابحة",
   "short_name": "جمع الإعلانات",
-  "version": "1.7.5",
+  "version": "1.7.6",
   "description": "تجمع إعلانات مكتبة ميتا، ونتائج البحث في AliExpress وAlibaba و1688 وTaobao (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
   "minimum_chrome_version": "116",
   "permissions": [
