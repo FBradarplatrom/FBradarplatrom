@@ -15,7 +15,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await ap.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
     // 1) المدير يعدّل رسالة «وصل الدفع»
     await ap.goto(BASE + '/platform/wa'); await ap.waitForSelector('[data-wat="pay"][data-l="ar"]');
-    ok((await ap.$$('[data-wat]')).length === 15 && /\{store\}/.test(await ap.innerText('#x-aset')), 'المدير: 5 رسائل × 3 لغات مع المتغيرات المتاحة');
+    ok((await ap.$$('[data-wat]')).length === 27 && /\{store\}/.test(await ap.innerText('#x-aset')), 'المدير: 5 رسائل للمشترك + 4 رسائله إلى المشتركين × 3 لغات');
     const t0 = await ap.inputValue('[data-wat="pay"][data-l="ar"]');
     await ap.fill('[data-wat="pay"][data-l="ar"]', t0 + '\nمتجري هو {store} وشكراً');
     await ap.click('[data-adm="wasave"]'); await ap.waitForFunction(() => /معدّلة/.test(document.querySelector('#x-aset').innerText));

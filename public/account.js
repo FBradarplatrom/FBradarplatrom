@@ -54,8 +54,28 @@ ${adm ? '' : `<div class="pay-sec"><div class="pay-h"><div><h3>الدفع وال
 ${BL.plans.length ? '' : `<p class="sub" style="margin:8px 0 0">لا توجد عروض متاحة للشراء بعد.</p>`}
 <div class="wa-l"><div class="wa-lt">${WAICON} عبر واتساب: رسالة جاهزة بمعلومات حسابك</div><div class="wa-lg">
 ${[['pay', 'إرسال وصل الدفع', 'بعد التحويل عبر BaridiMob أو CCP'], me.active ? ['upgrade', 'ترقية أو تغيير العرض', 'انتقل إلى باقة أخرى'] : null, me.active ? ['renew', 'تجديد الاشتراك', 'مدّد اشتراكك الحالي'] : null, ['billing', 'سؤال عن الدفع أو الاشتراك', 'نجيبك في أقرب وقت']].filter(Boolean)
-  .map(([k, t, h]) => `<button type="button" class="wa-i" data-wac="${k}"><b>${t}</b><small>${h}</small></button>`).join('')}</div></div></div>`}
+  .map(([k, t, h]) => `<button type="button" class="wa-i" data-wac="${k}"><b>${t}</b><small>${h}</small></button>`).join('')}</div></div>
+${(BL.methods.satim || BL.methods.stripe || BL.methods.paypal) && BL.plans.length ? '<div class="card" id="cpay" style="margin:14px 0 0"></div>' : ''}</div>`}
 ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td></tr>`).join('')}</table></div></details>` : ''}`;
+    cardPay($('#cpay'));
+  }
+  function cardPay(el) {
+    if (!el) return;
+    const cur = BL.plans.find(x => x.name === BL.plan);
+    let sel = (cur || BL.plans.find(x => x.note) || BL.plans[0]).id, mon = defMonths();
+    const draw = () => {
+      const p = BL.plans.find(x => x.id === +sel) || BL.plans[0], ms = (BL.periods || []).filter(z => perOf(p, z.m));
+      if (!ms.some(z => +z.m === +mon)) mon = (ms[0] || {}).m; const x = perOf(p, mon) || {};
+      el.innerHTML = `<b>💳 الدفع بالبطاقة</b><p class="sub" style="margin:4px 0 8px">ادفع مباشرة عبر بوابة آمنة، ويُفعَّل عرضك فور نجاح الدفع.</p>
+<div class="grid2" style="margin:0"><label class="fl">العرض<select data-cp="plan">${BL.plans.map(q => `<option value="${q.id}"${q.id === p.id ? ' selected' : ''}>${e(q.name)}${cur && q.id === cur.id ? ' (عرضك الحالي)' : ''}</option>`).join('')}</select></label>
+<label class="fl">المدة<select data-cp="mon">${ms.map(z => { const pz = perOf(p, z.m); return `<option value="${z.m}"${+z.m === +mon ? ' selected' : ''}>${perName(z.m)} · ${dz(pz.dzd)}${z.off ? ' (−' + z.off + '%)' : ''}</option>`; }).join('')}</select></label></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${BL.methods.satim && x.dzd > 0 ? `<button class="btn" data-cpay="satim">CIB / الذهبية · ${dz(x.dzd)}</button>` : ''}${BL.methods.stripe && x.usd > 0 ? `<button class="btn" data-cpay="stripe">Visa / Mastercard · $${Number(x.usd).toFixed(2)}</button>` : ''}${BL.methods.paypal && x.usd > 0 ? `<button class="btn ghost" data-cpay="paypal">PayPal · $${Number(x.usd).toFixed(2)}</button>` : ''}</div>`;
+    };
+    el.onchange = ev => { const c = ev.target.dataset.cp; if (c === 'plan') sel = +ev.target.value; else if (c === 'mon') mon = +ev.target.value; else return; draw(); };
+    el.onclick = ev => { const b = ev.target.closest('[data-cpay]'); if (!b) return;
+      const pr = X.api('POST', '/billing/checkout', { plan_id: +sel, months: +mon, method: b.dataset.cpay }).then(r => { location.href = r.url; }).catch(x => X.toast(x.message, 'err'));
+      W.__btnBusy && W.__btnBusy(ev, pr); };
+    draw();
   }
   /* ================= 💬 واتساب: رسائل جاهزة يضبطها المدير ================= */
   let WA = null;
@@ -118,6 +138,42 @@ ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">
     try { for (let i = 0; i < 20; i++) { const r = await X.api('GET', '/billing/payment/' + id); if (r.status === 'paid') { X.toast('✅ تم الدفع وتفعيل اشتراكك: ' + r.plan_name); X.reloadMe && await X.reloadMe(); drawBilling(); return; } if (r.status === 'failed') { X.toast('فشل الدفع', 'err'); return; } await new Promise(o => setTimeout(o, 3000)); } X.toast('الدفع قيد التأكيد. سيُفعَّل اشتراكك تلقائياً عند وصول التأكيد.'); }
     catch (x) {} finally { W.__busy && W.__busy('pay'); }
   }
+
+  /* ================= 📨 تواصل المدير مع المشتركين: رسائل جاهزة (يعدّلها المدير) عبر واتساب أو داخل المنصة ================= */
+  const ACK = [['a_welcome', 'ترحيب ومساعدة في البدء', 'لمشترك جديد: خطوات البداية'], ['a_paid', 'تأكيد الدفع والتفعيل', 'بعد قبول دفعته'], ['a_receipt', 'مشكلة في وصل الدفع', 'وصل غير واضح أو مبلغ ناقص'], ['a_renew', 'تذكير بالتجديد / انتهاء الاشتراك', 'اشتراك ينتهي قريباً أو انتهى']];
+  const acCards = uid => `<div class="wa-lg">${ACK.map(([k, t, h]) => `<button type="button" class="wa-i" data-acon="${k}"${uid ? ` data-uid="${uid}"` : ''}><b>${t}</b><small>${h}</small></button>`).join('')}</div>`;
+  async function acModal(key, uid) {
+    const T = W.WPRTOOLS; if (!T) return;
+    const [AWA, US] = await Promise.all([X.api('GET', '/admin/wa'), X.api('GET', '/admin/users')]);
+    const subs = US.filter(u => u.role !== 'admin'); if (!subs.length) return X.toast('لا يوجد مشتركون بعد', 'err');
+    let L = W.__LANG || 'ar', sel = +uid || subs[0].id, dirty = false;
+    const b = T.open('📨 رسالة إلى مشترك', '');
+    const fill = () => { const u = subs.find(x => x.id === +sel) || {}, t = (AWA.templates[key] || {})[L] || '';
+      const v = { name: u.name || (u.email || '').split('@')[0], email: u.email || '', current: u.plan && u.plan !== 'none' ? u.plan : '—', expires: u.expires_at ? X.fd(u.expires_at) : '—' };
+      return t.replace(/\{(\w+)\}/g, (m, n) => v[n] != null && v[n] !== '' ? String(v[n]) : '—'); };
+    b.innerHTML = `<div class="wa-m"><div class="grid2" style="margin:0"><label class="fl">الرسالة الجاهزة<select id="ac-k">${ACK.map(([k, t]) => `<option value="${k}"${k === key ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+<label class="fl">لغة الرسالة<select id="ac-l">${[['ar', 'العربية'], ['fr', 'Français'], ['en', 'English']].map(([k, n]) => `<option value="${k}"${k === L ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>
+<label class="fl">المشترك<select id="ac-u">${subs.map(u => `<option value="${u.id}"${u.id === sel ? ' selected' : ''}>${u.name ? e(u.name) + ' · ' : ''}${e(u.email)}${u.phone ? ' · 📱' : ''}</option>`).join('')}</select></label>
+<label class="fl">النص <small class="muted" style="font-weight:400">(يمكنك تعديله قبل الإرسال)</small><textarea id="ac-t" rows="8" dir="auto"></textarea></label>
+<p id="ac-ph" class="sub" style="margin:0"></p>
+<p style="display:flex;gap:8px;flex-wrap:wrap;margin:0"><button class="btn wa" data-acs="whatsapp">${WAICON} عبر واتساب</button><button class="btn" data-acs="app">إرسال داخل المنصة</button></p>
+<p class="sub" style="margin:0">داخل المنصة: تظهر للمشترك في «المساعدة والدعم ← طلباتي» مع تنبيه (وبالبريد/تيليغرام إن فعّلها). واتساب: يُفتح برسالة جاهزة إلى رقمه.</p></div>`;
+    const ta = b.querySelector('#ac-t'), upd = () => { if (!dirty) ta.value = fill(); const u = subs.find(x => x.id === +sel) || {};
+      b.querySelector('#ac-ph').innerHTML = u.phone ? `رقم واتساب: <bdi dir="ltr">${e(u.phone)}</bdi>` : 'لا يوجد رقم هاتف لهذا المشترك (يضيفه من «الإعدادات»)، فواتساب غير متاح له.'; b.querySelector('[data-acs="whatsapp"]').disabled = !u.phone; };
+    upd(); ta.addEventListener('input', () => { dirty = true; });
+    b.addEventListener('change', ev => { const id = ev.target.id; if (id === 'ac-u') sel = +ev.target.value; else if (id === 'ac-l') L = ev.target.value; else if (id === 'ac-k') key = ev.target.value; else return; dirty = false; upd(); });
+    b.addEventListener('click', ev => {
+      const s = ev.target.closest('[data-acs]'); if (!s) return;
+      const via = s.dataset.acs, subject = (ACK.find(x => x[0] === key) || [])[1], win = via === 'whatsapp' ? W.open('', '_blank') : null;   // تُفتح الآن حتى لا يمنعها المتصفح
+      const pr = X.api('POST', '/admin/contact', { user_id: +sel, via, text: ta.value.trim(), subject }).then(r => {
+        if (via === 'whatsapp') { const url = 'https://wa.me/' + r.phone + '?text=' + encodeURIComponent(ta.value); if (win) win.location.href = url; else location.href = url; }
+        T.close(); X.toast(via === 'whatsapp' ? 'فُتح واتساب برسالة جاهزة' : 'أُرسلت الرسالة إلى المشترك داخل المنصة');
+        if (X.cur() === 'ainbox') drawAdmin();
+      }).catch(x => { if (win) win.close(); X.toast(x.message, 'err'); });
+      W.__btnBusy && W.__btnBusy(ev, pr);
+    });
+  }
+  W.WPRACON = { cards: acCards, open: (k, u) => acModal(k, u).catch(x => X.toast(x.message, 'err')) };
 
   /* ================= لوحة المدير ================= */
   // كل قسم إداري في مكانه: نظرة عامة · المشتركون · العروض والمدفوعات · صندوق الدعم · إعدادات المنصة
@@ -232,19 +288,20 @@ ${r.keys.map(k => `<div class="pe-r"><span>${e(r.labels[k])}</span><input data-l
       const r = await X.api('GET', '/admin/messages'), CAT = { tech: 'مشكلة تقنية', billing: 'الدفع والعروض', usage: 'سؤال عن الاستعمال', idea: 'اقتراح', other: 'أخرى' };
       const L = r.list.filter(m => MF === 'all' || (MF === 'new' ? m.status === 'new' : m.status !== 'new'));
       const cnt = { new: r.list.filter(m => m.status === 'new').length, done: r.list.filter(m => m.status !== 'new').length, all: r.list.length };
-      el.innerHTML = `<div class="sup-f">${[['new', 'بانتظار الرد'], ['done', 'تمت معالجتها'], ['all', 'الكل']].map(([k, t]) => `<button data-adm="mf" data-f="${k}" class="${MF === k ? 'on' : ''}">${t} <b>${num(cnt[k])}</b></button>`).join('')}</div>
-${L.map(m => `<div class="card sup-t${m.status === 'new' ? ' new' : ''}"><div class="sup-h"><div class="grow"><b dir="auto">${e(m.subject)}</b><div class="muted">${e(m.name || '')} &lt;${e(m.email)}&gt; · ${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر'} · ${X.fd(m.created_at)}</div></div><span class="pill">${CAT[m.category] || CAT.other}</span><span class="pill ${m.status === 'new' ? 'warn' : 'ok'}">${m.status === 'new' ? 'بانتظار الرد' : m.reply ? 'تم الرد' : 'تمت المعالجة'}</span></div>
-<p class="sup-b" dir="auto">${e(m.body)}</p>
-${m.reply ? `<div class="sup-r"><small>ردّك · ${X.fd(m.replied_at)}</small><p dir="auto">${e(m.reply)}</p></div>` : ''}
+      el.innerHTML = `<div class="card" style="margin-bottom:14px"><h2>📨 تواصل مع مشترك</h2><p class="sub">رسائل جاهزة (تعدّل نصّها بثلاث لغات من «إعدادات المنصة ← رسائل واتساب»): اختر الرسالة ثم المشترك، وأرسلها عبر واتساب أو داخل المنصة.</p>${acCards()}</div>
+<div class="sup-f">${[['new', 'بانتظار الرد'], ['done', 'تمت معالجتها'], ['all', 'الكل']].map(([k, t]) => `<button data-adm="mf" data-f="${k}" class="${MF === k ? 'on' : ''}">${t} <b>${num(cnt[k])}</b></button>`).join('')}</div>
+${L.map(m => `<div class="card sup-t${m.status === 'new' ? ' new' : ''}"><div class="sup-h"><div class="grow"><b dir="auto">${e(m.subject)}</b><div class="muted">${e(m.name || '')} &lt;${e(m.email)}&gt; · ${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر'} · ${X.fd(m.created_at)}</div></div>${m.origin === 'admin' ? '<span class="pill">📤 أرسلتها أنت</span>' : `<span class="pill">${CAT[m.category] || CAT.other}</span>`}<span class="pill ${m.status === 'new' ? 'warn' : 'ok'}">${m.status === 'new' ? 'بانتظار الرد' : m.reply ? 'تم الرد' : 'تمت المعالجة'}</span></div>
+${m.body ? `<p class="sup-b" dir="auto">${e(m.body)}</p>` : ''}
+${m.reply ? `<div class="sup-r"><small>${m.origin === 'admin' ? 'رسالتك' : 'ردّك'} · ${X.fd(m.replied_at)}</small><p dir="auto">${e(m.reply)}</p></div>` : ''}
 ${m.user_id && !m.reply ? `<label class="fl">الرد (يصل إلى المشترك داخل المنصة وبالتنبيهات)<textarea rows="3" data-reply="${m.id}" dir="auto" placeholder="اكتب ردّك…"></textarea></label>` : ''}
-<div class="sup-a">${m.user_id && !m.reply ? `<button class="btn sm" data-adm="mreply" data-id="${m.id}">إرسال الرد</button>` : ''}<a class="btn ghost sm" href="mailto:${e(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}">رد بالبريد</a>${m.status === 'new' ? `<button class="btn ghost sm" data-adm="mdone" data-id="${m.id}">✓ تمت المعالجة</button>` : `<button class="btn ghost sm" data-adm="mnew" data-id="${m.id}">إرجاع كجديدة</button>`}<button class="btn ghost sm bad" data-adm="mdel" data-id="${m.id}">حذف</button></div></div>`).join('') || '<div class="card"><p class="sub">لا رسائل هنا.</p></div>'}`;
+<div class="sup-a">${m.user_id && !m.reply ? `<button class="btn sm" data-adm="mreply" data-id="${m.id}">إرسال الرد</button>` : ''}${m.user_id ? `<button class="btn ghost sm" data-acon="${m.category === 'billing' ? 'a_paid' : 'a_welcome'}" data-uid="${m.user_id}">📨 رسالة جاهزة</button>` : ''}<a class="btn ghost sm" href="mailto:${e(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}">رد بالبريد</a>${m.status === 'new' ? `<button class="btn ghost sm" data-adm="mdone" data-id="${m.id}">✓ تمت المعالجة</button>` : `<button class="btn ghost sm" data-adm="mnew" data-id="${m.id}">إرجاع كجديدة</button>`}<button class="btn ghost sm bad" data-adm="mdel" data-id="${m.id}">حذف</button></div></div>`).join('') || '<div class="card"><p class="sub">لا رسائل هنا.</p></div>'}`;
       return;
     }
     if (ATAB === 'wa') {
       const r = await X.api('GET', '/admin/wa'), L3 = [['ar', 'العربية'], ['en', 'English'], ['fr', 'Français']];
       el.innerHTML = `<div class="card"><h2>رسائل واتساب الجاهزة</h2><p class="sub"><span>تظهر للمشترك في «اشتراكي» و«المساعدة والدعم»: يختار الموقف فتُفتح هذه الرسالة في واتساب بمعلومات حسابه، ويستطيع تعديلها قبل الإرسال.</span> <span>تُرسل إلى رقم واتساب الدعم:</span> ${r.number ? `<b><bdi dir="ltr">+${e(r.number)}</bdi></b>` : '<b>(غير مضبوط: أضفه في «النشاط والتواصل»)</b>'}</p>
 <p class="sub" style="margin:6px 0 0">الكلمات بين {} تُملأ تلقائياً: ${Object.entries(r.vars).map(([k, v]) => `<code dir="ltr">{${k}}</code> ${e(v)}`).join(' · ')}</p></div>
-${Object.entries(r.keys).map(([k, [t, vs]]) => `<div class="card" style="margin-top:14px"><h2>${e(t)}</h2><p class="sub" style="margin:0 0 8px">المتاح هنا: ${vs.map(v => `<code dir="ltr">{${v}}</code>`).join(' ')}</p>
+${Object.entries(r.keys).map(([k, [t, vs, g]], i, A) => `${g === 'admin' && (A[i - 1] || [0, []])[1][2] !== 'admin' ? '<h2 style="margin:26px 0 0">📨 رسائلك إلى المشتركين</h2><p class="sub" style="margin:4px 0 0">تُرسل من «صندوق الدعم» و«المساعدة والدعم» عبر واتساب أو داخل المنصة.</p>' : ''}<div class="card" style="margin-top:14px"><h2>${e(t)}</h2><p class="sub" style="margin:0 0 8px">المتاح هنا: ${vs.map(v => `<code dir="ltr">{${v}}</code>`).join(' ')}</p>
 <div class="grid3" style="margin:0">${L3.map(([l, n]) => `<label class="fl">${n}<textarea rows="8" data-wat="${k}" data-l="${l}" dir="${l === 'ar' ? 'rtl' : 'ltr'}" style="font:inherit;font-size:13.5px;line-height:1.7">${e(r.templates[k][l])}</textarea>${r.templates[k][l] !== r.defaults[k][l] ? '<small class="muted">معدّلة</small>' : ''}</label>`).join('')}</div></div>`).join('')}
 <p style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0"><button class="btn" data-adm="wasave">حفظ الرسائل</button><button class="btn ghost" data-adm="wareset">استرجاع الرسائل الأصلية</button></p>`;
       return;
@@ -448,6 +505,7 @@ ${d.log.length ? `<details class="fx" style="margin-top:8px"><summary>آخر ا�
       X = ctx; if (inited) return; inited = true;
       X.root.addEventListener('click', ev => {
         const cur = X.cur(), fn = AV[cur] ? (e => e.target.closest('[data-int]') ? onInt(e) : onAdmin(e)) : cur === 'integrations' ? onInt : null;
+        const acon = ev.target.closest('[data-acon]'); if (acon) { W.WPRACON.open(acon.dataset.acon, acon.dataset.uid); return; }
         const wac = ev.target.closest('[data-wac]'); if (wac) { W.WPRWA.open(wac.dataset.wac, { topic: wac.dataset.topic }); return; }
         if (!fn) return; const pr = Promise.resolve().then(() => fn(ev)); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => { if (x && x.message !== 'auth') X.toast(x.message || 'حدث خطأ', 'err'); });
       });

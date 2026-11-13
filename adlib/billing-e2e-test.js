@@ -77,6 +77,9 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok((await M.locator('#x-billing .meter').count()) === 4, 'عدادات الاستعمال الأربعة');
     ok(!(await M.$('[data-acc="plans"]')) && !/الدفع أو تغيير العرض/.test(await M.textContent('#x-billing')), 'حُذف «الدفع أو تغيير العرض» (مكرر «الدفع والتجديد»)');
     ok(await M.locator('.pay-sec [data-wac]').count() === 4, '«الدفع والتجديد» كما هو: الوصل، الترقية، التجديد، سؤال');
+    ok(await M.isVisible('#cpay') && await M.locator('#cpay [data-cpay]').count() === 3 && /CIB/.test(await M.textContent('#cpay')), '«الدفع بالبطاقة» داخل «الدفع والتجديد»: CIB/الذهبية + Visa/Mastercard + PayPal');
+    await M.selectOption('#cpay [data-cp="plan"]', String(pl.id)); await M.selectOption('#cpay [data-cp="mon"]', '3');
+    ok(/7[.,٬]?100/.test(await M.textContent('#cpay [data-cpay="satim"]')) && /54\.15/.test(await M.textContent('#cpay [data-cpay="stripe"]')), 'المبلغ حسب العرض والمدة المختارين (دج و$)');
     // BaridiMob: رقم العملية + صورة الوصل (عبر الواجهة البرمجية للمنصة)
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
     ok((await M.request.post(BASE + '/api/billing/baridi', { data: { plan_id: pl.id, months: 3, ref: 'BM-778899', proof: 'data:image/png;base64,' + png.toString('base64') } })).ok(), 'طلب BaridiMob برقم العملية وصورة الوصل');
@@ -106,7 +109,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(bl.limits.gapProducts === 2 && bl.usage.gapProducts === 2, 'الاستعمال والحدود في /api/billing');
 
     const days = async () => (await (await M.request.get(BASE + '/api/me')).json()).expires_at;
-    const openPay = async m => { const r = await (await M.request.post(BASE + '/api/billing/checkout', { data: { plan_id: pl.id, months: 3, method: m } })).json(); await M.goto(r.url); };
+    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('#cpay [data-cp="plan"]'); await M.selectOption('#cpay [data-cp="plan"]', String(pl.id)); await M.selectOption('#cpay [data-cp="mon"]', '3'); await M.click('#cpay [data-cpay="' + m + '"]'); };
     // ---- SATIM: CIB / الذهبية مباشرة
     let before = await days();
     await openPay('satim'); await M.waitForURL(/paid=/);

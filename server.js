@@ -49,6 +49,7 @@ create table if not exists lib_rows(run_id integer, ad_id text, row text, primar
 create table if not exists activity(id integer primary key, user_id integer, kind text, ip text, ua text, detail text, at integer);
 create index if not exists activity_u on activity(user_id, at);`);
 try { db.exec('alter table users add column tv integer default 0'); } catch (e) {}
+try { db.exec('alter table users add column phone text'); } catch (e) {}   // رقم الهاتف / واتساب (اختياري): ليتواصل معه المدير
 ['totp_secret text', 'totp_on integer default 0', 'totp_recovery text'].forEach(c => { try { db.exec('alter table users add column ' + c); } catch (e) {} });   // التحقق بخطوتين
 try { db.exec('alter table runs add column batch text'); } catch (e) {}   // دفعة الجمع (لأرقام صفحة التحليل)
 // إعدادات المنصة المشفّرة (المفاتيح) وحدود الباقات
@@ -176,7 +177,7 @@ app.post('/api/logout', (q, s) => { s.clearCookie('t'); s.json({ ok: 1 }); });
 // تسجيل الخروج من كل الأجهزة
 app.post('/api/logout-all', auth, wrap((q, s) => { db.prepare('update users set tv=coalesce(tv,0)+1 where id=?').run(q.u.id); act(q.u.id, 'logout_all', q); s.clearCookie('t'); s.json({ ok: 1 }); }));
 app.get('/api/activity', auth, wrap((q, s) => s.json(db.prepare("select kind,ip,ua,at from activity where user_id=? and kind in ('login','login_fail','password','reset','logout_all') order by at desc limit 15").all(q.u.id))));
-app.get('/api/me', auth, (q, s) => s.json({ maint: q.u.role === 'admin' && maintOn(), email: q.u.email, name: q.u.name || '', username: q.u.username || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: contactUrl(), totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
+app.get('/api/me', auth, (q, s) => s.json({ maint: q.u.role === 'admin' && maintOn(), email: q.u.email, name: q.u.name || '', username: q.u.username || '', phone: q.u.phone || '', role: q.u.role, plan: q.u.plan, expires_at: q.u.expires_at, active: isActive(q.u), features: require('./adlib/limits.js').featuresOf(q.u), contact: contactUrl(), totp_on: !!q.u.totp_on, recovery_left: q.u.totp_on ? JSON.parse(q.u.totp_recovery || '[]').length : 0, gap_target: (() => { try { return JSON.parse((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(q.u.id) || {}).v || '"DZ"'); } catch (e) { return 'DZ'; } })() }));
 app.put('/api/profile', auth, wrap((q, s) => {
   const b = q.body || {}, name = String(b.name || '').trim().slice(0, 60), un = String(b.username || '').trim().toLowerCase(), em = String(b.email || '').trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(em)) return s.status(400).json({ error: 'بريد غير صالح' });
@@ -186,7 +187,9 @@ app.put('/api/profile', auth, wrap((q, s) => {
     if (db.prepare('select 1 from users where email=? and id!=?').get(em, q.u.id)) return s.status(409).json({ error: 'البريد مستعمل لحساب آخر' });
   }
   if (un && db.prepare('select 1 from users where username=? and id!=?').get(un, q.u.id)) return s.status(409).json({ error: 'اسم المستخدم مستعمل' });
-  db.prepare('update users set name=?, username=?, email=? where id=?').run(name, un || null, em, q.u.id); s.json({ ok: 1 });
+  const ph = String(b.phone == null ? (q.u.phone || '') : b.phone).replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '').slice(0, 20);
+  if (ph && !/^\+?\d{8,15}$/.test(ph)) return s.status(400).json({ error: 'رقم الهاتف: 8 إلى 15 رقماً، ويُفضّل بالرمز الدولي (مثل +213…)' });
+  db.prepare('update users set name=?, username=?, email=?, phone=? where id=?').run(name, un || null, em, ph || null, q.u.id); s.json({ ok: 1 });
 }));
 
 // ---------- التحليلات والأرشيف ----------
@@ -242,7 +245,7 @@ app.delete('/api/saved', auth, active, wrap((q, s) => { db.prepare('delete from 
 // إضافة خارجية قديمة (إرسال دفعات جاهزة): POST {label, rows:[ads...]}
 
 // ---------- الإدارة والاشتراكات ----------
-app.get('/api/admin/users', auth, admin, wrap((q, s) => s.json(db.prepare('select id,email,name,username,role,plan,expires_at,created_at from users order by created_at desc').all())));
+app.get('/api/admin/users', auth, admin, wrap((q, s) => s.json(db.prepare('select id,email,name,username,phone,role,plan,expires_at,created_at from users order by created_at desc').all())));
 app.get('/api/admin/activity', auth, admin, wrap((q, s) => s.json(db.prepare('select a.kind,a.ip,a.ua,a.detail,a.at,u.email from activity a left join users u on u.id=a.user_id order by a.at desc limit 300').all())));
 app.post('/api/admin/users/:id', auth, admin, wrap((q, s) => {
   const u = db.prepare('select plan, expires_at from users where id=?').get(q.params.id); if (!u) return s.sendStatus(404);
