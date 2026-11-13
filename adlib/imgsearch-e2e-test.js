@@ -32,6 +32,14 @@ const PAGES = {
 <script>${GOT};document.querySelector('.tb-img').onclick=()=>{const i=document.createElement('input');i.type='file';i.style.display='none';document.body.appendChild(i);got(i)}</script>`
 };
 const VARIANT = {
+  // Alibaba: بعد وضع الصورة تظهر معاينة وزر «搜索» للتأكيد (زر البحث بالكلمة الأصلي «搜索» يجب ألا يُضغط)
+  'alibaba-confirm': `<div><input style="width:500px"><button id="kw" style="width:80px;height:30px">搜索</button><span class="sb" style="display:inline-block;width:150px;height:30px">Search by image</span></div>
+<script>window.NOOP=1;${GOT};document.querySelector('#kw').onclick=()=>{document.title='WRONG:keyword'};document.querySelector('.sb').onclick=()=>{const i=document.createElement('input');i.type='file';i.style.display='none';document.body.appendChild(i);
+i.addEventListener('change',()=>{const d=document.createElement('div');d.innerHTML='<img width=80 height=80><button style="width:80px;height:30px">搜索</button>';document.body.appendChild(d);d.querySelector('button').onclick=()=>{document.title='GOT:'+i.files[0].type+':'+i.files[0].size+':'+i.files[0].name+':confirm';location.hash='results'}})}</script>`,
+  // 1688: خانة رفع موجودة لكن الموقع يتجاهلها، ومنطقة السحب هي التي تعمل: يجب تجربة الطريقة التالية
+  '1688-fileignored': `<div><input style="width:400px"><label class="img-search-upload"><input type="file" accept="image/*" hidden></label>
+<div class="dz" style="width:400px;height:120px">拖放文件到此处</div></div>
+<script>window.NOOP=0;${GOT};const z=document.querySelector('.dz');z.addEventListener('dragover',e=>e.preventDefault());z.addEventListener('drop',e=>{e.preventDefault();gotF(e.dataTransfer.files[0],'drop')})</script>`,
   // AliExpress دون أيقونة معروفة: يقبل لصق الصورة (Ctrl+V) في خانة البحث
   'ali-paste': `<input placeholder="search" style="width:400px"><script>${GOT};document.querySelector('input').addEventListener('paste',e=>gotF(e.clipboardData.files[0],'paste'))</script>`,
   // Taobao لغير المسجّل: يحوّل فوراً إلى صفحة الدخول
@@ -91,6 +99,14 @@ PAGES['login.taobao.com'] = `<h1>密码登录</h1><input type="password">`;
     PAGES['www.aliexpress.com'] = VARIANT['ali-paste'];
     ({ p, out } = await run('ali', 'www.aliexpress.com')); t = await got(p);
     ok(t[4] === 'paste' && t[1] === 'image/jpeg', 'AliExpress fallback: photo pasted into the search box (like Ctrl+V)'); await p.close();
+    // 5b) زر التأكيد «搜索» بعد المعاينة: يُضغط الجديد فقط
+    PAGES['www.alibaba.com'] = VARIANT['alibaba-confirm'];
+    ({ p, out } = await run('alibaba', 'www.alibaba.com')); t = await got(p);
+    ok(t[4] === 'confirm' && /النتائج في التبويب/.test(out.msg), 'after the photo preview, the new «搜索» confirm button is clicked (not the keyword search button)'); await p.close();
+    // 5c) الطريقة الأولى بلا أثر: تُجرَّب التالية تلقائياً
+    PAGES['www.1688.com'] = VARIANT['1688-fileignored'];
+    ({ p, out } = await run('1688', 'www.1688.com')); t = await got(p);
+    ok(t[4] === 'drop' && /النتائج في التبويب/.test(out.msg), 'upload field ignored by the site → the extension retries with drag-and-drop and succeeds'); await p.close();
     // 6) Taobao بلا تسجيل دخول: يُكتشف التحويل إلى صفحة الدخول، ورسالة تدلّه على «حسابات الأسواق»
     PAGES['www.taobao.com'] = VARIANT['taobao-login'];
     ({ p, out } = await run('taobao', 'login.taobao.com'));

@@ -236,23 +236,28 @@ function tabReady(tabId, ms) {
     chrome.tabs.get(tabId).then((tb) => { if (tb && tb.status === 'complete') done(true); }).catch(() => done(false));
   });
 }
-// تُحقن في صفحة السوق (دالة من الإضافة نفسها، لا شيفرة عن بُعد) وتضع صورة المنتج في «البحث بالصورة» كما يفعلها المستخدم:
-//  1) خانة رفع ملف (موجودة، أو تظهر بعد ضغط زر «以图搜款 / 搜同款 / Search by image / Recherche par image» أو أيقونة الكاميرا)
-//  2) سحب الصورة وإفلاتها في منطقة «Drag an image here / 拖放文件到此处»
-//  3) لصقها (Ctrl+V) في خانة البحث
-// تعيد الطريقة المستعملة + وصفاً مختصراً للصفحة (للتشخيص). النجاح الفعلي تتحقق منه خدمة الخلفية (فتح صفحة النتائج).
-async function uploadToImageSearch(dataUrl, market) {
+// تُحقن في صفحة السوق (دالة من الإضافة نفسها، لا شيفرة عن بُعد) وتضع صورة المنتج في «البحث بالصورة» كما يفعلها المستخدم.
+// الطرق: file = خانة رفع ملف · drop = سحب وإفلات في منطقة «Drag an image here / 拖放文件到此处» · paste = لصق (Ctrl+V) في خانة البحث.
+// skip = طرق جُرّبت قبلُ ولم تفتح النتائج (تجرّب خدمة الخلفية الطريقة التالية). بعد الرفع: تضغط زر «搜索 / Search» إن ظهر.
+// تعيد الطريقة + وصفاً مختصراً للصفحة (للتشخيص). النجاح الفعلي (فتح صفحة النتائج) تتحقق منه خدمة الخلفية.
+async function uploadToImageSearch(dataUrl, market, skip) {
+  skip = skip || [];
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const bin = atob(dataUrl.split(',')[1]), u8 = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
   const type = (/^data:([^;]+)/.exec(dataUrl) || [])[1] || 'image/jpeg';
   const file = new File([u8], 'product.' + (type.split('/')[1] === 'jpeg' ? 'jpg' : type.split('/')[1]), { type });
   const dt = () => { const d = new DataTransfer(); d.items.add(file); return d; };
+  // كل العناصر، بما فيها داخل Shadow DOM المفتوح (بعض الواجهات الحديثة)
+  const all = (sel) => { const out = [], walk = (root) => { root.querySelectorAll(sel).forEach((x) => out.push(x)); root.querySelectorAll('*').forEach((x) => { if (x.shadowRoot) walk(x.shadowRoot); }); }; walk(document); return out; };
   const box = (el) => el.getBoundingClientRect();
-  const seen = (el) => { const r = box(el); if (!r.width || !r.height) return false; const cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.display !== 'none'; };
-  const fileInput = () => [...document.querySelectorAll('input[type="file"]')].find((i) => !i.disabled && (!i.accept || /image|jpe?g|png|webp|\*/i.test(i.accept)));
-  const TXT = /以图搜|搜同款|拍立淘|图片搜索|按图搜|search by image|image search|recherche par image|buscar por imagen|pesquisa por imagem|ricerca per immagine|bildersuche|البحث بالصورة|بحث بالصورة/i;
+  const seen = (el) => { const r = box(el); if (!r.width || !r.height) return false; const cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity !== 0; };
+  const text = (el) => (el.innerText || el.textContent || '').trim();
+  const fileInput = () => all('input[type="file"]').find((i) => !i.disabled && (!i.accept || /image|jpe?g|png|webp|\*/i.test(i.accept)));
+  const TXT = /以图搜|搜同款|拍立淘|图片搜索|按图搜|识图|search by image|image search|recherche par image|buscar por imagen|pesquisa por imagem|ricerca per immagine|bildersuche|البحث بالصورة|بحث بالصورة/i;
   const ATTR = /(pic|image|img|photo|picture)[-_ ]?(search|upload)|camera|imgsearch|picsearch|拍立淘|以图搜|search by image|image search/i;
+  const UPL = /^(上传|上传图片|本地上传|点击上传|选择图片|upload( a)? (photo|image|file)|upload|importer( une)? (photo|image)|télécharger( une)? (photo|image)|subir( una)? (foto|imagen)|ارفع|رفع صورة|تحميل صورة)$/i;
+  const GO = /^(搜索|搜同款|找同款|开始搜索|搜图|查找|确定|search|search now|rechercher|buscar|بحث|ابحث)$/i;
   const SEL = {
     ali: ['[class*="picSearch"]', '[class*="pic-search"]', '[class*="image-search"]', '[class*="imageSearch"]', '[class*="camera"]'],
     alibaba: ['[class*="image-search"]', '[class*="imageSearch"]', '[class*="img-search"]', '[class*="picture-search"]', '[class*="camera"]'],
@@ -260,41 +265,50 @@ async function uploadToImageSearch(dataUrl, market) {
     taobao: ['[class*="image-search"]', '[class*="imgsearch"]', '[class*="imageSearch"]', '[class*="pailitao"]', '[class*="camera"]']
   }[market] || [];
   const attrs = (el) => { const c = typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || ''; return c + ' ' + (el.getAttribute('title') || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.getAttribute('alt') || ''); };
+  const leaf = (els, re) => els.filter((el) => { const t = text(el); return t && t.length <= 30 && re.test(t) && ![...el.children].some((c) => re.test(text(c))); });
   const triggers = () => {
-    const out = [];
-    for (const el of document.querySelectorAll('button,a,[role="button"],span,div,label,i,img,svg')) {
-      if (!seen(el)) continue;
-      const r = box(el); if (r.top > 520 || r.width > 320 || r.height > 120) continue;
-      const t = (el.innerText || '').trim();
-      if ((t && t.length <= 30 && TXT.test(t) && ![...el.children].some((c) => TXT.test(c.innerText || ''))) || ATTR.test(attrs(el))) out.push(el);
-    }
-    return [...new Set(SEL.flatMap((s) => [...document.querySelectorAll(s)]).filter(seen).concat(out))];
+    const cand = all('button,a,[role="button"],span,div,label,i,img,svg').filter((el) => { if (!seen(el)) return false; const r = box(el); return r.top <= 520 && r.width <= 320 && r.height <= 120; });
+    return [...new Set(SEL.flatMap((s) => all(s)).filter(seen).concat(leaf(cand, TXT), cand.filter((el) => ATTR.test(attrs(el)))))];
   };
+  const buttonsLike = (re) => leaf(all('button,a,[role="button"],span,div,label').filter(seen), re);
   const giveFile = (inp) => { inp.files = dt().files; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true })); };
-  const dropZone = () => [...document.querySelectorAll('div,section,label,form')].filter((el) => seen(el) && /drag|drop (an |a |your )?(image|file|photo)|拖放|拖拽|拖到|glisse|dépose|arrastra|اسحب/i.test((el.innerText || '').slice(0, 200)) && box(el).width < 900)
+  const dropZone = () => all('div,section,label,form').filter((el) => seen(el) && /drag|drop (an |a |your )?(image|file|photo)|拖放|拖拽|拖到|glisse|dépose|arrastra|اسحب/i.test(text(el).slice(0, 200)) && box(el).width < 900)
     .sort((a, b) => box(a).width * box(a).height - box(b).width * box(b).height)[0];
-  const dropOn = (el) => { const d = dt(), r = box(el), o = { bubbles: true, cancelable: true, dataTransfer: d, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+  const dropOn = (el) => { const d = dt(), r = box(el), o = { bubbles: true, cancelable: true, composed: true, dataTransfer: d, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
     ['dragenter', 'dragover', 'drop'].forEach((t) => el.dispatchEvent(new DragEvent(t, o))); };
-  const searchBox = () => [...document.querySelectorAll('input[type="text"],input[type="search"],input:not([type]),textarea')].filter((i) => seen(i) && box(i).top < 400).sort((a, b) => box(b).width - box(a).width)[0];
-  const pasteIn = (el) => { el.focus(); el.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt() })); };
-  const desc = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '.' + attrs(el).trim().slice(0, 50) + ' «' + (el.innerText || '').trim().slice(0, 20) + '»').replace(/\s+/g, ' ');
+  const searchBox = () => all('input[type="text"],input[type="search"],input:not([type]),textarea').filter((i) => seen(i) && box(i).top < 400).sort((a, b) => box(b).width - box(a).width)[0];
+  const pasteIn = (el) => { el.focus(); el.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, composed: true, clipboardData: dt() })); };
+  const click = (el) => { try { (el.closest('button,a,[role="button"]') || el).click(); } catch (_) { /* ignore */ } };
+  const desc = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '.' + attrs(el).trim().slice(0, 50) + ' «' + text(el).slice(0, 20) + '»').replace(/\s+/g, ' ');
   const tried = [];
-  const diag = () => ({ url: location.href.slice(0, 160), title: document.title.slice(0, 60), inputs: document.querySelectorAll('input[type="file"]').length, tried, triggers: triggers().slice(0, 6).map(desc), drop: !!dropZone(), search: !!searchBox() });
-
-  let inp = fileInput();
-  if (inp) { giveFile(inp); return { how: 'file', diag: diag() }; }
-  for (let round = 0; round < 3; round++) {
+  const diag = () => ({ url: location.href.slice(0, 160), title: document.title.slice(0, 60), inputs: all('input[type="file"]').length, skip, tried, triggers: triggers().slice(0, 6).map(desc), drop: !!dropZone(), search: !!searchBox() });
+  // بعد وضع الصورة: بعض المواقع تعرض معاينة وزر «搜索 / Search» للتأكيد
+  // (فقط زر ظهر بعد بدء العملية: زر البحث بالكلمة الأصلي في الصفحة لا يُضغط أبداً)
+  let pre = null;
+  const confirm = async () => { await sleep(1500); const b = buttonsLike(GO).filter((el) => !pre.has(el) && box(el).top > 0).slice(-1)[0]; if (b) { tried.push('confirm ' + desc(b)); click(b); } };
+  // ما يمكن فعله الآن دون ضغط أي زر (الطريقة التي لم تُجرَّب بعد)
+  const tryNow = async () => {
+    if (!skip.includes('file')) { let inp = fileInput();
+      if (!inp) for (const u of buttonsLike(UPL).slice(0, 2)) { tried.push('upload ' + desc(u)); click(u); await sleep(400); inp = fileInput(); if (inp) break; }   // زر «上传 / Upload a photo» يُنشئ الخانة
+      if (inp) { giveFile(inp); await confirm(); return 'file'; } }
+    if (!skip.includes('drop')) { const z = dropZone(); if (z) { dropOn(z); await confirm(); return 'drop'; } }
+    return '';
+  };
+  // الواجهة الثقيلة تُبنى بعد التحميل: ننتظر ظهور زر البحث بالصورة (حتى 8 ثوانٍ)
+  for (let i = 0; i < 16 && !fileInput() && !triggers().length; i++) await sleep(500);
+  pre = new Set(buttonsLike(GO));
+  let how = await tryNow();
+  if (how) return { how, diag: diag() };
+  for (let round = 0; round < 2 && !how; round++) {
     for (const t of triggers().slice(0, 6)) {
-      tried.push(desc(t));
-      try { (t.closest('button,a,[role="button"]') || t).click(); } catch (_) { /* ignore */ }
-      for (let k = 0; k < 6; k++) { await sleep(300); inp = fileInput(); if (inp) break; }
-      if (inp) { giveFile(inp); return { how: 'file', diag: diag() }; }
-      const z = dropZone(); if (z) { dropOn(z); return { how: 'drop', diag: diag() }; }
+      tried.push(desc(t)); click(t);
+      for (let k = 0; k < 6 && !how; k++) { await sleep(300); if (fileInput() || dropZone() || buttonsLike(UPL).length) how = await tryNow(); }
+      if (how) break;
     }
-    await sleep(1200);                        // الواجهة ما زالت تُبنى
+    if (!how) await sleep(1200);
   }
-  if (market === 'ali' || market === '1688') { const s = searchBox(); if (s) { pasteIn(s); return { how: 'paste', diag: diag() }; } }
-  return { how: '', diag: diag() };
+  if (!how && !skip.includes('paste') && (market === 'ali' || market === '1688')) { const s = searchBox(); if (s) { pasteIn(s); how = 'paste'; } }
+  return { how, diag: diag() };
 }
 // لوحة داخل صفحة السوق عند عدم اكتمال البحث: الصورة (تُسحب إلى أيقونة الكاميرا) + حفظها + نسخ تقرير للدعم
 function showImagePanel(dataUrl, lang, reason, report) {
@@ -336,16 +350,21 @@ async function imageSearch(m) {
   // النجاح الحقيقي: صفحة النتائج تُفتح (في نفس التبويب أو تبويب جديد كما في 1688)
   const kids = []; const onNew = (t) => { if (t.openerTabId === tab.id) kids.push(t.id); };
   chrome.tabs.onCreated.addListener(onNew);
-  let out = null;
-  try { const r = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: uploadToImageSearch, args: [img, m.market] }); out = (r && r[0] && r[0].result) || null; } catch (_) { out = null; }
-  let after = await urlOf();
-  for (let i = 0; i < 16 && after === before && !kids.length && (!out || out.how); i++) { await sleep(500); after = await urlOf(); }
+  // حتى 3 محاولات: إن لم تفتح الطريقة النتائج تُجرَّب التالية (خانة الرفع ← السحب والإفلات ← اللصق)
+  let out = null, after = before; const used = [], hist = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try { const r = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: uploadToImageSearch, args: [img, m.market, used] }); out = (r && r[0] && r[0].result) || null; } catch (_) { out = null; }
+    after = await urlOf();
+    for (let i = 0; i < 14 && after === before && !kids.length && (!out || out.how); i++) { await sleep(500); after = await urlOf(); }
+    if (after !== before || kids.length || !out || !out.how) break;
+    used.push(out.how); hist.push(out.diag);
+  }
   chrome.tabs.onCreated.removeListener(onNew);
   const moved = !!after && after !== before;
   if (moved && LOGIN_RE.test(after)) { await panel('login', report({ error: 'login', url: after })); return { ok: false, error: 'login', market: m.market }; }
   if (moved || kids.length) return { ok: true, market: m.market, how: (out && out.how) || 'navigated', result: kids.length ? 'new_tab' : 'same_tab' };
-  const error = !out ? 'inject' : out.how ? 'no_effect' : 'no_input';
-  await panel(error, report({ error, how: out && out.how, diag: out && out.diag }));
+  const error = !out ? 'inject' : out.how || used.length ? 'no_effect' : 'no_input';
+  await panel(error, report({ error, how: out && out.how, used, diag: out && out.diag, earlier: hist }));
   return { ok: false, error, market: m.market };
 }
 // حالة تسجيل الدخول في أسواق المورّدين (وجود كعكة الجلسة فقط، دون قراءة قيمتها أو إرسالها)

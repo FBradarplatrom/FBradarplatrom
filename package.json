@@ -1,6 +1,6 @@
 {
   "name": "radar-platform",
-  "version": "13.13.0",
+  "version": "13.14.0",
   "private": true,
   "engines": {
     "node": ">=20.6"
@@ -12,7 +12,7 @@
     "build:dict": "node adlib/tools/build-dict.js",
     "build:app": "node engine/build.js",
     "build:store": "node adlib/tools/build-store.js --shots --domain",
-    "test:browser": "node adlib/gap-e2e-test.js && node adlib/ui-intl-e2e-test.js && node adlib/tools-e2e-test.js && node adlib/imgsearch-e2e-test.js && node adlib/billing-e2e-test.js && node adlib/plans-admin-e2e-test.js && node adlib/criteria-e2e-test.js && node adlib/tt-scroll-test.js && node adlib/public-pages-test.js && node adlib/account-test.js && node adlib/i18n-e2e-test.js && node adlib/pay-gap-test.js && node adlib/ui-chrome-test.js && node adlib/security-2fa-test.js && node adlib/edge-e2e-test.js && node adlib/wa-e2e-test.js && node adlib/stats-maint-e2e-test.js && node adlib/audit-e2e-test.js",
+    "test:browser": "node adlib/gap-e2e-test.js && node adlib/ui-intl-e2e-test.js && node adlib/tools-e2e-test.js && node adlib/imgsearch-e2e-test.js && node adlib/billing-e2e-test.js && node adlib/plans-admin-e2e-test.js && node adlib/roles-e2e-test.js && node adlib/criteria-e2e-test.js && node adlib/tt-scroll-test.js && node adlib/public-pages-test.js && node adlib/account-test.js && node adlib/i18n-e2e-test.js && node adlib/pay-gap-test.js && node adlib/ui-chrome-test.js && node adlib/security-2fa-test.js && node adlib/edge-e2e-test.js && node adlib/wa-e2e-test.js && node adlib/stats-maint-e2e-test.js && node adlib/audit-e2e-test.js",
     "perf": "node adlib/perf-test.js 5000 && node adlib/perf-ui-test.js 5000 && node adlib/perf-net-test.js 3000"
   },
   "dependencies": {

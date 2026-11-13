@@ -75,12 +75,13 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     // ---- المشترك: بطاقة الاشتراك والعدادات
     await M.goto(BASE + '/subscription'); await M.waitForSelector('#x-billing .meter');
     ok((await M.locator('#x-billing .meter').count()) === 4, 'عدادات الاستعمال الأربعة');
-    await M.click('[data-acc="plans"]'); await M.waitForSelector('.plan-g .plan');
-    ok(await M.locator('.per-t [data-acc="per"]').count() === 3 && await M.locator('.per-t .on').getAttribute('data-m') === '6', 'نافذة الدفع: 3 مدد (بلا شهر: التجربة المجانية تكفي)، و6 أشهر مختارة');
+    await M.waitForSelector('#pay-box .plan-g .plan');
+    ok(!(await M.$('[data-acc="plans"]')) && !/الدفع أو تغيير العرض/.test(await M.textContent('#x-billing')), 'الدفع داخل «الدفع والتجديد» مباشرة: لا زر ولا نافذة مكررة');
+    ok(await M.locator('.per-t [data-acc="per"]').count() === 3 && await M.locator('.per-t .on').getAttribute('data-m') === '6', 'قسم الدفع: 3 مدد (بلا شهر: التجربة المجانية تكفي)، و6 أشهر مختارة');
     await M.click('.per-t [data-acc="per"][data-m="3"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'الأساسية' }).click(); await M.waitForSelector('.per-t [data-m="3"].on');
-    ok(/7[.,٬]?100/.test(await M.locator('.plan-g').textContent()), 'الباقة بسعرها في نافذة الاختيار (3 أشهر)');
+    ok(/7[.,٬]?100/.test(await M.locator('.plan-g').textContent()), 'الباقة بسعرها في قسم الدفع (3 أشهر)');
     ok(['satim', 'stripe', 'paypal'].every(async m => 1) && await M.locator('[data-acc="pay"][data-m="satim"]').count() === 1 && await M.locator('[data-acc="pay"][data-m="stripe"]').count() === 1 && await M.locator('[data-acc="pay"][data-m="paypal"]').count() === 1 && await M.locator('[data-acc="baridi"]').count() === 1, 'طرق الدفع: CIB/الذهبية، Stripe، PayPal، BaridiMob');
-    ok(/\$54\.15/.test(await M.locator('.tm').textContent()), 'السعر بالدولار ظاهر');
+    ok(/\$54\.15/.test(await M.locator('#pay-box').textContent()), 'السعر بالدولار ظاهر');
     // BaridiMob: رقم العملية + صورة الوصل
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
     ok(await M.isVisible('[data-acc="wa"]') && /اسم متجرك/.test(await M.locator('.pay-m').textContent()), 'الطريقة اليدوية: BaridiMob/CCP/تحويل + زر واتساب');
@@ -112,7 +113,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(bl.limits.gapProducts === 2 && bl.usage.gapProducts === 2, 'الاستعمال والحدود في /api/billing');
 
     const days = async () => (await (await M.request.get(BASE + '/api/me')).json()).expires_at;
-    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('[data-acc="plans"]'); await M.click('[data-acc="plans"]'); await M.click('.per-t [data-acc="per"][data-m="3"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'الأساسية' }).click(); await M.waitForSelector('.plan-g .plan.on:has-text("الأساسية")'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
+    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('#pay-box .per-t'); await M.click('.per-t [data-acc="per"][data-m="3"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'الأساسية' }).click(); await M.waitForSelector('.plan-g .plan.on:has-text("الأساسية")'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
     // ---- SATIM: CIB / الذهبية مباشرة
     let before = await days();
     await openPay('satim'); await Promise.all([M.waitForURL(/paid=/), M.click('[data-acc="pay"][data-m="satim"]')]);
@@ -214,8 +215,8 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await E.request.post(BASE + '/api/register', { data: { email: 'x@t.dz', password: 'password123' } });
     const uid = (await (await A.request.get(BASE + '/api/admin/users')).json()).find(u => u.email === 'x@t.dz').id;
     await A.request.post(BASE + '/api/admin/users/' + uid, { data: { days: -10, plan: 'الأساسية' } });
-    await E.goto(BASE + '/subscription'); await E.waitForSelector('[data-acc="plans"]');
-    ok(/اشترك الآن/.test(await E.locator('[data-acc="plans"]').textContent()), 'منتهي الاشتراك يرى «اشترك الآن»');
+    await E.goto(BASE + '/subscription'); await E.waitForSelector('.pay-sec h3');
+    ok(/اشترك الآن/.test(await E.textContent('.pay-sec h3')) && await E.$('#pay-box .plan-g'), 'منتهي الاشتراك يرى «اشترك الآن» والعروض مباشرة');
 
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log('\n✅ اختبار الاشتراكات:', pass, 'فحصاً ناجحاً');

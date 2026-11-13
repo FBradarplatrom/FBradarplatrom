@@ -21,9 +21,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     const U = await b.newContext({ locale: 'ar-DZ', viewport: { width: 1200, height: 900 } }), pg = await U.newPage(), errs = [];
     await U.route(/wa\.me|whatsapp\.com/, r => r.fulfill({ contentType: 'text/html', body: 'wa' }));   // لا خروج للإنترنت في الاختبار pg.on('pageerror', e => errs.push(e.message));
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
-    await pg.goto(BASE + '/subscription'); await pg.waitForSelector('[data-acc="plans"]');
-    ok((await pg.innerText('[data-acc="plans"]')).includes('الدفع أو تغيير العرض'), 'زر «الدفع أو تغيير العرض»');
-    await pg.click('[data-acc="plans"]'); await pg.waitForSelector('.pay-m');
+    await pg.goto(BASE + '/subscription'); await pg.waitForSelector('#pay-box .pay-m');
+    ok(/الدفع والتجديد/.test(await pg.textContent('.pay-sec h3')) && !(await pg.$('[data-acc="plans"]')), 'قسم «الدفع والتجديد» يعرض الدفع مباشرة (بلا زر «الدفع أو تغيير العرض»)');
     await pg.click('.per-t [data-acc="per"][data-m="3"]'); await pg.locator('.plan-g [data-acc="pick"]', { hasText: paid.name }).click(); await pg.waitForSelector('.plan-g .plan.on:has-text("' + paid.name + '")');   // شهر واحد، الباقة الأولى
     const tx = await pg.innerText('.pay-m');
     ok(/BaridiMob أو CCP أو تحويل بنكي/.test(tx) && /يُفعَّل عرضك عند الاستلام/.test(tx) && tx.includes('CCP: 0011223344'), 'بطاقة التحويل: BaridiMob/CCP/بنك + معلومات التحويل');
