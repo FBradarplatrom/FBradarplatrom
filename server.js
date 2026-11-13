@@ -238,7 +238,11 @@ app.get('/api/runs/:id', auth, active, wrap((q, s) => {
   // بلا JSON.parse ثم JSON.stringify لملايين الأحرف: النص المخزَّن يُرسل كما هو
   s.type('application/json').send('{"id":' + r.id + ',"source":' + JSON.stringify(r.source) + ',"label":' + JSON.stringify(r.label) + ',"created_at":' + r.created_at + ',"stats":' + JSON.stringify(stats) + ',"excluded":' + JSON.stringify(excl) + ',"rows":' + rowsJson(r) + '}');
 }));
-app.delete('/api/runs/:id', auth, active, wrap((q, s) => { if (db.prepare('delete from runs where id=? and user_id=?').run(q.params.id, q.u.id).changes) db.prepare('delete from lib_rows where run_id=?').run(q.params.id); s.json({ ok: 1 }); }));
+const delRun = (uid, id) => { if (db.prepare('delete from runs where id=? and user_id=?').run(+id, uid).changes) { db.prepare('delete from lib_rows where run_id=?').run(+id); return 1; } return 0; };
+app.delete('/api/runs/:id', auth, active, wrap((q, s) => { delRun(q.u.id, q.params.id); s.json({ ok: 1 }); }));
+app.post('/api/runs/delete', auth, active, wrap((q, s) => {   // حذف عدة دفعات/تحليلات محددة (للمشترك نفسه فقط)
+  const ids = (Array.isArray(q.body && q.body.ids) ? q.body.ids : []).slice(0, 300); let n = 0; ids.forEach(id => { n += delRun(q.u.id, id); }); s.json({ ok: 1, n });
+}));
 app.post('/api/runs', auth, active, wrap((q, s) => {
   const rows = arr(q.body.rows, 'rows'), fp = fpOf(rows);
   let ex = db.prepare('select id,created_at from runs where user_id=? and fp=? limit 1').get(q.u.id, fp);
@@ -261,6 +265,10 @@ app.put('/api/saved', auth, active, wrap((q, s) => {
   db.prepare('insert into saved(user_id,k,snap,created_at) values(?,?,?,?) on conflict(user_id,k) do update set snap=excluded.snap').run(q.u.id, String(k), JSON.stringify(snap), now()); s.json({ ok: 1 });
 }));
 app.delete('/api/saved', auth, active, wrap((q, s) => { db.prepare('delete from saved where user_id=? and k=?').run(q.u.id, String(q.query.k)); s.json({ ok: 1 }); }));
+app.post('/api/saved/delete', auth, active, wrap((q, s) => {   // إزالة عدة منتجات محفوظة دفعة واحدة
+  const ks = (Array.isArray(q.body && q.body.ks) ? q.body.ks : []).slice(0, 500), del = db.prepare('delete from saved where user_id=? and k=?'); let n = 0;
+  ks.forEach(k => { n += del.run(q.u.id, String(k)).changes; }); s.json({ ok: 1, n });
+}));
 
 // ---------- واجهة الإضافات ----------
 // إضافة خارجية قديمة (إرسال دفعات جاهزة): POST {label, rows:[ads...]}

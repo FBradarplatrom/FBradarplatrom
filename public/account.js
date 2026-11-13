@@ -288,7 +288,7 @@ ${r.keys.map(k => `<div class="pe-r"><span>${e(r.labels[k])}</span><input data-l
       const L = r.list.filter(m => MF === 'all' || (MF === 'new' ? m.status === 'new' : m.status !== 'new'));
       const cnt = { new: r.list.filter(m => m.status === 'new').length, done: r.list.filter(m => m.status !== 'new').length, all: r.list.length };
       el.innerHTML = `<div class="card" style="margin-bottom:14px"><h2>📨 تواصل مع مشترك</h2><p class="sub">رسائل جاهزة (تعدّل نصّها بثلاث لغات من «إعدادات المنصة ← رسائل واتساب»): اختر الرسالة ثم المشترك، وأرسلها عبر واتساب أو داخل المنصة.</p>${acCards()}</div>
-<div class="card"><h2>الرسائل الواردة</h2><div class="sup-f">${[['new', 'بانتظار الرد'], ['done', 'تمت معالجتها'], ['all', 'الكل']].map(([k, t]) => `<button data-adm="mf" data-f="${k}" class="${MF === k ? 'on' : ''}">${t} <b>${num(cnt[k])}</b></button>`).join('')}</div>
+<div class="card"><div class="sup-h"><h2 class="grow" style="margin:0">الرسائل الواردة</h2>${cnt.done ? `<button class="btn ghost sm bad" data-adm="mclean">حذف كل المنتهية (${num(cnt.done)})</button>` : ''}</div><div class="sup-f" style="margin-top:12px">${[['new', 'بانتظار الرد'], ['done', 'تمت معالجتها'], ['all', 'الكل']].map(([k, t]) => `<button data-adm="mf" data-f="${k}" class="${MF === k ? 'on' : ''}">${t} <b>${num(cnt[k])}</b></button>`).join('')}</div>
 ${L.length ? `<div class="mb-l">${L.map(m => `<button class="mb-r${m.status === 'new' ? ' new' : ''}" data-adm="mopen" data-id="${m.id}"><span class="mb-w"><span class="mb-n" dir="auto">${e(m.name || m.email)}</span><small dir="auto"><b>${e(m.subject)}</b>${m.body ? ' — ' + e(m.body.slice(0, 120)) : ''}</small></span><span class="mb-s"><small class="muted">${X.fd(m.created_at)}</small>${m.origin === 'admin' ? '<span class="pill">📤 أرسلتها أنت</span>' : `<span class="pill ${m.status === 'new' ? 'warn' : 'ok'}">${m.status === 'new' ? 'بانتظار الرد' : m.reply ? 'تم الرد' : 'تمت المعالجة'}</span>`}</span></button>`).join('')}</div>` : '<p class="sub" style="margin:0">لا رسائل هنا.</p>'}</div>`;
       MSGS = r.list; CATS = CAT;
       return;
@@ -373,6 +373,7 @@ ${m.reply ? `<div class="sup-r" style="margin:0"><small>${mine ? 'رسالتك' 
     if (a === 'reject') { const note = prompt('سبب الرفض (يظهر للمشترك):') || ''; await X.api('POST', '/admin/payments/' + b.dataset.id + '/reject', { note }); return drawAdmin(); }
     if (a === 'mf') { MF = b.dataset.f; return drawAdmin(); }
     if (a === 'mopen') return msgOpen(b.dataset.id);
+    if (a === 'mclean') { if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد الحذف؟'; return; } const r = await X.api('POST', '/admin/messages/delete-done', {}); X.toast('حُذفت ' + r.n + ' رسالة منتهية'); return drawAdmin(); }
     if (a === 'wasave' || a === 'wareset') {
       if (a === 'wareset' && !confirm('استرجاع كل الرسائل الأصلية؟ ستُحذف تعديلاتك.')) return;
       const t = {}; if (a === 'wasave') X.root.querySelectorAll('[data-wat]').forEach(x => { (t[x.dataset.wat] = t[x.dataset.wat] || {})[x.dataset.l] = x.value; });

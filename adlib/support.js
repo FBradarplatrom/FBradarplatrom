@@ -59,6 +59,9 @@ create table if not exists legal_docs(lang text, doc text, body text, updated_at
   app.get('/api/admin/messages', auth, admin, wrap((q, s) => s.json({
     list: db.prepare('select m.*, u.plan, u.expires_at, u.phone from contact_msgs m left join users u on u.id=m.user_id order by m.created_at desc limit 300').all(),
     unread: db.prepare("select count(*) n from contact_msgs where status='new'").get().n })));
+  app.post('/api/admin/messages/delete-done', auth, admin, wrap((q, s) => {   // «حذف كل المنتهية»: الرسائل التي تمت معالجتها
+    const n = db.prepare("delete from contact_msgs where status!='new'").run().changes; X.act && X.act(q.u.id, 'admin_msgs_clean', q, String(n)); s.json({ ok: 1, n });
+  }));
   app.post('/api/admin/messages/:id/:act', auth, admin, wrap((q, s) => {
     const id = +q.params.id, a = q.params.act;
     if (a === 'delete') db.prepare('delete from contact_msgs where id=?').run(id);

@@ -2250,4 +2250,9 @@ window.I18N_DICT=[["⏹️ توقف بعد نجاح","⏹️ Stopped after succe
 ["أُرسل الرد إلى المشترك", "Reply sent to the subscriber", "Réponse envoyée à l’abonné"],
 ["فُتح واتساب بنص ردّك", "WhatsApp opened with your reply", "WhatsApp ouvert avec votre réponse"],
 ["زائر بلا حساب: ردّ عليه بالبريد", "Visitor without an account: reply by email", "Visiteur sans compte : répondez par e-mail"],
-["· واتساب", "· WhatsApp", "· WhatsApp"]];
+["· واتساب", "· WhatsApp", "· WhatsApp"],
+["حدّد منتجاً واحداً على الأقل", "Select at least one product", "Sélectionnez au moins un produit"],
+["أُزيل", "Removed", "Retiré(s) :"],
+["إزالة المحدد", "Remove selected", "Retirer la sélection"],
+["حذف كل المنتهية ({})", "Delete all handled ({})", "Supprimer tous les traités ({})"],
+["رسالة منتهية", "handled message(s)", "message(s) traité(s)"]];

@@ -49,7 +49,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok((await other.request.post(BASE + '/api/support/mine/' + adm.list[0].id + '/archive', { data: {} })).status() === 404, 'a subscriber cannot touch another subscriber’s messages');
 
     // ---- 2) ثغرات السوق: حذف إعلان واحد (لا يعود) أو الكل دفعة واحدة
-    const snap = { v: 2, name: 'Star Light', kw: 'star', cat: 'gem', score: 80, n: 2, images: [], top: { title: 'Star Light', body: 'x', link_url: 'https://example.com/p', country: 'US' } };
+    const snap = { v: 2, name: 'Star Light', kw: 'star', cat: 'gem', score: 80, n: 2, images: [], top: { title: 'Star Light', body: 'x', link_url: 'https://example.com/p', image_url: '', country: 'US', library_url: 'https://www.facebook.com/ads/library/?id=1' }, recs: [], tags: [], lib: '', saved_at: Date.now() };
     await U.request.put(BASE + '/api/saved', { data: { k: 'star', snap } });
     const gp = (await (await U.request.post(BASE + '/api/gap', { data: { k: 'star' } })).json()).id;
     const mk = (id, level) => ({ level, ev: { why: 'test', score: 5 }, row: { ad_id: String(id), page_name: 'متجر ' + id, status: 'active', library_url: 'https://www.facebook.com/ads/library/?id=' + id, title: 'إعلان ' + id } });
@@ -108,6 +108,43 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     pays = await (await A.request.get(BASE + '/api/admin/payments')).json();
     ok(pays.length === 1 && pays[0].status === 'paid', 'the admin deleted the pending request; the paid one stays');
     ok((await A.request.post(BASE + '/api/admin/payments/' + pays[0].id + '/delete', { data: {} })).status() === 400, 'even the admin cannot delete an approved payment');
+    // ---- 5) (13.23) حذف عدة عناصر دفعة واحدة: الإعلانات الواردة، الأرشيف، المنتجات المحفوظة، و«حذف كل المنتهية» للمدير
+    const db3 = new DatabaseSync(path.join(DIR, 'd.db')), insR = db3.prepare("insert into runs(user_id,source,label,ads,rows,created_at) values(?,?,?,?,?,?)");
+    ['دفعة 1', 'دفعة 2', 'دفعة 3'].forEach((l, i) => insR.run(uid, 'adlib', l, 1, '[]', Date.now() - i * 1000));
+    ['ملف أ', 'ملف ب'].forEach((l, i) => insR.run(uid, 'upload', l, 1, '[]', Date.now() - 5000 - i * 1000));
+    insR.run(aid, 'adlib', 'دفعة المدير', 1, '[]', Date.now()); db3.close();
+    await U.goto(BASE + '/inbox'); await U.waitForSelector('#x-inbox [data-sel]');
+    await U.check('#x-inbox tr:has-text("دفعة 1") [data-sel]'); await U.check('#x-inbox tr:has-text("دفعة 3") [data-sel]');
+    await U.click('#v-inbox [data-a="delSel"]'); await U.click('#v-inbox [data-a="delSel"]');
+    await U.waitForFunction(() => document.querySelectorAll('#x-inbox [data-sel]').length === 1);
+    ok(/دفعة 2/.test(await U.textContent('#x-inbox')), 'incoming ads: the selected batches are deleted together, the other stays');
+    await U.goto(BASE + '/archive'); await U.waitForSelector('#x-arch [data-sel]');
+    ok(await U.$$eval('#x-arch [data-sel]', x => x.length) === 3, 'archive: every analysis has a checkbox');
+    await U.click('#v-arch [data-a="selall"]');
+    ok(await U.$$eval('#x-arch [data-sel]', x => x.every(c => c.checked)) && !(await U.$$eval('#x-inbox [data-sel]', x => x.some(c => c.checked))), '«Select all» only ticks the visible section');
+    await U.uncheck('#x-arch .row:has-text("ملف أ") [data-sel]');
+    await U.click('#v-arch [data-a="delSel"]'); await U.click('#v-arch [data-a="delSel"]');
+    await U.waitForFunction(() => document.querySelectorAll('#x-arch [data-sel]').length === 1);
+    ok(/ملف أ/.test(await U.textContent('#x-arch')), 'archive: the selected analyses are deleted');
+    ok((await (await A.request.get(BASE + '/api/runs')).json()).some(r => r.label === 'دفعة المدير'), 'nobody else’s batches are touched');
+    ok((await (await other.request.post(BASE + '/api/runs/delete', { data: { ids: [1, 2, 3, 4, 5, 6, 7, 8] } })).json()).n === 0, 'deleting by id only works on your own batches');
+    for (const k of ['p1', 'p2', 'p3']) await U.request.put(BASE + '/api/saved', { data: { k, snap: Object.assign({}, snap, { name: 'منتج ' + k }) } });
+    await U.goto(BASE + '/saved');
+    await U.waitForSelector('.sv-ck');
+    ok(await U.$$eval('#x-saved .sv-ck', x => x.length) === 4, 'saved products: a checkbox on every product card');
+    await U.check('#x-saved .sv-ck[data-sel="p1"]'); await U.check('#x-saved .sv-ck[data-sel="p3"]');
+    await U.click('#v-saved [data-a="svDel"]'); await U.click('#v-saved [data-a="svDel"]');
+    await U.waitForFunction(() => document.querySelectorAll('#x-saved .sv-ck').length === 2);
+    ok((await (await U.request.get(BASE + '/api/saved/keys')).json()).sort().join() === 'p2,star', 'saved products: the selected ones are removed together');
+    await U.request.post(BASE + '/api/contact', { data: { subject: 'سؤال 1', message: 'رسالة اختبار للحذف رقم واحد', category: 'usage' } });
+    await U.request.post(BASE + '/api/contact', { data: { subject: 'سؤال 2', message: 'رسالة اختبار للحذف رقم اثنان', category: 'usage' } });
+    let ML = (await (await A.request.get(BASE + '/api/admin/messages')).json()).list;
+    await A.request.post(BASE + '/api/admin/messages/' + ML.find(m => m.subject === 'سؤال 1').id + '/done', { data: {} });
+    await A.goto(BASE + '/support-inbox'); await A.waitForSelector('[data-adm="mclean"]');
+    await A.click('[data-adm="mclean"]'); await A.click('[data-adm="mclean"]'); await A.waitForFunction(() => !document.querySelector('[data-adm="mclean"]'));
+    ML = (await (await A.request.get(BASE + '/api/admin/messages')).json()).list;
+    ok(ML.length && ML.every(m => m.status === 'new') && ML.some(m => m.subject === 'سؤال 2'), 'admin: «Delete all handled» removes handled messages, the ones awaiting reply stay');
+    ok((await U.request.post(BASE + '/api/admin/messages/delete-done', { data: {} })).status() === 403, 'only the admin can clean the support inbox');
     ok(!errs.length, 'no page errors ' + errs.join(' | '));
     console.log(`PASS ${pass} delete checks`);
   } catch (e) { console.error('FAIL', e.message); console.error(log.slice(-1500)); process.exitCode = 1; }
