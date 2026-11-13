@@ -5,7 +5,7 @@ module.exports = function mountSupport(app, X) {
   const { db, auth, admin, wrap, now, blocked, fail, optUser } = X, CFG = require('./config.js');
   db.exec(`create table if not exists contact_msgs(id integer primary key, user_id integer, name text, email text, subject text, body text, ip text, status text default 'new', created_at integer);
 create table if not exists legal_docs(lang text, doc text, body text, updated_at integer, primary key(lang, doc));`);
-  ['category text', 'reply text', 'replied_at integer', "origin text default 'user'"].forEach(c => { try { db.exec('alter table contact_msgs add column ' + c); } catch (e) {} });
+  ['category text', 'reply text', 'replied_at integer', "origin text default 'user'", 'user_archived integer default 0', 'user_hidden integer default 0'].forEach(c => { try { db.exec('alter table contact_msgs add column ' + c); } catch (e) {} });
   const CATS = ['tech', 'billing', 'usage', 'idea', 'other'];
   const bad = (m, st) => Object.assign(new Error(m), { status: st || 400 }), str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
   const LANGS = ['ar', 'en', 'fr'], DOCS = ['terms', 'privacy', 'refund', 'contact'];
@@ -23,7 +23,14 @@ create table if not exists legal_docs(lang text, doc text, body text, updated_at
     s.json({ ok: 1, id: Number(id) });
   }));
   // المشترك: طلباته وردود الدعم عليها
-  app.get('/api/support/mine', auth, wrap((q, s) => s.json(db.prepare("select id, category, subject, body, status, reply, replied_at, created_at, coalesce(origin,'user') origin from contact_msgs where user_id=? order by created_at desc limit 50").all(q.u.id))));
+  app.get('/api/support/mine', auth, wrap((q, s) => s.json(db.prepare("select id, category, subject, body, status, reply, replied_at, created_at, coalesce(origin,'user') origin, coalesce(user_archived,0) archived from contact_msgs where user_id=? and coalesce(user_hidden,0)=0 order by created_at desc limit 50").all(q.u.id))));
+  // المشترك: أرشفة / إرجاع / حذف رسائل فريق الدعم الواردة (الحذف يخفيها عنده فقط، وتبقى في سجل المدير)
+  app.post('/api/support/mine/:id/:act', auth, wrap((q, s) => {
+    const a = q.params.act, set = { archive: 'user_archived=1', unarchive: 'user_archived=0', delete: 'user_hidden=1' }[a]; if (!set) throw bad('?');
+    const ids = String(q.params.id) === 'all' ? db.prepare("select id from contact_msgs where user_id=? and origin='admin' and coalesce(user_hidden,0)=0 and coalesce(user_archived,0)=?").all(q.u.id, a === 'unarchive' ? 1 : (q.body && q.body.archived ? 1 : 0)).map(r => r.id) : [+q.params.id];
+    const up = db.prepare(`update contact_msgs set ${set} where id=? and user_id=? and origin='admin'`); let n = 0; ids.forEach(id => { n += up.run(id, q.u.id).changes; });
+    if (!n && String(q.params.id) !== 'all') throw bad('غير موجود', 404); s.json({ ok: 1, n });
+  }));
   // المدير يبادر بالتواصل مع مشترك: رسالة داخل المنصة (تظهر في «طلباتي» مع تنبيه) أو واتساب (يُفتح من متصفح المدير ويُسجَّل هنا)
   app.post('/api/admin/contact', auth, admin, wrap((q, s) => {
     const b = q.body || {}, u = db.prepare('select id, email, name, phone from users where id=?').get(+b.user_id); if (!u) throw bad('المشترك غير موجود', 404);

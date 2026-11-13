@@ -100,6 +100,10 @@ create index if not exists edge_user on edge_runs(user_id, created_at);`);
 
   app.get('/api/edge', auth, active, wrap((q, s) => s.json({ ai: AI.enabled(), market: gapTarget(q.u.id), runs: db.prepare('select id,k,name,input,data,status,error,created_at from edge_runs where user_id=? order by created_at desc limit 50').all(q.u.id).map(r => view(r, false)) })));
   app.get('/api/edge/:id', auth, active, wrap((q, s) => s.json(view(own(q.u.id, q.params.id), true))));
+  app.post('/api/edge/delete', auth, active, wrap((q, s) => {   // حذف التحليلات المحددة (للمشترك نفسه فقط)
+    const ids = (Array.isArray(q.body && q.body.ids) ? q.body.ids : []).slice(0, 200).map(Number).filter(Boolean), del = db.prepare('delete from edge_runs where id=? and user_id=?');
+    let n = 0; ids.forEach(id => { n += del.run(id, q.u.id).changes; }); s.json({ ok: 1, n });
+  }));
   app.delete('/api/edge/:id', auth, active, wrap((q, s) => { own(q.u.id, q.params.id); db.prepare('delete from edge_runs where id=? and user_id=?').run(+q.params.id, q.u.id); s.json({ ok: 1 }); }));
   app.post('/api/edge', auth, active, wrap((q, s) => {
     if (!AI.enabled()) throw bad('الذكاء الاصطناعي غير مفعّل: يضيف المدير المفتاح من «إعدادات المنصة ← الذكاء الاصطناعي»');

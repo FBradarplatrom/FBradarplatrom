@@ -51,7 +51,7 @@
 .ed-hook{display:flex;gap:8px;align-items:flex-start;background:var(--card2);border:1px dashed var(--line);border-radius:10px;padding:8px 10px;font-size:14px}.ed-hook div{flex:1}
 .ed-pl{display:flex;flex-direction:column;gap:0}.ed-pl div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.ed-pl div:last-child{border:0}.ed-pl b{color:var(--brand)}
 .ed-h{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.ed-hc{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);cursor:pointer;display:flex;flex-direction:column;gap:3px}.ed-hc:hover{border-color:var(--brand)}
-.ed-hc b{font-size:14.5px}.ed-hc small{color:var(--mut)}`;
+.ed-hb{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.ed-all{display:flex;gap:6px;align-items:center;font-size:13.5px;cursor:pointer}.ed-hc{position:relative}.ed-ck{position:absolute;top:10px;inset-inline-end:10px;width:17px;height:17px;cursor:pointer}.ed-hc b{font-size:14.5px;padding-inline-end:24px}.ed-hc small{color:var(--mut)}`;
   document.head.appendChild(st);
 
   /* ---------- الصفحة الرئيسية للقسم: النموذج + التحليلات السابقة ---------- */
@@ -82,7 +82,7 @@
   }
   function hist(runs) {
     if (!runs || !runs.length) return '';
-    return `<div class="card" style="margin-top:14px"><h2>تحليلاتك السابقة</h2><div class="ed-h">${runs.map(r => `<div class="ed-hc" data-ed="open" data-id="${r.id}"><b>${e(r.name)}</b>${r.status === 'done' ? `<small>${r.n} فكرة${r.top ? ' · الأولى: ' + e(r.top) : ''}</small>` : r.status === 'run' ? '<small>قيد التحليل…</small>' : `<small style="color:var(--bad)">${e(r.error || 'فشل')}</small>`}<small>${flag(r.market)} ${e(X.ago(r.created_at))}</small></div>`).join('')}</div></div>`;
+    return `<div class="card" style="margin-top:14px"><div class="ed-hb"><h2 style="margin:0;flex:1">تحليلاتك السابقة</h2><label class="ed-all"><input type="checkbox" data-ed="selall"> تحديد الكل</label><button class="btn danger sm" data-ed="delsel" disabled>حذف المحدد</button></div><div class="ed-h">${runs.map(r => `<div class="ed-hc" data-ed="open" data-id="${r.id}"><input type="checkbox" class="ed-ck" data-ed="sel" value="${r.id}" aria-label="تحديد"><b>${e(r.name)}</b>${r.status === 'done' ? `<small>${r.n} فكرة${r.top ? ' · الأولى: ' + e(r.top) : ''}</small>` : r.status === 'run' ? '<small>قيد التحليل…</small>' : `<small style="color:var(--bad)">${e(r.error || 'فشل')}</small>`}<small>${flag(r.market)} ${e(X.ago(r.created_at))}</small></div>`).join('')}</div></div>`;
   }
   function pickSaved(k) {
     if (!k) { seed = null; $('#ed-seed').innerHTML = ''; drawUp(); return; }
@@ -177,6 +177,16 @@ ${x.hook ? `<div class="ed-hook"><div dir="auto">${e(x.hook)}</div><button type=
       const b = ev.target.closest('[data-ed]'); if (!b || !b.closest('#v-edge')) return;
       const a = b.dataset.ed;
       try {
+        if (a === 'sel' || a === 'selall') {
+          if (a === 'selall') X.root.querySelectorAll('#v-edge .ed-ck').forEach(c => { c.checked = b.checked; });
+          const n = X.root.querySelectorAll('#v-edge .ed-ck:checked').length, d = $('[data-ed="delsel"]');
+          if (d) { d.disabled = !n; d.dataset.s = ''; d.textContent = n ? 'حذف المحدد (' + n + ')' : 'حذف المحدد'; } return;
+        }
+        if (a === 'delsel') {
+          const ids = [...X.root.querySelectorAll('#v-edge .ed-ck:checked')].map(c => +c.value); if (!ids.length) return;
+          if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد حذف ' + ids.length + '؟'; return; }
+          const r = await X.api('POST', '/edge/delete', { ids }); X.toast('حُذف ' + r.n + ' تحليل'); return home();
+        }
         if (a === 'src') { X.root.querySelectorAll('.ed-src button').forEach(x => x.classList.toggle('on', x === b)); X.root.querySelectorAll('#ed-form [data-pane]').forEach(x => x.hidden = x.dataset.pane !== b.dataset.m); drawUp(); }
         else if (a === 'clrimg') { up = []; if (isSaved() && seed) { seed = Object.assign({}, seed, { images: [] }); } drawUp(); }
         else if (a === 'open') { X.url('/compete/' + b.dataset.id); await result(b.dataset.id); }

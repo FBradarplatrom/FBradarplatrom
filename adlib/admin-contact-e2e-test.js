@@ -50,8 +50,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(mine[0] && mine[0].origin === 'admin' && /مرحباً Amine/.test(mine[0].reply), 'in-platform message reaches the subscriber');
     await A.click('[data-adm="mf"][data-f="done"]'); await A.waitForSelector('text=أرسلتها أنت');
     ok(true, 'the inbox shows it as «sent by you»');
-    await U.goto(BASE + '/help'); await U.waitForSelector('.hc-t');
-    ok(/من الدعم/.test(await U.textContent('.hc-t')) && /مرحباً Amine/.test(await U.textContent('.hc-t')), 'subscriber sees it in «Help ← My requests» marked «from support»');
+    await U.goto(BASE + '/help'); await U.waitForSelector('#hc-in .hc-t');
+    ok(/فريق الدعم/.test(await U.textContent('#hc-in .hc-t')) && /مرحباً Amine/.test(await U.textContent('#hc-in .hc-t')), 'subscriber sees it in «Help ← Incoming messages» from the support team');
 
     // ---- واتساب: برقم المشترك، وغير متاح لمن لا رقم له
     await A.goto(BASE + '/support-inbox'); await A.click('[data-acon="a_renew"]'); await A.waitForSelector('#ac-u');

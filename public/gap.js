@@ -198,7 +198,7 @@ ${LIST.length ? `<div class="g-kp">${tabs.filter(t => t[0] === 'all' || cnt[t[0]
     return `<div class="g-m"><a href="${e(r.library_url)}" target="_blank" rel="noopener"><img loading="lazy" src="${e(img(r.image_url))}" alt=""></a><div>
 <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><b dir="auto">${e(r.page_name || 'صفحة')}</b><span class="pill ${r.status === 'inactive' ? '' : 'ok'}">${r.status === 'inactive' ? 'متوقف' : 'نشط'}</span>${r.start_date ? `<small>منذ ${e(r.start_date)}</small>` : ''}${dec === 'yes' ? '<span class="pill ok">✓ أكّدته أنت</span>' : dec === 'no' ? '<span class="pill">✗ استبعدته</span>' : m.level === 'strong' ? '<span class="pill ok">✅ مؤكد</span>' : m.level === 'similar' ? '<span class="pill">≈ مشابه</span>' : '<span class="pill warn">❔ محتمل</span>'}</div>
 <div class="g-ev">${e(m.ev.why || '')}</div><div class="tx muted" dir="auto">${e((r.title ? r.title + ' — ' : '') + (r.body || ''))}</div>
-<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><button class="btn sm ${dec === 'yes' ? '' : 'ghost'}" data-g="yes" data-m="${m.id}">✓ نفس المنتج</button><button class="btn sm ${dec === 'no' ? 'danger' : 'ghost'}" data-g="no" data-m="${m.id}">✗ ليس هو</button><a class="btn ghost sm" href="${e(r.library_url)}" target="_blank" rel="noopener">الإعلان ↗</a></div></div></div>`;
+<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><button class="btn sm ${dec === 'yes' ? '' : 'ghost'}" data-g="yes" data-m="${m.id}">✓ نفس المنتج</button><button class="btn sm ${dec === 'no' ? 'danger' : 'ghost'}" data-g="no" data-m="${m.id}">✗ ليس هو</button><a class="btn ghost sm" href="${e(r.library_url)}" target="_blank" rel="noopener">الإعلان ↗</a><button class="btn ghost sm" data-g="mdel" data-m="${m.id}" title="يُحذف ولا يعود في الفحوص القادمة">حذف</button></div></div></div>`;
   }
   async function drawProduct(id) {
     const root = $('#x-gap');
@@ -222,7 +222,7 @@ ${p.last_scan_at ? `<div class="g-nums"><div><b>${num(s.scanned)}</b><span>إع�
 <div id="g-terms">${termsHtml(p)}</div>
 <p style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><button class="btn ghost sm" data-g="tadd">+ عبارة</button>${AI ? '<button class="btn ghost sm" data-g="ai">✨ اقتراح بالذكاء الاصطناعي</button>' : ''}<button class="btn ghost sm" data-g="tsave">حفظ العبارات</button></p>
 <label class="fl">كلمات المنتج المميزة (للمقارنة، افصل بفاصلة)<input dir="auto" data-g="kw" value="${e((p.keywords || []).join('، '))}" placeholder="مثال: نجوم، بروجكتور، ضوضاء بيضاء، veilleuse"></label>
-<p style="margin:12px 0 0"><button class="btn" data-g="scan"${scanning(p.id) ? ' disabled' : ''}>${p.last_scan_at ? '🔁 أعد الفحص في ' + e(cname(TG(p))) : '🎯 ابدأ الفحص في ' + e(cname(TG(p)))}</button> <button class="btn danger sm" data-g="del">حذف من القسم</button></p>
+<p style="margin:12px 0 0"><button class="btn" data-g="scan"${scanning(p.id) ? ' disabled' : ''}>${p.last_scan_at ? '🔁 أعد الفحص في ' + e(cname(TG(p))) : '🎯 ابدأ الفحص في ' + e(cname(TG(p)))}</button> <button class="btn danger sm" data-g="del">حذف من القسم</button>${p.matches.length ? ` <button class="btn ghost sm" data-g="mdelall">حذف كل الإعلانات (${num(p.matches.length)})</button>` : ''}</p>
 <p class="sub" style="margin-top:6px">يبحث في مكتبة إعلانات ميتا (${e(cname(TG(p)))}، النشطة والمتوقفة) بكل عبارة، ويقارن كل إعلان لحظة وصوله: بصمة الصورة، رابط المورّد، وكلمات المنتج. يستهلك من حدّ عمليات البحث اليومي.</p></div></div>
 <div class="card" style="margin-top:14px"><h2>إعلانات مطابقة في ${e(cname(TG(p)))} <small>(${num(strong.length)})</small></h2>${strong.map(matchHtml).join('') || `<p class="sub">لا شيء مؤكد.</p>${similar.length ? '<p class="sub">انظر الإعلانات المشابهة أدناه.</p>' : ''}`}</div>
 ${simCard && !strong.length && !maybe.length ? `<div class="card" style="margin-top:14px">${simCard}</div>` : ''}
@@ -260,6 +260,11 @@ ${rejected.length ? `<details class="fx" style="margin-top:14px"><summary>است
     if (a === 'ai') { b.disabled = true; b.textContent = '✨ يقترح…'; try { const r = await X.api('POST', '/gap/' + CUR.id + '/suggest', {}); if (!r.ai) return X.toast('الذكاء الاصطناعي غير مفعّل', 'err'); CUR.terms = r.terms; CUR.keywords = r.keywords; MCTX.delete(CUR.id); X.toast('اقتُرحت ' + r.terms.length + ' عبارات. راجعها ثم ابدأ الفحص.'); return drawProduct(CUR.id); } finally { b.disabled = false; } }
     if (a === 'scan') { await saveTerms(); await startScan(CUR); return drawProduct(CUR.id); }
     if (a === 'del') { if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد الحذف؟'; return; } await X.api('DELETE', '/gap/' + CUR.id); CUR = null; LIST = null; X.url('/gaps'); return redraw(); }
+    if (a === 'mdel' || a === 'mdelall') {
+      if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد الحذف؟'; return; }
+      const r = await X.api('DELETE', '/gap/' + CUR.id + '/matches/' + (a === 'mdel' ? b.dataset.m : 'all'));
+      CUR = Object.assign(CUR, r); LIST = null; X.toast(a === 'mdel' ? 'حُذف الإعلان' : 'حُذفت كل الإعلانات. أعد الفحص متى شئت'); return drawProduct(CUR.id);
+    }
     if (a === 'yes' || a === 'no') {
       const m = CUR.matches.find(x => x.id === +b.dataset.m), d = m && m.decision === a ? '' : a;
       const r = await X.api('PUT', '/gap/' + CUR.id + '/matches/' + b.dataset.m, { decision: d }); if (m) m.decision = d; CUR.verdict = r.verdict; CUR.stats = r.stats; return drawProduct(CUR.id);

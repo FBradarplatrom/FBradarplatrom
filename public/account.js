@@ -54,7 +54,7 @@ ${BL.plans.length ? '' : `<p class="sub" style="margin:8px 0 0">لا توجد ع
 ${[['pay', 'إرسال وصل الدفع', 'بعد التحويل عبر BaridiMob أو CCP'], me.active ? ['upgrade', 'ترقية أو تغيير العرض', 'انتقل إلى باقة أخرى'] : null, me.active ? ['renew', 'تجديد الاشتراك', 'مدّد اشتراكك الحالي'] : null, ['billing', 'سؤال عن الدفع أو الاشتراك', 'نجيبك في أقرب وقت']].filter(Boolean)
   .map(([k, t, h]) => `<button type="button" class="wa-i" data-wac="${k}"><b>${t}</b><small>${h}</small></button>`).join('')}</div></div>
 ${(BL.methods.satim || BL.methods.stripe || BL.methods.paypal) && BL.plans.length ? '<div class="card" id="cpay" style="margin:14px 0 0"></div>' : ''}</div>`}
-${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td></tr>`).join('')}</table></div></details>` : ''}`;
+${BL.payments.length ? `<details class="fx" id="pay-hist" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th><th></th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td><td>${p.del ? `<button class="btn ghost sm" data-paydel="${p.id}">حذف</button>` : ''}</td></tr>`).join('')}</table></div><p class="sub" style="margin:6px 0 0">الطلبات المرفوضة أو قيد المراجعة يمكن حذفها. الدفعات المقبولة تبقى في السجل.</p></details>` : ''}`;
     cardPay($('#cpay'));
   }
   function cardPay(el) {
@@ -249,7 +249,7 @@ ${[['الإعلانات المجلوبة اليوم', Wk.adsToday], ['الإعل
     if (ATAB === 'pay') {
       const L = await X.api('GET', '/admin/payments'), pend = L.filter(p => p.status === 'pending');
       el.innerHTML = `${pend.length ? `<div class="alert info">${num(pend.length)} طلب بانتظار مراجعتك.</div>` : ''}<div class="tbw"><table class="tb"><tr><th>المشترك</th><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>رقم العملية / الوصل</th><th>الحالة</th><th>التاريخ</th><th></th></tr>${L.map(p => `<tr><td>${e(p.email || '—')}</td><td>${e(p.plan_name)} · ${num(p.days)} يوماً</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td dir="ltr">${e(p.ref || '')}${p.proof ? ` <a href="/api/admin/payments/${p.id}/proof" target="_blank" rel="noopener">🧾 الوصل</a>` : ''}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td>
-<td>${p.status === 'pending' ? `<button class="btn sm" data-adm="approve" data-id="${p.id}">✓ قبول وتفعيل</button> <button class="btn danger sm" data-adm="reject" data-id="${p.id}">رفض</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">لا مدفوعات بعد.</td></tr>'}</table></div>`;
+<td>${p.status === 'pending' ? `<button class="btn sm" data-adm="approve" data-id="${p.id}">✓ قبول وتفعيل</button> <button class="btn danger sm" data-adm="reject" data-id="${p.id}">رفض</button>` : ''}${p.del ? ` <button class="btn ghost sm" data-adm="paydel" data-id="${p.id}">حذف</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">لا مدفوعات بعد.</td></tr>'}</table></div>`;
     }
     if (ATAB === 'plans') {
       const r = await X.api('GET', '/admin/plans'), PERS = r.periods || [];
@@ -342,6 +342,7 @@ ${Object.entries(r.keys).map(([k, [t, vs, g]], i, A) => `${g === 'admin' && (A[i
     const a = b.dataset.adm;
     if ((AV[AVIEW] || []).some(t => t[0] === a)) { X.url(ABASE[AVIEW] + (a === AV[AVIEW][0][0] ? '' : '/' + a)); return adminView(AVIEW, a); }
     if (a === 'approve') { await X.api('POST', '/admin/payments/' + b.dataset.id + '/approve', {}); X.toast('قُبل الدفع وفُعّل الاشتراك'); return drawAdmin(); }
+    if (a === 'paydel') { if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد الحذف؟'; return; } await X.api('POST', '/admin/payments/' + b.dataset.id + '/delete', {}); X.toast('حُذف طلب الدفع'); return drawAdmin(); }
     if (a === 'reject') { const note = prompt('سبب الرفض (يظهر للمشترك):') || ''; await X.api('POST', '/admin/payments/' + b.dataset.id + '/reject', { note }); return drawAdmin(); }
     if (a === 'mf') { MF = b.dataset.f; return drawAdmin(); }
     if (a === 'mreply') { const t = X.root.querySelector(`[data-reply="${b.dataset.id}"]`), v = t ? t.value.trim() : ''; if (v.length < 2) return X.toast('اكتب الرد', 'err'); await X.api('POST', '/admin/messages/' + b.dataset.id + '/reply', { reply: v }); X.toast('✅ أُرسل الرد إلى المشترك'); return drawAdmin(); }
@@ -502,6 +503,10 @@ ${d.log.length ? `<details class="fx" style="margin-top:8px"><summary>آخر ا�
       X.root.addEventListener('click', ev => {
         const cur = X.cur(), fn = AV[cur] ? (e => e.target.closest('[data-int]') ? onInt(e) : onAdmin(e)) : cur === 'integrations' ? onInt : null;
         const acon = ev.target.closest('[data-acon]'); if (acon) { W.WPRACON.open(acon.dataset.acon, acon.dataset.uid); return; }
+        const pd = ev.target.closest('[data-paydel]'); if (pd) {   // المشترك يحذف طلب دفع مرفوضاً أو قيد المراجعة
+          if (pd.dataset.s !== '1') { pd.dataset.s = '1'; pd.textContent = 'تأكيد الحذف؟'; return; }
+          X.api('DELETE', '/billing/payment/' + pd.dataset.paydel).then(async () => { X.toast('حُذف طلب الدفع'); await drawBilling(); const h = $('#pay-hist'); if (h) h.open = true; }).catch(x => X.toast(x.message, 'err')); return;
+        }
         const wac = ev.target.closest('[data-wac]'); if (wac) { W.WPRWA.open(wac.dataset.wac, { topic: wac.dataset.topic }); return; }
         if (!fn) return; const pr = Promise.resolve().then(() => fn(ev)); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => { if (x && x.message !== 'auth') X.toast(x.message || 'حدث خطأ', 'err'); });
       });

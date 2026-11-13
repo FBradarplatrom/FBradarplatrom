@@ -22,7 +22,8 @@ create table if not exists gap_scans(id integer primary key, gp_id integer, user
 create table if not exists gap_matches(id integer primary key, gp_id integer, user_id integer, ad_id text, scan_id integer, row text, ev text, level text, decision text,
   created_at integer, unique(gp_id, ad_id));
 create index if not exists gap_m_gp on gap_matches(gp_id);`);
-  try { db.exec("alter table gap_products add column target text default 'DZ'"); } catch (e) {}   // السوق المستهدف لكل منتج
+  try { db.exec("alter table gap_products add column target text default 'DZ'"); } catch (e) {}
+  try { db.exec('alter table gap_products add column hidden text'); } catch (e) {}   // إعلانات حذفها المشترك: لا تعود في الفحوص القادمة   // السوق المستهدف لكل منتج
   // السوق المستهدف: دولة من lib/markets.js (ليس «كل الدول»). اختيار المشترك الافتراضي محفوظ في user_kv
   const okC = c => { c = String(c || '').toUpperCase(); return MK.COUNTRIES[c] && c !== 'ALL' ? c : null; };
   const userTarget = uid => { try { return okC(J((db.prepare("select v from user_kv where user_id=? and k='gap_target'").get(uid) || {}).v, '')) || 'DZ'; } catch (e) { return 'DZ'; } };
@@ -172,9 +173,9 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     const up = db.prepare(`insert into gap_matches(gp_id,user_id,ad_id,scan_id,row,ev,level,created_at) values(?,?,?,?,?,?,?,?)
       on conflict(gp_id,ad_id) do update set row=excluded.row, ev=excluded.ev, scan_id=excluded.scan_id,
       level=case when excluded.level='strong' or gap_matches.level='strong' then 'strong' when excluded.level='possible' or gap_matches.level='possible' then 'possible' else 'similar' end`);
-    let n = 0;
+    let n = 0; const hid = new Set(J(p.hidden, []));
     for (const m of (Array.isArray(b.matches) ? b.matches : []).slice(0, 200)) {
-      if (!m || !m.row || !m.row.ad_id || !['strong', 'possible', 'similar'].includes(m.level)) continue;
+      if (!m || !m.row || !m.row.ad_id || !['strong', 'possible', 'similar'].includes(m.level) || hid.has(String(m.row.ad_id))) continue;
       const row = {}; ['ad_id', 'library_url', 'page_id', 'page_name', 'status', 'start_date', 'days_running', 'title', 'body', 'link_url', 'domain', 'image_url', 'video_url', 'duplicates', 'search']
         .forEach(k => { row[k] = m.row[k] == null ? '' : typeof m.row[k] === 'number' ? m.row[k] : str(m.row[k], k === 'body' ? 1500 : 1200); });
       up.run(p.id, q.u.id, String(row.ad_id), +b.scan || 0, JSON.stringify(row), JSON.stringify(m.ev || {}).slice(0, 2000), m.level, now()); n++;
@@ -195,6 +196,15 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
     const fresh = db.prepare("select count(*) n, sum(level='strong') st from gap_matches where gp_id=? and created_at>=? and (decision is null or decision!='no') and (level!='similar' or decision='yes')").get(p.id, sc.started_at || 0);
     if (fresh.n) NT.fire(q.u.id, 'gap', '🎯 «' + (p.name || 'منتج') + '»: ' + fresh.n + ' إعلان جديد في ' + cnameAr(okC(p.target) || 'DZ') + (fresh.st ? ' (' + fresh.st + ' مطابق بقوة)' : ' (محتمل)') + '. افتحه لتتحقق: هل دخل منافس؟', '/gaps/' + p.id);
     s.json(Object.assign(view(refresh(p)), { matches: matchesOf(p.id) }));
+  }));
+  // حذف إعلان واحد (لا يعود في الفحوص القادمة) أو كل إعلانات المنتج دفعة واحدة (تُعاد في الفحص القادم)
+  app.delete('/api/gap/:id/matches/:mid', auth, active, wrap((q, s) => {
+    const p = own(q.u.id, q.params.id);
+    if (q.params.mid === 'all') db.prepare('delete from gap_matches where gp_id=?').run(p.id);
+    else { const m = db.prepare('select ad_id from gap_matches where id=? and gp_id=?').get(+q.params.mid, p.id); if (!m) throw bad('غير موجود', 404);
+      const h = J(p.hidden, []); if (!h.includes(m.ad_id)) h.push(m.ad_id); db.prepare('update gap_products set hidden=? where id=?').run(JSON.stringify(h.slice(-2000)), p.id);
+      db.prepare('delete from gap_matches where id=? and gp_id=?').run(+q.params.mid, p.id); }
+    s.json(Object.assign(view(refresh(own(q.u.id, p.id))), { matches: matchesOf(p.id) }));
   }));
   // تحققك اليدوي: هذا هو المنتج نفسه / ليس هو
   app.put('/api/gap/:id/matches/:mid', auth, active, wrap((q, s) => {

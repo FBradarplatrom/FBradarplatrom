@@ -110,7 +110,7 @@ create table if not exists error_logs(id integer primary key, at integer, method
     s.json({
       plan: u.plan, expires_at: u.expires_at, role: u.role, features: LIM.featuresOf(u), featureLabels: LIM.FLABEL, limits: LIM.limitsOf(u), usage: LIM.usage(u), labels: LIM.LABEL,
       plans: plans(false), periods: periodsCfg(), methods: { satim: !!(CFG.get('satim_user') && CFG.get('satim_pass')), stripe: !!CFG.get('stripe_secret'), paypal: !!(CFG.get('paypal_client') && CFG.get('paypal_secret')), baridi: CFG.get('baridi_info') || '', whatsapp: CFG.get('support_whatsapp') || '' },
-      payments: db.prepare('select id,plan_name,days,amount,method,status,ref,created_at,paid_at,note from payments where user_id=? order by created_at desc limit 12').all(u.id)
+      payments: db.prepare('select id,plan_name,days,amount,method,status,ref,created_at,paid_at,note from payments where user_id=? order by created_at desc limit 12').all(u.id).map(p => Object.assign(p, { del: canDel(p) }))
     });
   }));
   // الباقة + المدة المختارة (months: 1، 3، 6، 12). السعر والأيام من المدة
@@ -223,6 +223,13 @@ create table if not exists error_logs(id integer primary key, at integer, method
     try { X.notifyAdmins && X.notifyAdmins('💳 طلب دفع BaridiMob جديد: ' + q.u.email + ' · ' + p.name + ' · ' + p.per.label + ' · ' + p.per.dzd + ' دج' + (wa ? ' · الوصل عبر واتساب · المتجر: ' + store : ''), '/payments'); } catch (e) {}
     s.json({ id: Number(id) });
   }));
+  // يُحذف: المرفوض والفاشل، وطلب BaridiMob قيد المراجعة، والدفع بالبطاقة الذي بقي معلقاً أكثر من 24 ساعة. المدفوع لا يُحذف أبداً
+  const canDel = p => p && (p.status === 'rejected' || p.status === 'failed' || (p.status === 'pending' && (p.method === 'baridi' || now() - p.created_at > 864e5)));
+  const delPay = p => { db.prepare('delete from payments where id=?').run(p.id); if (p.proof && /^[a-f0-9]{24}\.(jpg|png|webp)$/.test(p.proof)) { try { fs.unlinkSync(path.join(PROOF_DIR, p.proof)); } catch (e) {} } };
+  app.delete('/api/billing/payment/:id', auth, wrap((q, s) => {
+    const p = db.prepare('select * from payments where id=? and user_id=?').get(+q.params.id, q.u.id); if (!p) throw bad('غير موجود', 404);
+    if (!canDel(p)) throw bad(p.status === 'paid' ? 'الدفعات المقبولة تبقى في السجل' : 'الدفع بالبطاقة قيد التنفيذ: يمكن حذفه بعد 24 ساعة'); delPay(p); act && act(q.u.id, 'payment_delete', q, '#' + p.id); s.json({ ok: 1 });
+  }));
   app.get('/api/billing/payment/:id', auth, async (q, s, n) => {
     try {
       let p = db.prepare('select * from payments where id=? and user_id=?').get(+q.params.id, q.u.id); if (!p) throw bad('غير موجود', 404);
@@ -235,13 +242,14 @@ create table if not exists error_logs(id integer primary key, at integer, method
   });
 
   /* ---------- المدير: المدفوعات والباقات ---------- */
-  app.get('/api/admin/payments', auth, admin, wrap((q, s) => s.json(db.prepare(`select p.*, u.email from payments p left join users u on u.id=p.user_id ${q.query.status ? 'where p.status=?' : ''} order by p.created_at desc limit 300`).all(...(q.query.status ? [str(q.query.status, 10)] : [])).map(p => Object.assign(p, { proof: !!p.proof })))));
+  app.get('/api/admin/payments', auth, admin, wrap((q, s) => s.json(db.prepare(`select p.*, u.email from payments p left join users u on u.id=p.user_id ${q.query.status ? 'where p.status=?' : ''} order by p.created_at desc limit 300`).all(...(q.query.status ? [str(q.query.status, 10)] : [])).map(p => Object.assign(p, { del: canDel(p), proof: !!p.proof })))));
   app.get('/api/admin/payments/:id/proof', auth, admin, (q, s) => { const p = db.prepare('select proof from payments where id=?').get(+q.params.id); if (!p || !p.proof || !/^[a-f0-9]{24}\.(jpg|png|webp)$/.test(p.proof)) return s.sendStatus(404); s.set('Cache-Control', 'private, no-store').sendFile(path.join(PROOF_DIR, p.proof)); });
   app.post('/api/admin/payments/:id/:act', auth, admin, wrap((q, s) => {
     const p = db.prepare('select * from payments where id=?').get(+q.params.id); if (!p) throw bad('غير موجود', 404);
     if (q.params.act === 'approve') { if (!markPaid(p, q.u.id)) throw bad('مدفوع مسبقاً'); act && act(q.u.id, 'admin_payment', q, 'قبول #' + p.id); }
     else if (q.params.act === 'reject') { db.prepare("update payments set status='rejected', note=?, admin_id=? where id=? and status='pending'").run(str(q.body && q.body.note, 200), q.u.id, p.id); act && act(q.u.id, 'admin_payment', q, 'رفض #' + p.id);
       try { X.notify && X.notify(p.user_id, 'payment', '❌ لم يُقبل طلب الدفع ' + p.plan_name + (q.body && q.body.note ? ': ' + q.body.note : '')); } catch (e) {} }
+    else if (q.params.act === 'delete') { if (!canDel(p)) throw bad(p.status === 'paid' ? 'الدفعات المقبولة تبقى في السجل (المحاسبة والإحصائيات)' : 'الدفع بالبطاقة قيد التنفيذ: يمكن حذفه بعد 24 ساعة'); delPay(p); act && act(q.u.id, 'admin_payment', q, 'حذف #' + p.id); }
     else throw bad('إجراء غير معروف');
     s.json({ ok: 1 });
   }));
