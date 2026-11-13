@@ -72,7 +72,7 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
       const r = await AI.chatJSON('You are an expert product sourcing agent for Chinese marketplaces (AliExpress, Alibaba, 1688, Taobao).', user, { timeout: 40000 });
       const d = r.data || {};
       s.json({ q: str(d.q, 90).toLowerCase() || simple, zh: str(d.zh, 40), product: str(d.product, 80), features: (d.features || []).map(x => str(x, 60)).slice(0, 6), vision: !!data, ai: true });
-    })().catch(n);
+    })().catch(e => { LIM.refundAI(q.u.id); n(e); });   // فشل المزوّد: لا يُحتسب من الرصيد
   });
 
   /* ================= تحليل الإعلان بالذكاء الاصطناعي ================= */
@@ -96,7 +96,7 @@ create table if not exists tt_items(run_id integer, vid text, q text, row text, 
       const d = Object.assign(r.data || {}, { market: tgt });
       db.prepare("insert into ai_cache(user_id,k,kind,data,created_at) values(?,?,'ad',?,?) on conflict(user_id,k,kind) do update set data=excluded.data, created_at=excluded.created_at").run(q.u.id, k, JSON.stringify(d), now());
       s.json({ data: d, created_at: now() });
-    }).catch(n);
+    }).catch(e => { LIM.refundAI(q.u.id); n(e); });
   });
 
   /* ================= Google Sheets ================= */

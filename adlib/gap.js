@@ -139,7 +139,7 @@ create index if not exists gap_m_gp on gap_matches(gp_id);`);
       if (!r) return s.json({ ai: false });
       db.prepare('update gap_products set terms=?, keywords=? where id=?').run(JSON.stringify(r.terms), JSON.stringify(r.keywords), p.id);
       s.json(Object.assign({ ai: true }, r));
-    }).catch(n);
+    }).catch(e => { LIM.refundAI(q.u.id); n(e); });
   });
 
   /* ---------- الفحص ---------- */

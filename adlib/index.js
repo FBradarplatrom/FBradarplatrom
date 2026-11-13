@@ -262,7 +262,7 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
       const m = (r && r.data && r.data.map) || {};
       for (const w of need) { const g = String(m[w] || '').slice(0, 80).trim(); if (g) { map[w] = g; kvSet('gloss:' + lang + ':' + w.toLowerCase(), g); } }
       s.json({ map, ai: true });
-    }).catch(n);
+    }).catch(e => { LIM.refundAI(q.u.id); n(e); });
   });
 
   /* ---------- القاموس (كلمات البحث) ---------- */

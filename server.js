@@ -307,7 +307,7 @@ app.delete('/api/admin/users/:id', auth, admin, wrap((q, s) => {
 // المشترك: تصدير بياناته (ملف JSON) وحذف حسابه نهائياً بكلمة المرور
 app.get('/api/me/export', auth, wrap((q, s) => {
   const id = q.u.id, all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (e) { return []; } }, J = x => { try { return JSON.parse(x); } catch (e) { return x; } };
-  const out = { exported_at: new Date().toISOString(), account: { email: q.u.email, name: q.u.name || '', username: q.u.username || '', plan: q.u.plan, expires_at: q.u.expires_at ? new Date(q.u.expires_at).toISOString() : null, created_at: q.u.created_at ? new Date(q.u.created_at).toISOString() : null },
+  const out = { exported_at: new Date().toISOString(), account: { email: q.u.email, name: q.u.name || '', username: q.u.username || '', phone: q.u.phone || '', plan: q.u.plan, expires_at: q.u.expires_at ? new Date(q.u.expires_at).toISOString() : null, created_at: q.u.created_at ? new Date(q.u.created_at).toISOString() : null },
     saved_products: all('select k, snap, created_at from saved where user_id=?', id).map(r => Object.assign({ key: r.k, saved_at: new Date(r.created_at).toISOString() }, J(r.snap))),
     analyses: all('select id, source, label, ads, summary, created_at from runs where user_id=? order by created_at desc', id).map(r => ({ id: r.id, source: r.source, label: r.label, ads: r.ads, summary: J(r.summary), created_at: new Date(r.created_at).toISOString() })),
     market_gaps: all('select name, snap, verdict, created_at from gap_products where user_id=?', id).map(r => ({ name: r.name, product: J(r.snap), verdict: r.verdict, created_at: r.created_at })),
