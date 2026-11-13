@@ -42,7 +42,7 @@ const open = f => { try { return new (require('better-sqlite3'))(f, { readonly: 
     ok(await vis.isVisible('#wa') && /wa\.me\/213555123456/.test(await vis.getAttribute('#wa', 'href')), 'زر واتساب عائم في الصفحات العامة');
     await vis.fill('#cform [name=name]', 'Karim'); await vis.fill('#cform [name=email]', 'visitor@mail.com'); await vis.fill('#cform [name=subject]', 'Question about plans'); await vis.fill('#cform [name=message]', 'Do you support the Moroccan market?');
     await vis.click('#cform button'); await vis.waitForSelector('#cmsg.ok');
-    await pg.goto(BASE + '/help'); await pg.waitForSelector('#hf-m'); await pg.fill('#hf-s', 'مشكلة في الجمع'); await pg.fill('#hf-m', 'الإضافة لا تتصل بالمنصة عندي'); await pg.click('[data-a="hsend"]'); await pg.waitForTimeout(500);
+    await pg.goto(BASE + '/help'); await pg.click('[data-a="hcform"]'); await pg.waitForSelector('#hf-m'); await pg.fill('#hf-s', 'مشكلة في الجمع'); await pg.fill('#hf-m', 'الإضافة لا تتصل بالمنصة عندي'); await pg.click('[data-a="hsend"]'); await pg.waitForTimeout(500);
     const M = await (await A.request.get(BASE + '/api/admin/messages')).json();
     ok(M.list.length === 2 && M.unread === 2 && M.list.some(m => m.email === 'visitor@mail.com' && !m.user_id) && M.list.some(m => m.email === 'u@t.dz' && m.user_id && m.subject === 'مشكلة في الجمع'), 'الرسائل تصل للمدير (زائر + مشترك ببريد حسابه)');
     await A.request.post(BASE + '/api/admin/messages/' + M.list[0].id + '/done', { data: {} });

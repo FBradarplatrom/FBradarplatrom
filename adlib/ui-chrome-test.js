@@ -46,10 +46,11 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
     const pub = await ctx.newPage(); await pub.goto(BASE + '/login'); await pub.waitForSelector('.wpr-dock'); ok(await pub.isVisible('.wd-th'), 'الأزرار العائمة في صفحة الدخول');
     // الدعم: طلب من المشترك ← ردّ المدير من المنصة ← يظهر في «طلباتي» وتنبيه في لوحة التحكم
     await pg.click('.wd-lang'); await pg.click('[data-lang="ar"]'); await pg.waitForLoadState('load');
-    await pg.goto(BASE + '/help'); await pg.waitForSelector('#hf-m');
+    await pg.goto(BASE + '/help'); await pg.waitForSelector('#hc-q');
     ok(await pg.isVisible('.hc-hero #hc-q') && (await pg.$$('.hf-q')).length >= 12 && !(await pg.$('[data-a="onbshow"]')), 'مركز المساعدة: بحث + أسئلة مصنّفة، بلا «إظهار دليل البداية» المكرر');
     await pg.fill('#hc-q', 'واتساب'); await pg.waitForTimeout(200); const shown = await pg.$$eval('.hf-q', a => a.filter(x => !x.hidden).length);
     ok(shown >= 1 && shown < 14, 'البحث في الأسئلة يصفّي (' + shown + ')');
+    await pg.click('[data-a="hcform"]'); await pg.waitForSelector('#hf-m');
     await pg.selectOption('#hf-c', 'billing'); await pg.fill('#hf-s', 'تفعيل العرض'); await pg.fill('#hf-m', 'أرسلت الوصل عبر واتساب، متى يُفعَّل؟'); await pg.click('[data-a="hsend"]');
     await pg.waitForSelector('.hc-t'); ok(/قيد المراجعة/.test(await pg.innerText('.hc-t')), '«طلباتي»: الطلب قيد المراجعة');
     const A = await b.newContext({ locale: 'ar-DZ', viewport: { width: 1280, height: 860 } }), ap = await A.newPage(); ap.on('pageerror', e => errs.push('A ' + e.message));

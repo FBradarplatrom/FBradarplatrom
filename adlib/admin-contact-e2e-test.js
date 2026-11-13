@@ -50,7 +50,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(mine[0] && mine[0].origin === 'admin' && /مرحباً Amine/.test(mine[0].reply), 'in-platform message reaches the subscriber');
     await A.click('[data-adm="mf"][data-f="done"]'); await A.waitForSelector('text=أرسلتها أنت');
     ok(true, 'the inbox shows it as «sent by you»');
-    await U.goto(BASE + '/help'); await U.waitForSelector('#hc-in .hc-t');
+    await U.goto(BASE + '/help'); await U.click('[data-a="hcin"]'); await U.waitForSelector('#hc-in .hc-t');
     ok(/فريق الدعم/.test(await U.textContent('#hc-in .hc-t')) && /مرحباً Amine/.test(await U.textContent('#hc-in .hc-t')), 'subscriber sees it in «Help ← Incoming messages» from the support team');
 
     // ---- واتساب: برقم المشترك، وغير متاح لمن لا رقم له
@@ -65,11 +65,13 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(/wa\.me\/213555123456\?text=/.test(url) && /Amine/.test(url) && /ينتهي في/.test(url), 'WhatsApp opens to the subscriber\'s number with the renewal reminder');
 
     // ---- المساعدة عند المدير: معاينة بطاقات المشترك + بطاقات تواصله
-    await A.goto(BASE + '/help'); await A.waitForSelector('#hc-wa');
+    await A.goto(BASE + '/help'); await A.waitForSelector('#hc-wa', { state: 'attached' });
+    ok(!(await A.$('[data-a="hcin"]')) && /صندوق الدعم/.test(await A.textContent('[data-a="hcadm"]')), 'admin: the 4th card is «Support inbox» (no empty «Incoming messages»)');
+    await A.click('[data-a="hcadm"]'); ok(await A.isVisible('#hc-box [data-v="ainbox"]') && await A.isVisible('#hc-admin') && !(await A.isVisible('#hc-fq')), 'admin card shows «Open the support inbox» + «Contact subscribers»');
     const prev = await A.$$eval('#hc-wa .wa-i', x => x.map(b => b.disabled));
     ok(prev.length === 7 && prev.every(Boolean) && /معاينة/.test(await A.textContent('#hc-wa')), 'admin help page: the same 7 subscriber cards, as a preview');
     ok((await A.$$('#hc-admin [data-acon]')).length === 4, 'admin help page: «Contact subscribers» cards below');
-    await U.goto(BASE + '/help'); await U.waitForSelector('#hc-wa');
+    await U.goto(BASE + '/help'); await U.waitForSelector('#hc-wa', { state: 'attached' });
     ok((await U.$$('#hc-wa .wa-i:not([disabled])')).length === 7 && !(await U.$('#hc-admin')), 'subscriber help page unchanged (7 cards, no admin cards)');
     ok(!errs.length, 'no page errors ' + errs.join(' | '));
     console.log(`PASS ${pass} admin contact checks`);

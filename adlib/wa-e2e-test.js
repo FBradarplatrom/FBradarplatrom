@@ -42,10 +42,15 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(/سؤال عن اشتراكي/.test(await up.inputValue('#wa-text')) && !(await up.$('#wa-plan')), 'سؤال الدفع: رسالة بلا اختيار عرض');
     await up.keyboard.press('Escape');
     // 3) المساعدة: واتساب أولاً
-    await up.goto(BASE + '/help'); await up.waitForSelector('#hc-wa');
+    await up.goto(BASE + '/help'); await up.waitForSelector('#hc-wa', { state: 'attached' });
     const order = await up.evaluate(() => { const g = document.querySelector('.hc-g'), w = document.querySelector('#hc-wa'), f = document.querySelector('#hc-form'), q = document.querySelector('#hc-faq'); return !!(g.compareDocumentPosition(w) & 4) && !!(w.compareDocumentPosition(f) & 4) && !!(f.compareDocumentPosition(q) & 4); });
     ok(order && (await up.innerText('#hc-form h2')).trim() === 'رسالة مكتوبة' && (await up.$$('.hc-g .hc-c')).length === 4, 'المساعدة: البطاقات (مع «الرسائل الواردة») ← واتساب ← رسالة مكتوبة ← الأسئلة، بلا تكرار ولا «(بديل واتساب)»');
+    ok(await up.isVisible('#hc-fq') && !(await up.isVisible('#hc-wa')) && !(await up.isVisible('#hc-form')), 'المساعدة تفتح على الأسئلة الشائعة فقط تحت البطاقات');
     await up.click('.hc-g [data-a="hcpay"]'); await up.waitForFunction(() => document.querySelector('#hc-wa').classList.contains('hl')); ok(true, 'بطاقة «الدفع والاشتراك» تنزل إلى قسم واتساب');
+    ok(await up.isVisible('#hc-wa') && !(await up.isVisible('#hc-fq')) && !(await up.isVisible('#hc-form')) && await up.$eval('[data-a="hcpay"]', c => c.classList.contains('on')), 'الضغط على بطاقة يُظهر قسمها وحده، والبطاقة مُعلَّمة');
+    await up.click('.hc-g [data-a="hcform"]'); ok(await up.isVisible('#hc-form') && !(await up.isVisible('#hc-wa')), 'بطاقة «رسالة مكتوبة» تُظهر النموذج وحده');
+    await up.click('.hc-g [data-a="hcform"]'); ok(await up.isVisible('#hc-fq') && !(await up.isVisible('#hc-form')), 'الضغط مرة ثانية يعيد الأسئلة الشائعة');
+    await up.click('.hc-g [data-a="hcpay"]'); await up.waitForSelector('#hc-wa');
     await up.click('#hc-wa [data-wac="support"][data-topic="tech"]'); await up.waitForSelector('#wa-topic');
 
     ok(/مشكلة تقنية/.test(await up.inputValue('#wa-text')), 'رسالة الدعم بنوع الطلب');

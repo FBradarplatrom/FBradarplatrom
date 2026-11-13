@@ -2226,4 +2226,11 @@ window.I18N_DICT=[["⏹️ توقف بعد نجاح","⏹️ Stopped after succe
 ["الدفع بالبطاقة قيد التنفيذ: يمكن حذفه بعد 24 ساعة", "Card payment in progress: it can be deleted after 24 hours", "Paiement par carte en cours : suppression possible après 24 heures"],
 ["الدفعات المقبولة تبقى في السجل (المحاسبة والإحصائيات)", "Approved payments stay in the history (accounting and statistics)", "Les paiements acceptés restent dans l’historique (comptabilité et statistiques)"],
 ["حذف #", "Delete #", "Supprimer #"],
-["طلبات كثيرة جداً، انتظر دقيقة ثم أعد المحاولة","Too many requests, wait a minute and try again","Trop de requêtes, attendez une minute puis réessayez"]];
+["طلبات كثيرة جداً، انتظر دقيقة ثم أعد المحاولة","Too many requests, wait a minute and try again","Trop de requêtes, attendez une minute puis réessayez"],
+["{} ردّ جديد", "{} new reply", "{} nouvelle(s) réponse(s)"],
+["صندوق الدعم{}", "Support inbox{}", "Boîte du support{}"],
+["رسائل المشتركين، وتواصل معهم برسائل جاهزة.", "Subscriber messages, and reach out with ready-made messages.", "Messages des abonnés, et contactez-les avec des messages prêts."],
+["{} رسالة جديدة بانتظار ردك.", "{} new message(s) awaiting your reply.", "{} nouveau(x) message(s) en attente de votre réponse."],
+["رسائل المشتركين وردودك عليها، والرسائل التي أرسلتها لهم.", "Subscriber messages and your replies, plus the messages you sent them.", "Les messages des abonnés et vos réponses, ainsi que les messages que vous leur avez envoyés."],
+["افتح صندوق الدعم", "Open the support inbox", "Ouvrir la boîte du support"],
+["رسالة مكتوبة{}", "Written message{}", "Message écrit{}"]];
