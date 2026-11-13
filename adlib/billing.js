@@ -1,4 +1,5 @@
 'use strict';
+const U = require('./util.js');   // J · str · kvGet · kvSet
 // الاشتراكات كخدمة: الباقات (السعر، المدة، الحدود)، الدفع، التفعيل التلقائي، لوحة إحصائيات المدير، سجل الأخطاء، إعدادات الربط.
 //  • CIB والذهبية مباشرة عبر بوابة SATIM (بلا وسيط): register.do ثم confirmOrder.do عند العودة.
 //  • البطاقات الدولية عبر Stripe Checkout (إشعار موقّع + تحقق عند العودة)، و PayPal (Orders v2: موافقة ثم capture).
@@ -11,8 +12,8 @@ module.exports = function mountBilling(app, X) {
   const { db, auth, active, admin, wrap, now, act, DATA_DIR } = X;
   const DAY = 864e5;
   const bad = (m, code) => Object.assign(new Error(m), { status: code || 400 });
-  const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
-  const str = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+  const J = U.J;
+  const str = U.str;
   const PROOF_DIR = path.join(DATA_DIR, 'proofs'); fs.mkdirSync(PROOF_DIR, { recursive: true });
 
   db.exec(`

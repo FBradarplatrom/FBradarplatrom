@@ -74,6 +74,19 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(await u.$eval('details.fx summary', s => /تثبيت يدوي/.test(s.textContent)), 'manual ZIP install stays available as an alternative');
     await u.goto(BASE + '/guide'); await u.waitForTimeout(600);
     ok(/إضافة إلى Chrome/.test(await u.textContent('body')) && !/وضع المطوّر/.test(await u.textContent('body')), 'the usage guide shows the Chrome Web Store steps');
+    // ---- قسم غير مشمول في العرض: بطاقة ثابتة «غير متاح» + «ترقية عرضي» (بدل قسم فارغ)
+    let PL = (await (await pg.request.get(BASE + '/api/admin/plans')).json()); PL.plans.forEach(p => { if (p.free) p.features = p.features.filter(k => k !== 'gap'); });
+    await pg.request.put(BASE + '/api/admin/plans', { data: { plans: PL.plans, periods: PL.periods } });
+    await u.goto(BASE + '/gaps'); await u.waitForSelector('#v-gap .lockc');
+    ok(/هذا القسم غير متاح في عرضك/.test(await u.textContent('#v-gap .lockc')) && !(await u.isVisible('#x-gap')), 'a section not in the plan shows a fixed «not available in your plan» card');
+    await u.click('#v-gap .lockc [data-v="sub"]'); await u.waitForURL(/\/subscription$/);
+    ok(true, '«Upgrade my plan» opens My subscription');
+    await pg.goto(BASE + '/gaps'); await pg.waitForTimeout(600);
+    ok(!(await pg.$('#v-gap .lockc')), 'the admin never sees the lock card');
+    PL = (await (await pg.request.get(BASE + '/api/admin/plans')).json()); PL.plans.forEach(p => { if (p.free) p.features = p.features.concat('gap'); });
+    await pg.request.put(BASE + '/api/admin/plans', { data: { plans: PL.plans, periods: PL.periods } });
+    await u.goto(BASE + '/gaps'); await u.waitForSelector('#x-gap .card, #x-gap .g-list, #x-gap .empty');
+    ok(!(await u.$('#v-gap .lockc')) && await u.isVisible('#x-gap'), 'once included in the plan, the section works normally');
     ok(!errs.length, 'no page errors ' + errs.join(' | '));
     console.log(`PASS ${pass} plans editor checks`);
   } catch (e) { console.error('FAIL', e.message); console.error(log.slice(-1200)); process.exitCode = 1; }

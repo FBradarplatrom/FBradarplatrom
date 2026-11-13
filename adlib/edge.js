@@ -1,4 +1,5 @@
 'use strict';
+const U = require('./util.js');   // J · str · kvGet · kvSet
 /* «الخروج من المنافسة»: منتج يبيعه كثيرون ← أفكار عملية ودقيقة لبيعه بطريقة لا ينافسك فيها أحد
    (باك مع منتجات مكمّلة، خيار إضافي، تفكيك وبيع الأجزاء، شريحة جديدة، زاوية لم يستعملها أحد، مناسبة، عرض، تغليف، خدمة، بيع للمحترفين…)
    الطلب يعمل في الخلفية (قد يستغرق دقيقة): POST يُنشئ المهمة ويعود فوراً، والصفحة تسأل عن النتيجة كل ثانيتين،
@@ -11,7 +12,7 @@ const LEVEL = ['easy', 'medium', 'hard'], COST = ['low', 'medium', 'high'], MARG
 module.exports = function mountEdge(app, X) {
   const { db, auth, active, wrap, now, imgData } = X;
   const bad = (m, code) => Object.assign(new Error(m), { status: code || 400 });
-  const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
+  const J = U.J;
   const str = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, ' ').trim().slice(0, n);
   const int = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo; };
   const arr = (v, n, len) => (Array.isArray(v) ? v : []).map(x => str(x, len)).filter(Boolean).slice(0, n);

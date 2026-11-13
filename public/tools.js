@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   const W = window; let X = null;
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
   const MK = () => W.RadarMarkets, G = () => W.RadarGapMatch;
@@ -59,7 +59,7 @@
   const IMS = { ali: ['AliExpress', 'https://www.aliexpress.com/'], alibaba: ['Alibaba', 'https://www.alibaba.com/'], '1688': ['1688', 'https://www.1688.com/'],
     taobao: ['Taobao', 'https://www.taobao.com/'] };
   const IMG_MIN = '1.7.4';
-  const vlt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; };
+  const vlt = window.WPRU.vlt;
   const toast = (m, t) => (X ? X.toast(m, t) : W.__toast && W.__toast(m, t));
   async function blobOfImg(u) { const r = await fetch(img(u)); if (!r.ok) throw new Error('تعذّر جلب الصورة من مصدرها (قد تكون منتهية الصلاحية)'); return r.blob(); }
   async function jpegOf(u) {                     // JPEG بحجم معقول: كل الأسواق تقبله

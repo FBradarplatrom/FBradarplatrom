@@ -1,4 +1,5 @@
 'use strict';
+const U = require('./util.js');   // J · str · kvGet · kvSet
 // قسم «جمع الإعلانات»: تستقبل المنصة ما تجمعه الإضافة وتضعه مباشرة في «الإعلانات الواردة» (دفعة لكل عملية جمع)،
 // والتصفية والتقييم كلها في قسم التحليل. هنا أيضاً: قاموس كلمات البحث لكل مستخدم، حدود الجمع، وتنزيل الإضافة.
 const fs = require('fs'), path = require('path');
@@ -45,7 +46,7 @@ create table if not exists ad_track(user_id integer, ad_id text, first_seen inte
   const tx = f => { db.exec('BEGIN'); try { const r = f(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (x) {} throw e; } };
   const kvGet = k => { const r = db.prepare('select v from lib_kv where k=?').get(k); return r ? r.v : null; };
   const kvSet = (k, v) => db.prepare('insert into lib_kv(k,v) values(?,?) on conflict(k) do update set v=excluded.v').run(k, v);
-  const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
+  const J = U.J;
 
   /* ---------- ترحيل: مكتبة النسخة السابقة (lib_ads) تصير دفعة في «الواردة» ثم يُحذف الجدول ---------- */
   try {

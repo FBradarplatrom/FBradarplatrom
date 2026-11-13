@@ -6,7 +6,7 @@
   const W = window, G = () => W.RadarGapMatch, BR = () => (W.WPRLIB && W.WPRLIB.bridge) || null;
   let X = null, inited = false;
   const $ = s => X.root.querySelector(s);
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const VIEW = 'gap';
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
@@ -50,7 +50,7 @@
 
   /* ---------- حالة الفحص الجاري (تبقى بعد إعادة تحميل الصفحة) ---------- */
   const SK = 'wpr_gap_scan_v1', QK = 'wpr_gap_queue_v1';
-  const ls = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (x) { return null; } };
+  const ls = window.WPRU.ls;
   let S = ls(SK);                   // {pid, scan, batch, name}
   const LIVE = { scanned: 0, strong: 0, possible: 0, similar: 0, items: [], last: [] };
   let LIST = null, CUR = null, FILTER = 'all', AI = false;

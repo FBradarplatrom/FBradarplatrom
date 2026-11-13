@@ -1,4 +1,5 @@
 'use strict';
+const U = require('./util.js');   // J · str · kvGet · kvSet
 // 🔔 التنبيهات بالبريد أو تيليغرام:
 //  • ظهر منافس في الجزائر لمنتج في «ثغرات السوق» · إعلانات جديدة لصفحة منافس مراقبة · منتج جديد صار «💎 جوهرة»
 //  • تأكيد الدفع وتفعيل الاشتراك · تذكير قبل انتهاء الاشتراك · (للمدير) طلبات دفع BaridiMob جديدة
@@ -10,9 +11,9 @@ const EV = { gap: '🎯 ظهر منافس لمنتج تتابعه في «ثغر�
   payment: '💳 الدفع والاشتراك', expiry: '⏰ تذكير قبل انتهاء الاشتراك', admin: '🛠 للمدير: طلبات دفع جديدة' };
 let db = null, mailer = null, sendMail = null, appName = 'رادار المنتجات الرابحة';
 const now = () => Date.now();
-const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
-const kvGet = (u, k, d) => { const r = db.prepare('select v from user_kv where user_id=? and k=?').get(u, k); return r ? J(r.v, d) : d; };
-const kvSet = (u, k, v) => db.prepare('insert into user_kv(user_id,k,v) values(?,?,?) on conflict(user_id,k) do update set v=excluded.v').run(u, k, JSON.stringify(v));
+const J = U.J;
+const kvGet = (u, k, d) => U.kvGet(db, u, k, d);
+const kvSet = (u, k, v) => U.kvSet(db, u, k, v);
 const DEFP = () => ({ email: false, tg: false, chat: '', ev: { gap: true, watch: true, gem: true, payment: true, expiry: true, admin: true, support: true } });
 const prefs = uid => { const p = Object.assign(DEFP(), kvGet(uid, 'notify', {})); p.ev = Object.assign(DEFP().ev, p.ev || {}); return p; };
 const tgApi = () => (process.env.TELEGRAM_TEST_API || 'https://api.telegram.org') + '/bot' + CFG.get('telegram_token');

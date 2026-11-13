@@ -1,4 +1,5 @@
 'use strict';
+const U = require('./util.js');   // J · str · kvGet · kvSet
 // قسم «ثغرات السوق»: منتج رابح في سوق أجنبي (من المحفوظات) ← هل يُعلَن عنه في السوق المستهدف (الجزائر افتراضياً، أو أي دولة يختارها المشترك)؟
 // 1) عبارات بحث بلغات ذلك السوق (ذكاء اصطناعي إن وُجد OPENAI_API_KEY، وإلا كتابة يدوية)
 // 2) الإضافة تبحث في مكتبة إعلانات ميتا (السوق المستهدف، النشطة والمتوقفة) والصفحة تقارن لحظياً (بصمة الصورة، رابط المورّد، الكلمات المميزة)
@@ -11,8 +12,8 @@ const VERDICTS = ['new', 'gap', 'weak', 'tried', 'saturated', 'check', 'inconclu
 module.exports = function mountGap(app, X) {
   const { db, auth, active, wrap, now } = X;
   const bad = (m, code) => Object.assign(new Error(m), { status: code || 400 });
-  const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
-  const str = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+  const J = U.J;
+  const str = U.str;
 
   db.exec(`
 create table if not exists gap_products(id integer primary key, user_id integer, k text, name text, snap text, terms text, keywords text, hashes text,

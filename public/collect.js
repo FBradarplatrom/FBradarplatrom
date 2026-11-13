@@ -5,7 +5,7 @@
   const W = window;
   let X = null;                              // سياق المنصة: api, toast, e, fd, ago, root, me, cur, url, refresh
   const $ = s => X.root.querySelector(s), $$ = s => [...X.root.querySelectorAll(s)];
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const VIEW = 'collect';
 
@@ -45,7 +45,7 @@
   /* ---------- الإضافة (المتصفح) ---------- */
   const B = { ok: false, version: '', state: null, n: 0, wait: new Map() };
   const RUN = { added: 0, updated: 0, rejected: 0, filtered: 0, byKind: {}, samples: [], quota: false, run: 0, active: false, batch: '' };
-  const vlt = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0; } return false; };
+  const vlt = window.WPRU.vlt;
   function bsend(cmd, payload, ms) {
     return new Promise((res, rej) => {
       const id = 'p' + (++B.n), t = setTimeout(() => { B.wait.delete(id); rej(new Error('timeout')); }, ms || 3000);

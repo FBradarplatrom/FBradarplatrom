@@ -4,11 +4,11 @@
   'use strict';
   const W = window; let X = null, LIST = null, CUR = null, inited = false;
   const $ = s => X.root.querySelector(s);
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const img = u => (u ? '/api/img?u=' + encodeURIComponent(u) : '');
   const VIEW = 'watch', QK = 'wpr_watch_queue_v1';
-  const ls = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (x) { return null; } };
+  const ls = window.WPRU.ls;
   const LIVE = { id: 0, scanned: 0, added: 0 };
   const pageUrl = pid => 'https://www.facebook.com/ads/library/?' + new URLSearchParams({ active_status: 'all', ad_type: 'all', country: 'ALL', is_targeted_country: 'false', media_type: 'all', search_type: 'page', view_all_page_id: pid }).toString();
 

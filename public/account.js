@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   const W = window; let X = null, inited = false;
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const num = n => Number(n || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const dz = n => num(n) + ' دج';
   const $ = s => X.root.querySelector(s);
@@ -219,7 +219,7 @@ ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">
     }
     if (ATAB === 'stats') {
       const s = await X.api('GET', '/admin/stats'), S = s.subs || {}, Wk = s.work || {}, Mo = s.money || {}, Sy = s.system || {};
-      const flag = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].map(x => 127397 + x.charCodeAt())) : '';
+      const flag = window.WPRU.flag;
       let DN = null; try { DN = new Intl.DisplayNames([W.__LANG || 'ar'], { type: 'region' }); } catch (x) {}
       const cname = c => c === '?' || !c ? 'غير معروف' : (DN ? DN.of(c) : c), LGN = { ar: 'العربية', en: 'English', fr: 'Français', '?': 'غير معروف' };
       const kp = (n, l, cls) => `<div class="${cls || ''}"><b>${n}</b><span>${l}</span></div>`;

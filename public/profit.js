@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   const W = window;
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const num = n => Math.round(Number(n) || 0).toLocaleString((window.__LOC||'ar-DZ'));
   const dz = n => num(n) + ' دج';
   const MK = () => W.RadarMarkets || W.WPRMarkets || null;

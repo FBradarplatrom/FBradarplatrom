@@ -5,10 +5,10 @@
   'use strict';
   const W = window; let X = null, inited = false, seed = null, up = [], timer = null, LIST = null;
   const $ = s => X.root.querySelector(s);
-  const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const e = window.WPRU.e;   // public/shared.js
   const I = n => (W.ICO ? W.ICO(n) : '');
   const MK = () => W.RadarMarkets;
-  const flag = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].map(x => 127397 + x.charCodeAt())) : '';
+  const flag = window.WPRU.flag;
   const mkName = c => (MK() && MK().COUNTRIES[c] ? MK().COUNTRIES[c].name : c || '');
   const img = u => (/^https?:/.test(u || '') ? '/api/img?u=' + encodeURIComponent(u) : u);
 

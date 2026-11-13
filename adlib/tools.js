@@ -1,4 +1,5 @@
 'use strict';
+const U = require('./util.js');   // J · str · kvGet · kvSet
 // أدوات المنتج والأقسام الجديدة (10.0):
 //  • إيجاد المورّد: نتائج بحث AliExpress التي تجمعها الإضافة لكل منتج، ومطابقتها بالصورة تتم في المتصفح.
 //  • تحليل الإعلان بالذكاء الاصطناعي: زاوية البيع، الجمهور، نقاط القوة والضعف، ونص إعلان جزائري مقترح.
@@ -11,8 +12,8 @@ const WEEK = 7 * 864e5;
 module.exports = function mountTools(app, X) {
   const { db, auth, active, wrap, now, imgData } = X;
   const bad = (m, code) => Object.assign(new Error(m), { status: code || 400 });
-  const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } };
-  const str = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+  const J = U.J;
+  const str = U.str;
   const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
   db.exec(`
@@ -26,8 +27,8 @@ create table if not exists tt_runs(id integer primary key, user_id integer, labe
 create table if not exists tt_items(run_id integer, vid text, q text, row text, primary key(run_id, vid));`);
   // سجل كل فحص: الإعلانات التي ظهرت لأول مرة فيه، والتي توقفت، وأرقامه (لعرض الفحص الأول والذي بعده بوضوح)
   ['added text', 'gone text', 'stats text'].forEach(c => { try { db.exec('alter table watch_scans add column ' + c); } catch (e) {} });
-  const kvGet = (u, k, d) => { const r = db.prepare('select v from user_kv where user_id=? and k=?').get(u, k); return r ? J(r.v, d) : d; };
-  const kvSet = (u, k, v) => db.prepare('insert into user_kv(user_id,k,v) values(?,?,?) on conflict(user_id,k) do update set v=excluded.v').run(u, k, JSON.stringify(v));
+  const kvGet = (u, k, d) => U.kvGet(db, u, k, d);
+  const kvSet = (u, k, v) => U.kvSet(db, u, k, v);
 
   /* ================= إيجاد المورّد ================= */
   const cleanSup = it => ({
