@@ -2225,4 +2225,5 @@ window.I18N_DICT=[["⏹️ توقف بعد نجاح","⏹️ Stopped after succe
 ["الدفعات المقبولة تبقى في السجل", "Approved payments stay in the history", "Les paiements acceptés restent dans l’historique"],
 ["الدفع بالبطاقة قيد التنفيذ: يمكن حذفه بعد 24 ساعة", "Card payment in progress: it can be deleted after 24 hours", "Paiement par carte en cours : suppression possible après 24 heures"],
 ["الدفعات المقبولة تبقى في السجل (المحاسبة والإحصائيات)", "Approved payments stay in the history (accounting and statistics)", "Les paiements acceptés restent dans l’historique (comptabilité et statistiques)"],
-["حذف #", "Delete #", "Supprimer #"]];
+["حذف #", "Delete #", "Supprimer #"],
+["طلبات كثيرة جداً، انتظر دقيقة ثم أعد المحاولة","Too many requests, wait a minute and try again","Trop de requêtes, attendez une minute puis réessayez"]];

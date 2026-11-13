@@ -76,6 +76,19 @@ function client(ip) {
     ok((await client('10.6.0.4')('POST', '/api/login', { email: 'boss@t.dz', password: 'password123' })).status === 200, 'admin signs in with the new email');
     const H = client('10.6.0.5'); ok((await H('POST', '/api/register', { email: 'admin@t.dz', password: 'password123' })).status === 200, 'someone registers the old ADMIN_EMAIL');
     ok((await H('GET', '/api/me')).body.role === 'member' && (await H('GET', '/api/admin/activity')).status === 403, '…but gets a normal member account, not admin');
+    // ---- v13.20: الحماية من الإغراق بالطلبات وحجم الطلب ----
+    const Z = client('10.7.0.1'); let codes = [];
+    for (let i = 0; i < 125; i++) codes.push((await Z('GET', '/api/plans/public')).status);
+    ok(codes.slice(0, 120).every(c => c === 200) && codes.slice(120).every(c => c === 429), 'a visitor flooding the API gets «too many requests» after 120 in a minute');
+    const z429 = await Z('GET', '/api/plans/public'); ok(+z429.headers.get('retry-after') > 0 && /طلبات كثيرة/.test(z429.body.error), 'the refusal says how long to wait');
+    ok((await client('10.7.0.2')('GET', '/api/plans/public')).status === 200, 'other visitors are not affected');
+    ok((await Z('GET', '/login')).status === 200, 'pages still open (only the API is limited)');
+    const M = client('10.7.0.3'); await M('POST', '/api/register', { email: 'many@t.dz', password: 'password123' }); codes = [];
+    for (let i = 0; i < 150; i++) codes.push((await M('GET', '/api/me')).status);
+    ok(codes.every(c => c === 200), 'a signed-in subscriber is counted by account with a much higher limit (150 quick requests are fine)');
+    const big = 'x'.repeat(3 * 1024 * 1024);
+    ok((await M('PUT', '/api/profile', { name: big, email: 'many@t.dz' })).status === 413, 'an oversized request to a normal route is refused (2 MB)');
+    ok((await M('POST', '/api/runs', { label: 'big', ads: [], pad: big })).status !== 413, 'upload routes (ads from the extension) still accept large data');
     console.log(`PASS ${pass} security checks`);
   } catch (e) { console.error('FAIL', e.message); console.error(log.slice(-1200)); process.exitCode = 1; }
   finally { srv.kill(); fs.rmSync(DIR, { recursive: true, force: true }); }

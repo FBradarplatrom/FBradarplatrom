@@ -75,7 +75,23 @@ app.disable('x-powered-by'); app.set('trust proxy', 1);
 app.use(gzip);
 // الأمان: ترويسات تمنع تضمين المنصة في مواقع أخرى (clickjacking) وتخمين أنواع الملفات وتسريب الروابط
 app.use((q, s, n) => { s.set({ 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' }); if (q.secure) s.set('Strict-Transport-Security', 'max-age=15552000'); n(); });
-app.use(express.json({ limit: '50mb', verify: (q, s, buf) => { if (q.url.startsWith('/api/billing/webhook')) q.rawBody = buf; } }), cookie());   // الجسم الخام لتحقق توقيع بوابة الدفع
+app.use(cookie());
+// الحماية من الإغراق بالطلبات: حد لكل مشترك مسجّل (600 طلب/دقيقة) ولكل عنوان للزوار (120/دقيقة) على /api فقط.
+// المسجّل يُحسب بحسابه لا بعنوانه (مشتركو الجوال قد يخرجون بنفس العنوان). الصفحات والملفات لا تُحسب. القيم قابلة للتعديل من .env
+const RL = new Map(), RL_USER = +process.env.RATE_USER_PER_MIN || 600, RL_ANON = +process.env.RATE_ANON_PER_MIN || 120;
+setInterval(() => { const t = now(); for (const [k, v] of RL) if (t - v.at >= 6e4) RL.delete(k); }, 6e4).unref();
+app.use('/api', (q, s, n) => {
+  if (q.path.startsWith('/billing/webhook')) return n();                        // بوابات الدفع تُرسل من خوادمها
+  let k, max; try { k = 'u' + session(q.cookies.t).id; max = RL_USER; } catch (e) { k = 'i' + q.ip; max = RL_ANON; }
+  const t = now(); let v = RL.get(k); if (!v || t - v.at >= 6e4) { v = { at: t, n: 0 }; RL.set(k, v); }
+  if (++v.n > max) { s.set('Retry-After', String(Math.ceil((v.at + 6e4 - t) / 1000))); return s.status(429).json({ error: 'طلبات كثيرة جداً، انتظر دقيقة ثم أعد المحاولة' }); }
+  n();
+});
+// حجم الطلب: 2MB عادةً، و50MB فقط لمسارات رفع الإعلانات (الإضافة) وصور الوصل والإدارة
+const BIG = /^\/api\/(runs|lib\/|gap\/|watch\/|tt\/|edge|saved|billing\/baridi|admin\/)/;
+const jsonOpt = l => express.json({ limit: l, verify: (q, s, buf) => { if (q.url.startsWith('/api/billing/webhook')) q.rawBody = buf; } });   // الجسم الخام لتحقق توقيع بوابة الدفع
+const jBig = jsonOpt('50mb'), jSmall = jsonOpt('2mb');
+app.use((q, s, n) => (BIG.test(q.path) ? jBig : jSmall)(q, s, n));
 app.use('/api', (q, s, n) => { s.set('Cache-Control', 'no-store'); n(); });
 // ---------- وضع الصيانة: الزوار والمشتركون يرون صفحة الصيانة (503)، والمدير يعمل عادياً ----------
 // مفتوح دائماً: صفحة الدخول (ليدخل المدير)، الصفحات القانونية، الملفات الثابتة، وإشعارات بوابات الدفع (حتى لا يضيع دفع)
