@@ -27,6 +27,7 @@
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media(max-width:860px){.grid3{grid-template-columns:1fr}}
 .wa-m{display:flex;flex-direction:column;gap:10px}.wa-m textarea{font:inherit;line-height:1.7}
 .sup-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.sup-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.sup-f button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.mb-l{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}.mb-r{display:flex;gap:12px;align-items:center;text-align:start;width:100%;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}.mb-r:last-child{border-bottom:0}.mb-r:hover{background:var(--soft)}.mb-r.new{border-inline-start:3px solid var(--brand)}.mb-r.new .mb-n{font-weight:800}.mb-w{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.mb-w small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mb-s{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}.mb-i{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;background:var(--soft);border-radius:12px;padding:10px 14px;font-size:14px}.mb-i dt{color:var(--mut)}.mb-i dd{margin:0;overflow-wrap:anywhere}.mb-a{display:flex;gap:8px;flex-wrap:wrap}
 .sup-t{margin-bottom:12px}.sup-t.new{border-inline-start:3px solid var(--brand)}.sup-h{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.sup-b{white-space:pre-wrap;margin:10px 0}.sup-r{background:var(--soft);border-radius:12px;padding:10px 12px;margin:0 0 10px}.sup-r p{margin:4px 0 0;white-space:pre-wrap}.sup-a{display:flex;gap:6px;flex-wrap:wrap}.btn.bad{color:var(--bad)}
 .pe-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.pe-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
 .pe{display:flex;flex-direction:column;gap:6px}.pe.pe-new{border-style:dashed;opacity:.85}.pe-h{display:flex;gap:8px;align-items:center}.pe-h .mv{display:flex;gap:2px;flex:none}.pe-h input{flex:1;font-size:18px;font-weight:700;padding:8px 10px}
@@ -287,12 +288,9 @@ ${r.keys.map(k => `<div class="pe-r"><span>${e(r.labels[k])}</span><input data-l
       const L = r.list.filter(m => MF === 'all' || (MF === 'new' ? m.status === 'new' : m.status !== 'new'));
       const cnt = { new: r.list.filter(m => m.status === 'new').length, done: r.list.filter(m => m.status !== 'new').length, all: r.list.length };
       el.innerHTML = `<div class="card" style="margin-bottom:14px"><h2>📨 تواصل مع مشترك</h2><p class="sub">رسائل جاهزة (تعدّل نصّها بثلاث لغات من «إعدادات المنصة ← رسائل واتساب»): اختر الرسالة ثم المشترك، وأرسلها عبر واتساب أو داخل المنصة.</p>${acCards()}</div>
-<div class="sup-f">${[['new', 'بانتظار الرد'], ['done', 'تمت معالجتها'], ['all', 'الكل']].map(([k, t]) => `<button data-adm="mf" data-f="${k}" class="${MF === k ? 'on' : ''}">${t} <b>${num(cnt[k])}</b></button>`).join('')}</div>
-${L.map(m => `<div class="card sup-t${m.status === 'new' ? ' new' : ''}"><div class="sup-h"><div class="grow"><b dir="auto">${e(m.subject)}</b><div class="muted">${e(m.name || '')} &lt;${e(m.email)}&gt; · ${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر'} · ${X.fd(m.created_at)}</div></div>${m.origin === 'admin' ? '<span class="pill">📤 أرسلتها أنت</span>' : `<span class="pill">${CAT[m.category] || CAT.other}</span>`}<span class="pill ${m.status === 'new' ? 'warn' : 'ok'}">${m.status === 'new' ? 'بانتظار الرد' : m.reply ? 'تم الرد' : 'تمت المعالجة'}</span></div>
-${m.body ? `<p class="sup-b" dir="auto">${e(m.body)}</p>` : ''}
-${m.reply ? `<div class="sup-r"><small>${m.origin === 'admin' ? 'رسالتك' : 'ردّك'} · ${X.fd(m.replied_at)}</small><p dir="auto">${e(m.reply)}</p></div>` : ''}
-${m.user_id && !m.reply ? `<label class="fl">الرد (يصل إلى المشترك داخل المنصة وبالتنبيهات)<textarea rows="3" data-reply="${m.id}" dir="auto" placeholder="اكتب ردّك…"></textarea></label>` : ''}
-<div class="sup-a">${m.user_id && !m.reply ? `<button class="btn sm" data-adm="mreply" data-id="${m.id}">إرسال الرد</button>` : ''}${m.user_id ? `<button class="btn ghost sm" data-acon="${m.category === 'billing' ? 'a_paid' : 'a_welcome'}" data-uid="${m.user_id}">📨 رسالة جاهزة</button>` : ''}<a class="btn ghost sm" href="mailto:${e(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}">رد بالبريد</a>${m.status === 'new' ? `<button class="btn ghost sm" data-adm="mdone" data-id="${m.id}">✓ تمت المعالجة</button>` : `<button class="btn ghost sm" data-adm="mnew" data-id="${m.id}">إرجاع كجديدة</button>`}<button class="btn ghost sm bad" data-adm="mdel" data-id="${m.id}">حذف</button></div></div>`).join('') || '<div class="card"><p class="sub">لا رسائل هنا.</p></div>'}`;
+<div class="card"><h2>الرسائل الواردة</h2><div class="sup-f">${[['new', 'بانتظار الرد'], ['done', 'تمت معالجتها'], ['all', 'الكل']].map(([k, t]) => `<button data-adm="mf" data-f="${k}" class="${MF === k ? 'on' : ''}">${t} <b>${num(cnt[k])}</b></button>`).join('')}</div>
+${L.length ? `<div class="mb-l">${L.map(m => `<button class="mb-r${m.status === 'new' ? ' new' : ''}" data-adm="mopen" data-id="${m.id}"><span class="mb-w"><span class="mb-n" dir="auto">${e(m.name || m.email)}</span><small dir="auto"><b>${e(m.subject)}</b>${m.body ? ' — ' + e(m.body.slice(0, 120)) : ''}</small></span><span class="mb-s"><small class="muted">${X.fd(m.created_at)}</small>${m.origin === 'admin' ? '<span class="pill">📤 أرسلتها أنت</span>' : `<span class="pill ${m.status === 'new' ? 'warn' : 'ok'}">${m.status === 'new' ? 'بانتظار الرد' : m.reply ? 'تم الرد' : 'تمت المعالجة'}</span>`}</span></button>`).join('')}</div>` : '<p class="sub" style="margin:0">لا رسائل هنا.</p>'}</div>`;
+      MSGS = r.list; CATS = CAT;
       return;
     }
     if (ATAB === 'wa') {
@@ -337,6 +335,35 @@ ${Object.entries(r.keys).map(([k, [t, vs, g]], i, A) => `${g === 'admin' && (A[i
 <div class="tbw" style="margin-top:10px"><table class="tb"><tr><th>الوقت</th><th>الطلب</th><th>الرمز</th><th>الرسالة</th><th>المستخدم</th></tr>${s.errors.list.map(x => `<tr><td>${X.fd(x.at)} ${new Date(x.at).toLocaleTimeString((window.__LOC||'ar-DZ'), { hour: '2-digit', minute: '2-digit' })}</td><td dir="ltr">${e(x.method)} ${e(x.path)}</td><td>${num(x.status)}</td><td dir="auto">${e(x.msg)}</td><td>${x.user_id ? '#' + x.user_id : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">✅ لا أخطاء مسجّلة.</td></tr>'}</table></div></div>`;
     }
   }
+  /* صندوق الدعم: نافذة الرسالة — معلومات المرسل، والرد من المنصة أو بالبريد أو بواتساب */
+  let MSGS = [], CATS = {};
+  function msgOpen(id) {
+    const m = MSGS.find(x => x.id === +id), T = W.WPRTOOLS; if (!m || !T) return;
+    const NOPH = 'لا يوجد رقم هاتف لهذا المرسل', ph = String(m.phone || '').replace(/[^\d]/g, ''), mine = m.origin === 'admin', canApp = m.user_id && !mine && !m.reply;
+    const b = T.open(m.subject || 'رسالة', '');
+    b.innerHTML = `<div class="wa-m"><dl class="mb-i" style="margin:0"><dt>الاسم</dt><dd dir="auto">${e(m.name || '—')}</dd><dt>البريد</dt><dd><bdi dir="ltr">${e(m.email)}</bdi></dd><dt>الهاتف</dt><dd>${m.phone ? `<bdi dir="ltr">${e(m.phone)}</bdi>` : '—'}</dd><dt>المرسل</dt><dd>${m.user_id ? 'مشترك' + (m.plan ? ' (' + e(m.plan) + ')' : '') : 'زائر (بلا حساب)'}</dd><dt>التاريخ</dt><dd>${X.fd(m.created_at)}</dd></dl>
+<div class="sup-h">${mine ? '<span class="pill">📤 أرسلتها أنت</span>' : `<span class="pill">${CATS[m.category] || CATS.other}</span>`}<span class="pill ${m.status === 'new' ? 'warn' : 'ok'}">${m.status === 'new' ? 'بانتظار الرد' : m.reply ? 'تم الرد' : 'تمت المعالجة'}</span></div>
+${m.body ? `<p class="sup-b" dir="auto" style="margin:0">${e(m.body)}</p>` : ''}
+${m.reply ? `<div class="sup-r" style="margin:0"><small>${mine ? 'رسالتك' : 'ردّك'} · ${X.fd(m.replied_at)}</small><p dir="auto">${e(m.reply)}</p></div>` : ''}
+<label class="fl">${mine || m.reply ? 'رسالة جديدة' : 'ردّك'}<textarea id="mb-t" rows="4" dir="auto" placeholder="اكتب ردّك مرة واحدة، ثم اختر طريقة الإرسال…"></textarea></label>
+<div class="mb-a">${canApp ? '<button class="btn" data-mb="app">إرسال داخل المنصة</button>' : ''}<button class="btn wa" data-mb="wa"${ph ? '' : ' disabled title="' + NOPH + '"'}>${WAICON} الرد بواتساب</button><button class="btn ghost" data-mb="mail">الرد بالبريد</button></div>
+<p class="sub" style="margin:0">${canApp ? '<span>داخل المنصة: يظهر الرد للمشترك في «المساعدة والدعم» مع تنبيه.</span> ' : ''}${ph ? '<span>واتساب: يُفتح بنص ردّك إلى رقمه ويُحفظ الرد هنا.</span> ' : '<span>واتساب غير متاح: لا يوجد رقم هاتف لهذا المرسل.</span> '}<span>البريد: يفتح برنامج البريد عندك بنص ردّك.</span></p>
+<div class="mb-a" style="border-top:1px solid var(--line);padding-top:10px">${m.user_id ? `<button class="btn ghost sm" data-mb="ready">📨 رسالة جاهزة</button>` : ''}${m.status === 'new' ? '<button class="btn ghost sm" data-mb="done">✓ تمت المعالجة</button>' : '<button class="btn ghost sm" data-mb="new">إرجاع كجديدة</button>'}<button class="btn ghost sm bad" data-mb="del">حذف</button></div></div>`;
+    const ta = b.querySelector('#mb-t'), act = (path, ok) => X.api('POST', '/admin/messages/' + m.id + '/' + path, {}).then(() => { T.close(); if (ok) X.toast(ok); drawAdmin(); });
+    b.addEventListener('click', ev => {
+      const k = (ev.target.closest('[data-mb]') || {}).dataset; if (!k || !k.mb) return; const a = k.mb, v = ta.value.trim();
+      if ((a === 'app' || a === 'wa') && v.length < 2) { ta.focus(); return X.toast('اكتب الرد أولاً', 'err'); }
+      let pr;
+      if (a === 'app') pr = X.api('POST', '/admin/messages/' + m.id + '/reply', { reply: v }).then(() => { T.close(); X.toast('أُرسل الرد إلى المشترك'); drawAdmin(); });
+      else if (a === 'wa') { const win = W.open('', '_blank');   // تُفتح الآن حتى لا يمنعها المتصفح
+        pr = X.api('POST', '/admin/messages/' + m.id + '/reply', { reply: v, via: 'whatsapp' }).then(r => { const url = 'https://wa.me/' + r.phone + '?text=' + encodeURIComponent(v); if (win) win.location.href = url; else location.href = url; T.close(); X.toast('فُتح واتساب بنص ردّك'); drawAdmin(); }).catch(x => { if (win) win.close(); throw x; }); }
+      else if (a === 'mail') { location.href = 'mailto:' + m.email + '?subject=' + encodeURIComponent('Re: ' + (m.subject || '')) + (v ? '&body=' + encodeURIComponent(v) : ''); return; }
+      else if (a === 'ready') { T.close(); W.WPRACON.open(m.category === 'billing' ? 'a_paid' : 'a_welcome', m.user_id); return; }
+      else if (a === 'done' || a === 'new') pr = act(a);
+      else if (a === 'del') { if (k.s !== '1') { ev.target.closest('[data-mb]').dataset.s = '1'; ev.target.closest('[data-mb]').textContent = 'تأكيد الحذف؟'; return; } pr = act('delete', 'حُذفت الرسالة'); }
+      if (pr) pr.catch(x => X.toast(x.message, 'err'));
+    });
+  }
   async function onAdmin(ev) {
     const b = ev.target.closest('[data-adm]'); if (!b) return;
     const a = b.dataset.adm;
@@ -345,8 +372,7 @@ ${Object.entries(r.keys).map(([k, [t, vs, g]], i, A) => `${g === 'admin' && (A[i
     if (a === 'paydel') { if (b.dataset.s !== '1') { b.dataset.s = '1'; b.textContent = 'تأكيد الحذف؟'; return; } await X.api('POST', '/admin/payments/' + b.dataset.id + '/delete', {}); X.toast('حُذف طلب الدفع'); return drawAdmin(); }
     if (a === 'reject') { const note = prompt('سبب الرفض (يظهر للمشترك):') || ''; await X.api('POST', '/admin/payments/' + b.dataset.id + '/reject', { note }); return drawAdmin(); }
     if (a === 'mf') { MF = b.dataset.f; return drawAdmin(); }
-    if (a === 'mreply') { const t = X.root.querySelector(`[data-reply="${b.dataset.id}"]`), v = t ? t.value.trim() : ''; if (v.length < 2) return X.toast('اكتب الرد', 'err'); await X.api('POST', '/admin/messages/' + b.dataset.id + '/reply', { reply: v }); X.toast('✅ أُرسل الرد إلى المشترك'); return drawAdmin(); }
-    if (a === 'mdone' || a === 'mnew' || a === 'mdel') { if (a === 'mdel' && !confirm('حذف الرسالة؟')) return; await X.api('POST', '/admin/messages/' + b.dataset.id + '/' + ({ mdone: 'done', mnew: 'new', mdel: 'delete' })[a], {}); return drawAdmin(); }
+    if (a === 'mopen') return msgOpen(b.dataset.id);
     if (a === 'wasave' || a === 'wareset') {
       if (a === 'wareset' && !confirm('استرجاع كل الرسائل الأصلية؟ ستُحذف تعديلاتك.')) return;
       const t = {}; if (a === 'wasave') X.root.querySelectorAll('[data-wat]').forEach(x => { (t[x.dataset.wat] = t[x.dataset.wat] || {})[x.dataset.l] = x.value; });

@@ -58,9 +58,9 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
     await ap.goto(BASE + '/'); await ap.waitForSelector('#nav-admin:not([hidden])');
     ok((await ap.$$eval('#nav-admin .nv', a => a.map(x => x.dataset.v))).join(',') === 'aover,admin,abill,ainbox,aset', 'قائمة الإدارة: نظرة عامة، المشتركون، العروض والمدفوعات، صندوق الدعم، إعدادات المنصة');
     await ap.waitForFunction(() => !document.getElementById('nb-sup').hidden); ok(true, 'شارة الرسائل الجديدة على «صندوق الدعم»');
-    await ap.click('.nv[data-v="ainbox"]'); await ap.waitForSelector('[data-reply]');
-    ok(/الدفع والعروض/.test(await ap.innerText('.sup-t')), 'نوع الطلب ظاهر للمدير');
-    await ap.fill('[data-reply]', 'فُعّل عرضك، شكراً لك.'); await ap.click('[data-adm="mreply"]'); await ap.waitForFunction(() => !document.querySelector('[data-reply]'));
+    await ap.click('.nv[data-v="ainbox"]'); await ap.waitForSelector('.mb-r'); await ap.click('.mb-r'); await ap.waitForSelector('.tm #mb-t');
+    ok(/الدفع والعروض/.test(await ap.innerText('.tm')), 'نوع الطلب ظاهر للمدير');
+    await ap.fill('#mb-t', 'فُعّل عرضك، شكراً لك.'); await ap.click('[data-mb="app"]'); await ap.waitForFunction(() => !document.querySelector('.tm'));
     await ap.goto(BASE + '/platform'); await ap.waitForSelector('[data-cfg="biz_name"]'); ok(!!(await ap.$('#t-aset [data-adm="legal"]')) && !!(await ap.$('#t-aset [data-adm="backup"]')), 'إعدادات المنصة: النشاط، المفاتيح، الصفحات القانونية، النسخ الاحتياطي');
     await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum'); await pg.waitForSelector('.dal'); ok(/ردّ فريق الدعم/.test(await pg.innerText('.dal')), 'تنبيه في لوحة التحكم: ردّ الدعم');
     await pg.click('.dal-i[data-v="help"]'); await pg.waitForSelector('.hc-t .sup-r'); ok(/فُعّل عرضك/.test(await pg.innerText('.hc-t')), 'الرد ظاهر في «طلباتي»');

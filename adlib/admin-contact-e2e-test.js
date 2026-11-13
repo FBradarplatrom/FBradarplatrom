@@ -50,6 +50,27 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok(mine[0] && mine[0].origin === 'admin' && /مرحباً Amine/.test(mine[0].reply), 'in-platform message reaches the subscriber');
     await A.click('[data-adm="mf"][data-f="done"]'); await A.waitForSelector('text=أرسلتها أنت');
     ok(true, 'the inbox shows it as «sent by you»');
+    // ---- صندوق الرسائل: عنوان «الرسائل الواردة» تحت بطاقات التواصل، قائمة، ونافذة الرسالة بالردود الثلاثة
+    await U.request.post(BASE + '/api/contact', { data: { subject: 'تفعيل العرض', message: 'أرسلت الوصل، متى يُفعَّل عرضي؟', category: 'billing' } });
+    await fetch(BASE + '/api/contact', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '10.9.9.9' }, body: JSON.stringify({ email: 'visitor@mail.com', name: 'Visitor', subject: 'سؤال عن الأسعار', message: 'هل توجد باقة شهرية للمتاجر الصغيرة؟' }) });
+    await A.goto(BASE + '/support-inbox'); await A.click('[data-adm="mf"][data-f="new"]'); await A.waitForSelector('.mb-r');
+    ok(await A.evaluate(() => { const c = document.querySelector('[data-acon]').closest('.card'), h = [...document.querySelectorAll('.card h2')].find(x => x.textContent.trim() === 'الرسائل الواردة'); return !!h && !!(c.compareDocumentPosition(h) & 4); }), '«Incoming messages» heading comes under the contact cards');
+    ok((await A.$$('.mb-r.new')).length === 2 && /Amine/.test(await A.textContent('.mb-l')) && /Visitor/.test(await A.textContent('.mb-l')), 'a compact list of messages awaiting reply (sender, subject, date)');
+    await A.click('.mb-r:has-text("تفعيل العرض")'); await A.waitForSelector('.tm #mb-t');
+    const info = await A.textContent('.tm .mb-i');
+    ok(/Amine/.test(info) && /u@t\.dz/.test(info) && /213555123456/.test(info) && /مشترك/.test(info), 'opening a message shows the sender: name, email, phone, subscriber');
+    ok(await A.isVisible('[data-mb="app"]') && !(await A.$eval('[data-mb="wa"]', x => x.disabled)) && await A.isVisible('[data-mb="mail"]'), 'three ways to reply: in the platform, WhatsApp, email');
+    await A.fill('#mb-t', 'فُعّل عرضك، شكراً لك.');
+    const [wpop] = await Promise.all([A.waitForEvent('popup'), A.click('[data-mb="wa"]')]);
+    await wpop.waitForURL(/wa\.me/, { timeout: 15000 }).catch(() => {});
+    ok(/wa\.me\/213555123456\?text=/.test(wpop.url()) && decodeURIComponent(wpop.url()).includes('فُعّل عرضك'), 'WhatsApp opens with the written reply to the subscriber number'); await wpop.close();
+    let M2 = await (await A.request.get(BASE + '/api/admin/messages')).json(), m2 = M2.list.find(m => m.subject === 'تفعيل العرض');
+    ok(m2.status === 'done' && /فُعّل عرضك/.test(m2.reply), 'the WhatsApp reply is saved and the message is marked replied');
+    await A.click('[data-adm="mf"][data-f="new"]'); await A.click('.mb-r:has-text("سؤال عن الأسعار")'); await A.waitForSelector('.tm #mb-t');
+    ok(/زائر/.test(await A.textContent('.tm .mb-i')) && !(await A.$('[data-mb="app"]')) && await A.$eval('[data-mb="wa"]', x => x.disabled), 'a visitor (no account, no phone): reply by email only, WhatsApp disabled with a reason');
+    ok((await A.request.post(BASE + '/api/admin/messages/' + M2.list.find(m => m.subject === 'سؤال عن الأسعار').id + '/reply', { data: { reply: 'نعم', via: 'whatsapp' } })).status() === 400, 'the server also refuses WhatsApp without a number');
+    await A.click('[data-mb="del"]'); await A.click('[data-mb="del"]'); await A.waitForFunction(() => !document.querySelector('.tm'));
+    M2 = await (await A.request.get(BASE + '/api/admin/messages')).json(); ok(!M2.list.some(m => m.subject === 'سؤال عن الأسعار'), 'delete (with confirmation) from the message window');
     await U.goto(BASE + '/help'); await U.click('[data-a="hcin"]'); await U.waitForSelector('#hc-in .hc-t');
     ok(/فريق الدعم/.test(await U.textContent('#hc-in .hc-t')) && /مرحباً Amine/.test(await U.textContent('#hc-in .hc-t')), 'subscriber sees it in «Help ← Incoming messages» from the support team');
 
@@ -66,8 +87,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
 
     // ---- المساعدة عند المدير: معاينة بطاقات المشترك + بطاقات تواصله
     await A.goto(BASE + '/help'); await A.waitForSelector('#hc-wa', { state: 'attached' });
-    ok(!(await A.$('[data-a="hcin"]')) && /صندوق الدعم/.test(await A.textContent('[data-a="hcadm"]')), 'admin: the 4th card is «Support inbox» (no empty «Incoming messages»)');
-    await A.click('[data-a="hcadm"]'); ok(await A.isVisible('#hc-box [data-v="ainbox"]') && await A.isVisible('#hc-admin') && !(await A.isVisible('#hc-fq')), 'admin card shows «Open the support inbox» + «Contact subscribers»');
+    ok((await A.$$('.hc-g .hc-c')).length === 3 && !(await A.$('[data-a="hcin"]')) && !(await A.$('[data-a="hcadm"]')), 'admin help page: 3 cards (no duplicate «Support inbox» card)');
+    await A.click('[data-a="hcpay"]'); ok(await A.isVisible('#hc-wa') && await A.isVisible('#hc-admin') && !(await A.isVisible('#hc-fq')), '«Contact subscribers» shows with «Payment & subscription»');
     const prev = await A.$$eval('#hc-wa .wa-i', x => x.map(b => b.disabled));
     ok(prev.length === 7 && prev.every(Boolean) && /معاينة/.test(await A.textContent('#hc-wa')), 'admin help page: the same 7 subscriber cards, as a preview');
     ok((await A.$$('#hc-admin [data-acon]')).length === 4, 'admin help page: «Contact subscribers» cards below');

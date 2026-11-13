@@ -46,14 +46,18 @@ create table if not exists legal_docs(lang text, doc text, body text, updated_at
   // المدير يردّ من المنصة: يُحفظ الرد ويُعلَّم الطلب «تم الرد» ويصل تنبيه للمشترك
   app.post('/api/admin/messages/:id/reply', auth, admin, wrap((q, s) => {
     const m = db.prepare('select * from contact_msgs where id=?').get(+q.params.id); if (!m) throw bad('غير موجود', 404);
-    const reply = str(q.body && q.body.reply, 4000); if (reply.length < 2) throw bad('اكتب الرد');
+    const reply = str(q.body && q.body.reply, 4000), wa = q.body && q.body.via === 'whatsapp'; if (reply.length < 2) throw bad('اكتب الرد');
+    // واتساب: يُفتح من متصفح المدير بنص الرد إلى رقم المشترك، ويُحفظ الرد هنا سجلاً (بلا تنبيه داخل المنصة لأنه وصله في واتساب)
+    const ph = wa ? String((m.user_id && (db.prepare('select phone from users where id=?').get(m.user_id) || {}).phone) || '').replace(/[^\d]/g, '') : '';
+    if (wa && !ph) throw bad('لا يوجد رقم هاتف لهذا المرسل');
+    if (!wa && !m.user_id) throw bad('زائر بلا حساب: ردّ عليه بالبريد');
     db.prepare("update contact_msgs set reply=?, replied_at=?, status='done' where id=?").run(reply, now(), m.id);
-    if (m.user_id && X.notify) X.notify(m.user_id, 'support', '💬 ردّ فريق الدعم على «' + (m.subject || '—') + '»:\n' + reply.slice(0, 600), '/help');
-    X.act && X.act(q.u.id, 'admin_reply', q, '#' + m.id);
-    s.json({ ok: 1 });
+    if (!wa && X.notify) X.notify(m.user_id, 'support', '💬 ردّ فريق الدعم على «' + (m.subject || '—') + '»:\n' + reply.slice(0, 600), '/help');
+    X.act && X.act(q.u.id, 'admin_reply', q, '#' + m.id + (wa ? ' · واتساب' : ''));
+    s.json(wa ? { ok: 1, phone: ph } : { ok: 1 });
   }));
   app.get('/api/admin/messages', auth, admin, wrap((q, s) => s.json({
-    list: db.prepare('select m.*, u.plan, u.expires_at from contact_msgs m left join users u on u.id=m.user_id order by m.created_at desc limit 300').all(),
+    list: db.prepare('select m.*, u.plan, u.expires_at, u.phone from contact_msgs m left join users u on u.id=m.user_id order by m.created_at desc limit 300').all(),
     unread: db.prepare("select count(*) n from contact_msgs where status='new'").get().n })));
   app.post('/api/admin/messages/:id/:act', auth, admin, wrap((q, s) => {
     const id = +q.params.id, a = q.params.act;
