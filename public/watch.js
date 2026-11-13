@@ -44,17 +44,17 @@
   function drawLive() { const el = $('#w-live'); if (!el || X.cur() !== VIEW) return; const j = W.WPRJOB.cur(); el.innerHTML = j && j.mod === 'watch' ? `<div class="alert info">⏳ يفحص الآن «${e(j.ctx.name)}»: ${num(LIVE.scanned)} إعلاناً حتى الآن · ${num(LIVE.added)} لم تكن معروفة <button class="btn ghost sm" data-w="stop">إيقاف</button></div>` : ''; }
   const st = document.createElement('style');
   st.textContent = `.wt-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
-.wt-c{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}.wt-c.nw{border-color:var(--brand);box-shadow:0 0 0 3px var(--soft)}
+.wt-c{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}.wt-c.nw{border-color:var(--brand-t);box-shadow:0 0 0 3px var(--soft)}
 .wt-h{display:flex;gap:8px;align-items:center}.wt-h b{flex:1;font-size:16px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-n{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.wt-n div{background:var(--card2);border-radius:12px;padding:8px 6px;text-align:center}.wt-n b{display:block;font-size:20px;line-height:1.3}.wt-n span{font-size:12px;color:var(--mut)}
-.wt-n .up b{color:var(--brand)}.wt-n .dn b{color:var(--bad)}.wt-s{font-size:13px;color:var(--mut);line-height:1.7}.wt-a{display:flex;gap:6px;flex-wrap:wrap}
-.wt-k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}@media(max-width:700px){.wt-k{grid-template-columns:repeat(2,1fr)}}.wt-k div{background:var(--card2);border-radius:12px;padding:10px;text-align:center}.wt-k b{display:block;font-size:24px}.wt-k span{font-size:12.5px;color:var(--mut)}.wt-k .up b{color:var(--brand)}.wt-k .dn b{color:var(--bad)}
+.wt-n .up b{color:var(--brand-t)}.wt-n .dn b{color:var(--bad)}.wt-s{font-size:13px;color:var(--mut);line-height:1.7}.wt-a{display:flex;gap:6px;flex-wrap:wrap}
+.wt-k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}@media(max-width:700px){.wt-k{grid-template-columns:repeat(2,1fr)}}.wt-k div{background:var(--card2);border-radius:12px;padding:10px;text-align:center}.wt-k b{display:block;font-size:24px}.wt-k span{font-size:12.5px;color:var(--mut)}.wt-k .up b{color:var(--brand-t)}.wt-k .dn b{color:var(--bad)}
 .wt-tl{display:flex;flex-direction:column}.wt-r{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.wt-r:last-child{border:0}
 .wt-r .no{width:34px;height:34px;border-radius:50%;background:var(--soft);color:var(--brand-h);display:grid;place-items:center;font-weight:700;font-size:13px}.wt-r.f .no{background:var(--card2);color:var(--mut)}
 .wt-r .tx b{display:block;font-size:14px}.wt-r .tx span{font-size:13px;color:var(--mut)}.wt-ch{display:flex;gap:6px;flex-wrap:wrap}.wt-ch i{font-style:normal;border-radius:99px;padding:2px 9px;font-size:12.5px;font-weight:700}
 .wt-ch .up{background:#dcfce7;color:#166534}.wt-ch .dn{background:#fee2e2;color:#991b1b}.wt-ch .ac{background:var(--card2);color:var(--mut)}
 @media(prefers-color-scheme:dark){.wt-ch .up{background:#14532d;color:#bbf7d0}.wt-ch .dn{background:#7f1d1d;color:#fecaca}}
-.wt-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.wt-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 13px;font:inherit;font-size:13px;cursor:pointer}.wt-f button.on{background:var(--brand);border-color:var(--brand);color:#fff}`;
+.wt-f{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.wt-f button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 13px;font:inherit;font-size:13px;cursor:pointer}.wt-f button.on{background:var(--brand);border-color:var(--brand-t);color:var(--on-brand)}`;
   document.head.appendChild(st);
   let FLT = 'new';
   const scanLine = w => {

@@ -14,6 +14,7 @@ const dark = c => { const m = c.match(/\d+/g).map(Number); return m[0] + m[1] + 
   try {
     const ctx = await b.newContext({ locale: 'ar-DZ', colorScheme: 'light', viewport: { width: 1280, height: 860 } }), pg = await ctx.newPage(), errs = []; pg.on('pageerror', e => errs.push(e.message));
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
+    await pg.request.put(BASE + '/api/saved', { data: { k: 'seed', snap: { v: 2, name: 'Seed', kw: 'seed', cat: 'gem', score: 80, n: 1, images: [], top: { title: 'Seed', body: 'x', link_url: 'https://example.com/p', image_url: '', country: 'DZ', library_url: 'https://www.facebook.com/ads/library/?id=1' }, recs: [], tags: [], lib: '' } } });   // لوحة الملخص تظهر لمن عنده بيانات (المشترك الجديد بلا بيانات يرى «مسار العمل» بدل لوحة أصفار)
     await pg.goto(BASE + '/'); await pg.waitForSelector('.onb');
     // القائمة
     const groups = await pg.$$eval('.nvh', a => a.filter(x => x.offsetParent !== null).map(x => x.textContent.trim()));   // المشترك لا يرى مجموعة «الإدارة»

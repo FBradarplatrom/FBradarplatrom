@@ -14,13 +14,13 @@
   st.textContent = `
 .lt{display:flex;gap:6px;overflow-x:auto;margin:0 0 18px;padding:2px;scrollbar-width:none}.lt::-webkit-scrollbar{display:none}
 .lt button{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:99px;padding:8px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s}
-.lt button:hover{color:var(--ink);border-color:var(--brand)}.lt button.on{background:linear-gradient(135deg,var(--brand),#0a7040);border-color:transparent;color:#fff}
+.lt button:hover{color:var(--ink);border-color:var(--brand-t)}.lt button.on{background:linear-gradient(135deg,var(--brand),#0a7040);border-color:transparent;color:#fff}
 .l-st{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}.l-st .grow{flex:1;min-width:200px}
 .l-dot{width:10px;height:10px;border-radius:50%;background:var(--bad);flex:none}.l-dot.ok{background:var(--ok)}.l-dot.warn{background:var(--warn)}
 .l-g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
 .l-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:210px;overflow:auto;padding:2px}
 .lc{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:3px 12px;font:inherit;font-size:13px;cursor:pointer;transition:.12s;display:inline-flex;gap:6px;align-items:center}
-.lc:hover{border-color:var(--brand)}.lc.on{background:var(--brand);border-color:var(--brand);color:#fff}.lc.off{opacity:.45;text-decoration:line-through}.lc.custom{border-style:dashed;border-color:var(--brand)}.lc i{font-style:normal;opacity:.7}
+.lc:hover{border-color:var(--brand-t)}.lc.on{background:var(--brand);border-color:var(--brand-t);color:var(--on-brand)}.lc.off{opacity:.45;text-decoration:line-through}.lc.custom{border-style:dashed;border-color:var(--brand-t)}.lc i{font-style:normal;opacity:.7}
 .l-sub{margin:12px 0 6px;font-size:13px;font-weight:600;color:var(--mut)}
 .l-q{max-height:150px;overflow:auto;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
 .l-bi{display:flex;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13.5px}.l-bi:last-child{border:0}.l-bi .q{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -339,7 +339,7 @@ ${qs.length ? `<div class="l-q">${qs.slice(0, 40).map(x => `<span dir="auto"${x.
 <label class="fl">وضع الإرسال<select data-sm>${opt('auto', 'تلقائي: يصل فور الرصد', sm)}${opt('manual', 'يدوي: أرسل أنا بعد المراجعة', sm)}</select></label></div>
 <p class="sub" style="margin:10px 0 0">تصل الإعلانات المجموعة إلى «الإعلانات الواردة» (دفعة لكل عملية جمع) وتُقيَّم هناك بمعايير المنصة. الدفعات التي لا تُحلَّل تُحذف تلقائياً بعد ${num(STATS.retention.days)} يوماً.</p></div>
 
-<div class="card" style="margin-top:14px"><h2>بحث سريع</h2><div class="l-add" style="max-width:640px"><input id="l-qs" dir="auto" placeholder="كلمة البحث بلغة ${e(cname(P.country))}، مثل: ${e(quickHint())}" value="${e(P.q)}"><button class="btn" data-l="quick">ابدأ الجمع</button></div>
+<div class="card" style="margin-top:14px"><h2>بحث سريع</h2><div class="l-add" style="max-width:640px"><input id="l-qs" dir="auto" aria-label="كلمة البحث" placeholder="كلمة البحث بلغة ${e(cname(P.country))}، مثل: ${e(quickHint())}" value="${e(P.q)}"><button class="btn" data-l="quick">ابدأ الجمع</button></div>
 <p style="margin:10px 0 0"><button class="btn ghost sm" data-l="current">جمع الصفحة المفتوحة في فيسبوك</button> <small>إن كنت فتحت بحثاً في مكتبة الإعلانات بنفسك.</small></p></div>
 
 <div class="card${P.edit ? ' l-edit' : ''}" style="margin-top:14px"><div class="l-st" style="margin-bottom:4px"><h2 class="grow" style="margin:0">بحث جماعي بالكلمات الذهبية</h2><button class="btn ${P.edit ? '' : 'ghost'} sm" data-l="kwedit">${P.edit ? '✓ إنهاء التعديل' : '✎ إضافة / حذف كلمات'}</button></div>

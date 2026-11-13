@@ -14,19 +14,19 @@
   const st = document.createElement('style');
   st.textContent = `
 .g-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.g-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r,16px);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:.15s}.g-card:hover{border-color:var(--brand);transform:translateY(-1px)}
+.g-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r,16px);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:.15s}.g-card:hover{border-color:var(--brand-t);transform:translateY(-1px)}
 .g-card .im{aspect-ratio:16/10;background:var(--card2) center/cover no-repeat}.g-card .bd{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 .g-v{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:700;border:1px solid transparent}
 .g-v.gap{background:#dcfce7;color:#166534}.g-v.weak{background:#fef9c3;color:#854d0e}.g-v.tried{background:#dbeafe;color:#1e40af}.g-v.saturated{background:#fee2e2;color:#991b1b}
 .g-v.check{background:#ffedd5;color:#9a3412}.g-v.inconclusive,.g-v.new{background:var(--card2);color:var(--mut);border-color:var(--line)}
 @media(prefers-color-scheme:dark){.g-v.gap{background:#14532d;color:#bbf7d0}.g-v.weak{background:#713f12;color:#fef08a}.g-v.tried{background:#1e3a8a;color:#bfdbfe}.g-v.saturated{background:#7f1d1d;color:#fecaca}.g-v.check{background:#7c2d12;color:#fed7aa}}
-.g-kp{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}.g-kp button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.g-kp button.on{border-color:var(--brand);background:var(--soft);color:var(--brand);font-weight:700}
+.g-kp{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}.g-kp button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}.g-kp button.on{border-color:var(--brand-t);background:var(--soft);color:var(--brand-t);font-weight:700}
 .g-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px}@media(max-width:860px){.g-top{grid-template-columns:1fr}}
 .g-ims{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.g-ims img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--card2)}
 .g-t{display:flex;gap:6px;margin:6px 0}.g-t input{flex:1;min-width:0}.g-t select{width:auto}
 .g-m{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.g-m:last-child{border:0}
 .g-m img{width:110px;height:110px;object-fit:cover;border-radius:10px;background:var(--card2);border:1px solid var(--line)}
-.g-m .tx{font-size:13.5px;max-height:4.6em;overflow:hidden}.g-ev{font-size:12.5px;color:var(--brand);font-weight:600}
+.g-m .tx{font-size:13.5px;max-height:4.6em;overflow:hidden}.g-ev{font-size:12.5px;color:var(--brand-t);font-weight:600}
 .g-q{display:flex;gap:10px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13.5px}.g-q:last-child{border:0}.g-q .q{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .g-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:10px 0}.g-nums div{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center}.g-nums b{display:block;font-size:20px}.g-nums span{font-size:12px;color:var(--mut)}`;
   document.head.appendChild(st);
@@ -46,7 +46,7 @@
   const langsOf = t => { const M = W.RadarMarkets; const L = M ? M.langsOf(t) : ['ar', 'dz', 'fr', 'arz']; return Object.fromEntries(L.map(l => [l, M && M.LANGS[l] ? M.LANGS[l].name : l])); };
   const TG = p => (p && p.target) || 'DZ';
   let TARGET = 'DZ';
-  const countrySel = (cur, attr) => { const M = W.RadarMarkets; if (!M) return ''; return `<select ${attr}>${Object.keys(M.REGIONS).filter(r => r !== 'all').map(r => { const cs = Object.keys(M.COUNTRIES).filter(c => c !== 'ALL' && M.COUNTRIES[c].region === r); return cs.length ? `<optgroup label="${e(M.REGIONS[r])}">${cs.map(c => `<option value="${c}"${c === cur ? ' selected' : ''}>${e(M.COUNTRIES[c].name)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select>`; };
+  const countrySel = (cur, attr) => { const M = W.RadarMarkets; if (!M) return ''; return `<select ${attr} aria-label="الدولة">${Object.keys(M.REGIONS).filter(r => r !== 'all').map(r => { const cs = Object.keys(M.COUNTRIES).filter(c => c !== 'ALL' && M.COUNTRIES[c].region === r); return cs.length ? `<optgroup label="${e(M.REGIONS[r])}">${cs.map(c => `<option value="${c}"${c === cur ? ' selected' : ''}>${e(M.COUNTRIES[c].name)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select>`; };
 
   /* ---------- حالة الفحص الجاري (تبقى بعد إعادة تحميل الصفحة) ---------- */
   const SK = 'wpr_gap_scan_v1', QK = 'wpr_gap_queue_v1';

@@ -18,7 +18,7 @@ const SKIP = '[translate=no],[dir=auto],.pc-ti,.pc-sub,.l-chips,script,style,tex
     for (const L of ['en', 'fr']) {
       const ctx = await b.newContext({ viewport: { width: 1280, height: 860 } }); await ctx.addInitScript(l => { try { localStorage.setItem('wpr_lang', l); } catch (e) {} }, L);
       const pg = await ctx.newPage(), errs = []; pg.on('pageerror', e => errs.push(e.message));
-      if (first) { await pg.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123', name: 'Admin' } }); first = false; }
+      if (first) { await pg.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123', name: 'Admin' } }); await pg.request.put(BASE + '/api/saved', { data: { k: 'seed', snap: { v: 2, name: 'Seed', kw: 'seed', cat: 'gem', score: 80, n: 1, images: [], top: { title: 'Seed', body: 'x', link_url: 'https://example.com/p', image_url: '', country: 'DZ', library_url: 'https://www.facebook.com/ads/library/?id=1' }, recs: [], tags: [], lib: '' } } }); /* لوحة الملخص تظهر لمن عنده بيانات */ first = false; }
       else await pg.request.post(BASE + '/api/login', { data: { email: 'a@t.dz', password: 'password123' } });
       await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum h2');
       ok(await pg.evaluate(() => document.getElementById('wpr-app').dir === 'ltr' && document.documentElement.lang) === L, L + ': الاتجاه من اليسار واللغة ' + L);

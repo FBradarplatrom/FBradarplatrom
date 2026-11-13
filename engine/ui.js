@@ -50,7 +50,7 @@ async function load(files){RST=(files&&files[0]&&files[0].stats)||null;for(const
  const cd=ALL.map(a=>a.collected).filter(Boolean).map(Number);
  NOW=cd.length?Math.max(...cd):(lm||Date.now());   // تاريخ جمع البيانات
 }finally{window.__busy&&window.__busy('ld')}
- await analyze();$('#app').hidden=false;window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);trackPass().catch(()=>{})}
+ await analyze();$('#app').hidden=false;const va=D.getElementById('v-analyze');if(va)va.classList.add('has-res');window.__onLoaded&&window.__onLoaded(files.map(f=>f.name),rows);trackPass().catch(()=>{})}
 
 /* التحليل في خيط خلفي للملفات الكبيرة (الصفحة لا تتجمد)، ومباشرة للصغيرة أو إن تعذّر الخيط */
 let WK=null,WKN=0;const WKW=new Map();
@@ -70,7 +70,7 @@ async function analyze(){
  }finally{window.__busy&&window.__busy('an')}
  LAST_L={market,rates};fillMarkets();markDups();
  const kw=new Set(ALL.map(a=>a.search).filter(Boolean)).size,ds=Math.floor((Date.now()-NOW)/864e5);
- $('#note').innerHTML=`<div class="alert info">تاريخ جمع البيانات: ${fd(NOW)}، وتُقاس أعمار الإعلانات منه.${ds>3?` مرّ على الجمع ${ds} أيام، فقد تكون الأعمار والحالات متقادمة، والأفضل إعادة جمع البيانات.`:''}</div>`+
+ $('#note').innerHTML=ds>3?`<div class="alert">تاريخ جمع البيانات: ${fd(NOW)}، وتُقاس أعمار الإعلانات منه. مرّ على الجمع ${ds} أيام، فقد تكون الأعمار والحالات متقادمة، والأفضل إعادة جمع البيانات.</div>`:`<p class="sub res-note">تاريخ جمع البيانات: ${fd(NOW)}، وتُقاس أعمار الإعلانات منه.</p>`+
   '';
  render()}
 

@@ -2255,4 +2255,11 @@ window.I18N_DICT=[["⏹️ توقف بعد نجاح","⏹️ Stopped after succe
 ["أُزيل", "Removed", "Retiré(s) :"],
 ["إزالة المحدد", "Remove selected", "Retirer la sélection"],
 ["حذف كل المنتهية ({})", "Delete all handled ({})", "Supprimer tous les traités ({})"],
-["رسالة منتهية", "handled message(s)", "message(s) traité(s)"]];
+["رسالة منتهية", "handled message(s)", "message(s) traité(s)"],
+["ابدأ أول جمع للإعلانات", "Start your first ad collection", "Lancez votre première collecte de publicités"],
+["اجمع إعلانات سوقك بالإضافة، فتظهر هنا أرقامك: الإعلانات الواردة، التحليلات، والمنتجات الرابحة.", "Collect your market’s ads with the extension and your numbers appear here: incoming ads, analyses and winning products.", "Collectez les publicités de votre marché avec l’extension : vos chiffres apparaîtront ici (publicités reçues, analyses, produits gagnants)."],
+["اجمع إعلاناتك الأولى", "Collect your first ads", "Collecter vos premières publicités"],
+["ابحث في الأسئلة", "Search the questions", "Rechercher dans les questions"],
+["تاريخ جمع البيانات: {}، وتُقاس أعمار الإعلانات منه. مرّ على الجمع {} أيام، فقد تكون الأعمار والحالات متقادمة، والأفضل إعادة جمع البيانات.", "Data collected on {}; ad ages are measured from that date. It has been {} days since collection, so ages and statuses may be outdated — collect again for best results.", "Données collectées le {} ; l’âge des publicités est mesuré à partir de cette date. {} jours se sont écoulés : les âges et statuts peuvent être dépassés, mieux vaut relancer la collecte."],
+["تاريخ جمع البيانات: {}، وتُقاس أعمار الإعلانات منه.", "Data collected on {}; ad ages are measured from that date.", "Données collectées le {} ; l’âge des publicités est mesuré à partir de cette date."],
+["كلمة البحث", "Search term", "Terme de recherche"]];

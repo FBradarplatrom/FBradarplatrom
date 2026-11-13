@@ -14,7 +14,7 @@ const code = sec => T.hotp(sec, Math.floor(Date.now() / 30000));
     const ctx = await b.newContext({ locale: 'ar-DZ', viewport: { width: 1280, height: 900 } }), pg = await ctx.newPage(), errs = []; pg.on('pageerror', e => errs.push(e.message));
     await pg.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
     await pg.request.post(BASE + '/api/register', { data: { email: 'u@t.dz', password: 'password123', name: 'Amine' } });
-    await pg.goto(BASE + '/'); await pg.waitForSelector('.dsum'); await pg.waitForTimeout(600);
+    await pg.goto(BASE + '/'); await pg.waitForSelector('#d-head h1'); await pg.waitForTimeout(600);
     ok(!/التحقق بخطوتين/.test(await pg.innerText('#d-body')), 'لوحة التحكم بلا تنبيه سلبي عن الحماية (الحماية في «أمان الحساب»)');
     await pg.click('#me-btn'); const items = await pg.$$eval('#am .am-i span', a => a.map(x => x.textContent.trim()));
     ok(items.join('|') === 'الملف الشخصي|اشتراكي|أمان الحساب|تسجيل الخروج', 'قائمة الحساب: ' + items.join('، '));

@@ -9,15 +9,15 @@
 
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
-:root{--bg:#ffffff;--card:#ffffff;--card2:#f5f7f6;--ink:#121916;--mut:#5d6661;--line:#e3e8e5;--brand:#118553;--brand-h:#0a7040;--soft:#dcefe4;--ok:#0a7040;--bad:#dc2626;--warn:#d97706;--sh:0 1px 2px rgba(18,25,22,.05),0 8px 24px -16px rgba(18,25,22,.18)}
-@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--card2:#202825;--ink:#dbe1de;--mut:#9ca4a0;--line:#2e3632;--brand:#35ac74;--brand-h:#6bc79a;--soft:#173126;--sh:0 1px 2px rgba(0,0,0,.35),0 8px 24px -16px rgba(0,0,0,.6)}}
+:root{--bg:#ffffff;--card:#ffffff;--card2:#f5f7f6;--ink:#121916;--mut:#5d6661;--line:#e3e8e5;--brand:#118553;--brand-t:#0a7040;--on-brand:#fff;--brand-h:#0a7040;--soft:#dcefe4;--ok:#0a7040;--bad:#dc2626;--warn:#d97706;--sh:0 1px 2px rgba(18,25,22,.05),0 8px 24px -16px rgba(18,25,22,.18)}
+@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--card2:#202825;--ink:#dbe1de;--mut:#9ca4a0;--line:#2e3632;--brand:#35ac74;--brand-t:#6bc79a;--on-brand:#0d1a13;--brand-h:#6bc79a;--soft:#173126;--sh:0 1px 2px rgba(0,0,0,.35),0 8px 24px -16px rgba(0,0,0,.6)}}
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.75 "Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;-webkit-font-smoothing:antialiased}
-a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+a{color:var(--brand-t);text-decoration:none}a:hover{text-decoration:underline}
 .auth{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:100vh;min-height:100dvh}
 /* ---- اللوحة التعريفية ---- */
-.bp{position:relative;overflow:hidden;color:#fff;padding:44px clamp(28px,5vw,64px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;background:radial-gradient(900px 500px at 85% -10%,rgba(167,139,250,.55),transparent 60%),radial-gradient(700px 500px at -10% 110%,rgba(6,182,212,.4),transparent 60%),linear-gradient(145deg,#064526,#118553 55%,#085a33)}
+.bp{position:relative;overflow:hidden;color:#fff;padding:44px clamp(28px,5vw,64px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;background:radial-gradient(900px 500px at 85% -10%,rgba(167,139,250,.22),transparent 60%),radial-gradient(700px 500px at -10% 110%,rgba(6,182,212,.16),transparent 60%),linear-gradient(145deg,#053b20,#0b6a41 55%,#06482a)}
 .bp::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(180deg,#000,transparent 75%);pointer-events:none}
 .bp>*{position:relative;z-index:1}
 .lg{display:flex;align-items:center;gap:12px;font-weight:700;font-size:19px;color:inherit;text-decoration:none}.lg:hover{text-decoration:none}
@@ -45,7 +45,7 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(22px,4vw,34px);box-shadow:var(--sh)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:22px}
 .seg button{border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer;transition:.18s}
-.seg button.on{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(18,25,22,.14)}
+.seg button.on{background:var(--card);color:var(--brand-t);box-shadow:0 1px 3px rgba(18,25,22,.14)}
 .seg button:not(.on):hover{color:var(--ink)}
 h1{font-size:24px;line-height:1.35;margin:0 0 4px;letter-spacing:-.2px}
 .lead{margin:0 0 20px;color:var(--mut);font-size:14.5px}
@@ -57,7 +57,7 @@ form{display:flex;flex-direction:column;gap:15px;animation:in .28s ease}
 input{font:inherit;width:100%;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;transition:border-color .15s,box-shadow .15s}
 input::placeholder{color:#94a3b8}
 input:hover{border-color:#cbd5e1}
-input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 4px var(--soft)}
+input:focus{outline:0;border-color:var(--brand-t);box-shadow:0 0 0 4px var(--soft)}
 input:user-invalid{border-color:var(--bad)}
 input[dir=ltr]{text-align:left}
 .pw{position:relative}.pw input{padding-inline-end:46px}
@@ -65,13 +65,13 @@ input[dir=ltr]{text-align:left}
 .eye:hover{background:var(--card2);color:var(--ink)}.eye svg{width:20px;height:20px}
 .meter{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:2px}.meter i{display:block;height:100%;width:0;border-radius:99px;transition:.25s}
 .mt{font-size:12.5px;color:var(--mut);min-height:1.4em}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:600;font-size:15.5px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#118553,#0a7040);box-shadow:0 10px 22px -10px rgba(17,133,83,.7);transition:.18s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 14px 26px -10px rgba(17,133,83,.8)}.btn:active{transform:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:600;font-size:15.5px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#118553,#0a7040);box-shadow:0 10px 22px -10px rgba(18,25,22,0.22);transition:.18s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 14px 26px -10px rgba(18,25,22,0.22)}.btn:active{transform:none}
 .btn[disabled]{opacity:.7;cursor:progress;transform:none}
-.btn.ghost{background:var(--card);color:var(--brand);border:1px solid var(--line);box-shadow:none}.btn.ghost:hover{background:var(--soft)}
+.btn.ghost{background:var(--card);color:var(--brand-t);border:1px solid var(--line);box-shadow:none}.btn.ghost:hover{background:var(--soft)}
 .spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.lnk{background:none;border:0;padding:0;font:inherit;font-size:13.5px;color:var(--brand);cursor:pointer}.lnk:hover{text-decoration:underline}
+.lnk{background:none;border:0;padding:6px 2px;min-height:32px;font:inherit;font-size:13.5px;color:var(--brand-t);cursor:pointer}.lnk:hover{text-decoration:underline}
 .foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;font-size:13.5px;color:var(--mut)}
 .msg{border-radius:12px;padding:11px 14px;margin:0 0 16px;font-size:14px;line-height:1.7;animation:in .25s}
 .msg.err{background:rgba(220,38,38,.1);color:var(--bad);border:1px solid rgba(220,38,38,.25)}
@@ -104,9 +104,9 @@ input[dir=ltr]{text-align:left}
    <h2>اعرف المنتج الرابح قبل أن يزدحم السوق</h2>
    <p>ما يبيع فعلاً الآن، في سوقك وفي أكثر من 40 دولة، مرتّب لتقرّر بثقة.</p>
    <div class="pv" aria-hidden="true">
-    <div class="pr"><i style="background:linear-gradient(135deg,#a2ddbf,#6bc79a)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></i><div><b>جهاز منزلي ذكي</b><small>يتصدّر هذا الأسبوع</small><u><s style="width:86%"></s></u></div><em style="background:#35ac74">💎 جوهرة</em></div>
-    <div class="pr"><i style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></i><div><b>إكسسوار سيارة</b><small>صاعد</small><u><s style="width:64%"></s></u></div><em style="background:#16a34a">🌱 واعد</em></div>
-    <div class="pr"><i style="background:linear-gradient(135deg,#fed7aa,#f97316)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2.34M14 2v2.34"/><path d="M9 4.34h6a1 1 0 0 1 1 1v2.32a1 1 0 0 0 .3.71l.4.4a1 1 0 0 1 .3.7V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9.47a1 1 0 0 1 .3-.7l.4-.4a1 1 0 0 0 .3-.71V5.34a1 1 0 0 1 1-1Z"/><path d="M7 13h10"/></svg></i><div><b>منتج عناية</b><small>طلب ثابت</small><u><s style="width:72%"></s></u></div><em style="background:#f97316">🔥 رابح</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#a2ddbf,#6bc79a)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></i><div><b>جهاز منزلي ذكي</b><small>يتصدّر هذا الأسبوع</small><u><s style="width:86%"></s></u></div><em style="background:#1b7f55">💎 جوهرة</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></i><div><b>إكسسوار سيارة</b><small>صاعد</small><u><s style="width:64%"></s></u></div><em style="background:#15803d">🌱 واعد</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#fed7aa,#f97316)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2.34M14 2v2.34"/><path d="M9 4.34h6a1 1 0 0 1 1 1v2.32a1 1 0 0 0 .3.71l.4.4a1 1 0 0 1 .3.7V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9.47a1 1 0 0 1 .3-.7l.4-.4a1 1 0 0 0 .3-.71V5.34a1 1 0 0 1 1-1Z"/><path d="M7 13h10"/></svg></i><div><b>منتج عناية</b><small>طلب ثابت</small><u><s style="width:72%"></s></u></div><em style="background:#c2410c">🔥 رابح</em></div>
     <div class="pt">🏭 مورّد بسعر أقل وُجد</div>
    </div>
    <ul class="ft">
