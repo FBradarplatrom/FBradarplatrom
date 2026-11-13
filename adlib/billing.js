@@ -1,5 +1,6 @@
 'use strict';
 const U = require('./util.js');   // J · str · kvGet · kvSet
+const TEST_API = k => process.env.NODE_ENV === 'test' ? process.env[k] : '';   // عناوين بديلة للاختبارات فقط (لا تعمل في الإنتاج)
 // الاشتراكات كخدمة: الباقات (السعر، المدة، الحدود)، الدفع، التفعيل التلقائي، لوحة إحصائيات المدير، سجل الأخطاء، إعدادات الربط.
 //  • CIB والذهبية مباشرة عبر بوابة SATIM (بلا وسيط): register.do ثم confirmOrder.do عند العودة.
 //  • البطاقات الدولية عبر Stripe Checkout (إشعار موقّع + تحقق عند العودة)، و PayPal (Orders v2: موافقة ثم capture).
@@ -119,9 +120,9 @@ create table if not exists error_logs(id integer primary key, at integer, method
   const newPay = (u, p, method, amount, currency) => Number(db.prepare("insert into payments(user_id,plan_id,plan_name,days,amount,currency,method,status,created_at) values(?,?,?,?,?,?,?,'pending',?)")
     .run(u.id, p.id, p.name + ' · ' + p.per.label, p.per.days, amount, currency, method, now()).lastInsertRowid);
   const failPay = (pid, note) => db.prepare("update payments set status='failed', note=? where id=? and status='pending'").run(str(note, 200), pid);
-  const SATIM = () => process.env.SATIM_TEST_API || (CFG.get('satim_mode') === 'live' ? 'https://cib.satim.dz/payment/rest' : 'https://test.satim.dz/payment/rest');
-  const STRIPE = () => process.env.STRIPE_TEST_API || 'https://api.stripe.com';
-  const PAYPAL = () => process.env.PAYPAL_TEST_API || (CFG.get('paypal_mode') === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com');
+  const SATIM = () => TEST_API('SATIM_TEST_API') || (CFG.get('satim_mode') === 'live' ? 'https://cib.satim.dz/payment/rest' : 'https://test.satim.dz/payment/rest');
+  const STRIPE = () => TEST_API('STRIPE_TEST_API') || 'https://api.stripe.com';
+  const PAYPAL = () => TEST_API('PAYPAL_TEST_API') || (CFG.get('paypal_mode') === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com');
   const lang = q => (/^(fr|en)/i.test(String(q.get('accept-language') || '')) ? String(q.get('accept-language')).slice(0, 2).toUpperCase() : 'AR');
   async function paypalToken() {
     const r = await fetch(PAYPAL() + '/v1/oauth2/token', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Basic ' + Buffer.from(CFG.get('paypal_client') + ':' + CFG.get('paypal_secret')).toString('base64'), 'content-type': 'application/x-www-form-urlencoded' }, body: 'grant_type=client_credentials' });

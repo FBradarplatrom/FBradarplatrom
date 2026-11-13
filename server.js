@@ -7,6 +7,9 @@ const express = require('express'), bcrypt = require('bcryptjs'),
   jwt = require('jsonwebtoken'), cookie = require('cookie-parser'), crypto = require('crypto'), dns = require('dns'), fs = require('fs'), path = require('path');
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET || SECRET.length < 24) { console.error('JWT_SECRET (24+ chars) is required'); process.exit(1); }
+// أمان: رمز الجلسة فقط (لا يُقبل رمز «بانتظار التحقق بخطوتين» ككوكي جلسة)، وخوارزمية التوقيع مثبتة
+const JWTO = { algorithms: ['HS256'] };
+const session = tok => { const t = jwt.verify(tok, SECRET, JWTO); if (t.p) throw new Error('not a session'); return t; };
 const ADMIN = (process.env.ADMIN_EMAIL || '').toLowerCase(), DAY = 864e5, now = () => Date.now();
 const contactUrl = () => { const w = String(require('./adlib/config.js').get('support_whatsapp') || '').replace(/[^\d]/g, ''); return process.env.CONTACT_URL || (w ? 'https://wa.me/' + w : '') || (process.env.ADMIN_EMAIL ? 'mailto:' + process.env.ADMIN_EMAIL : ''); };   // واتساب هو قناة التواصل الأساسية
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
@@ -66,7 +69,7 @@ const cols = t => db.prepare(`pragma table_info(${t})`).all().map(c => c.name);
 db.exec('create unique index if not exists users_un on users(username) where username is not null');
 const EK = crypto.createHash('sha256').update('apikey:' + SECRET).digest();   // تشفير المفتاح المحفوظ
 const enc = t => { const iv = crypto.randomBytes(12), c = crypto.createCipheriv('aes-256-gcm', EK, iv), b = Buffer.concat([c.update(t, 'utf8'), c.final()]); return Buffer.concat([iv, c.getAuthTag(), b]).toString('base64'); };
-const dec = x => { try { const b = Buffer.from(x, 'base64'), d = crypto.createDecipheriv('aes-256-gcm', EK, b.subarray(0, 12)); d.setAuthTag(b.subarray(12, 28)); return Buffer.concat([d.update(b.subarray(28)), d.final()]).toString('utf8'); } catch (e) { return null; } };
+const dec = x => { try { const b = Buffer.from(x, 'base64'), d = crypto.createDecipheriv('aes-256-gcm', EK, b.subarray(0, 12), { authTagLength: 16 }); d.setAuthTag(b.subarray(12, 28)); return Buffer.concat([d.update(b.subarray(28)), d.final()]).toString('utf8'); } catch (e) { return null; } };
 const app = express();
 app.disable('x-powered-by'); app.set('trust proxy', 1);
 app.use(gzip);
@@ -100,11 +103,11 @@ setInterval(() => { const t = now(); fails.forEach((f, k) => { if (t - f.t > 36e
 const act = (uid, kind, q, detail) => { try { db.prepare('insert into activity(user_id,kind,ip,ua,detail,at) values(?,?,?,?,?,?)').run(uid || null, kind, (q && q.ip) || '', String((q && q.get && q.get('user-agent')) || '').slice(0, 160), String(detail || '').slice(0, 300), now()); } catch (e) {} };
 // tv = إصدار الجلسة: تغيير كلمة المرور يرفعه فتُغلق الجلسات على الأجهزة الأخرى
 const login = (s, id) => s.cookie('t', jwt.sign({ id, v: (db.prepare('select tv from users where id=?').get(id) || {}).tv || 0 }, SECRET, { expiresIn: '30d' }),
-  { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 30 * DAY });
+  { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' || !!(s.req && s.req.secure), maxAge: 30 * DAY });
 
 function auth(q, s, n) {
   let u;   // الدخول بالكوكي فقط (لا مفاتيح خارجية: الإضافة تتصل عبر صفحة المنصة نفسها)
-  try { const t = jwt.verify(q.cookies.t, SECRET); u = db.prepare('select * from users where id=?').get(t.id); if (u && (t.v || 0) !== (u.tv || 0)) u = null; } catch (e) {}
+  try { const t = session(q.cookies.t); u = db.prepare('select * from users where id=?').get(t.id); if (u && (t.v || 0) !== (u.tv || 0)) u = null; } catch (e) {}
   if (!u) return s.status(401).json({ error: 'auth' });
   q.u = u; n();
 }
@@ -121,10 +124,12 @@ app.post('/api/register', wrap((q, s) => {
   if (un && !UN.test(un)) return s.status(400).json({ error: 'اسم المستخدم: 3 إلى 30 حرفاً لاتينياً أو أرقاماً أو _ .' });
   if (db.prepare('select 1 from users where email=?').get(em)) return s.status(409).json({ error: 'البريد مسجّل مسبقاً' });
   if (un && db.prepare('select 1 from users where username=?').get(un)) return s.status(409).json({ error: 'اسم المستخدم مستعمل' });
+  // ADMIN_EMAIL يصبح مديراً فقط إن لم يوجد مدير بعد (وإلا يستطيع أي شخص أخذه بعد أن يغيّر المدير بريده)
+  const isAdm = em === ADMIN && !db.prepare("select 1 from users where role='admin'").get();
   const id = db.prepare('insert into users(email,hash,role,expires_at,created_at,name,username) values(?,?,?,?,?,?,?)')
-    .run(em, bcrypt.hashSync(String(password), 10), em === ADMIN ? 'admin' : 'member', now() + (+process.env.TRIAL_DAYS || 0) * DAY, now(), String(name).trim().slice(0, 60), un || null).lastInsertRowid;
+    .run(em, bcrypt.hashSync(String(password), 10), isAdm ? 'admin' : 'member', now() + (+process.env.TRIAL_DAYS || 0) * DAY, now(), String(name).trim().slice(0, 60), un || null).lastInsertRowid;
   // الباقة المجانية لتجربة المنصة (من «إدارة المشتركين ← الباقات»): مدتها وحدودها تُطبَّق فوراً
-  try { const tp = em !== ADMIN && db.prepare('select name, days from plans where free=1 and active=1 order by sort limit 1').get(); if (tp) db.prepare('update users set plan=?, expires_at=? where id=?').run(tp.name, now() + tp.days * DAY, id); } catch (e) {}
+  try { const tp = !isAdm && db.prepare('select name, days from plans where free=1 and active=1 order by sort limit 1').get(); if (tp) db.prepare('update users set plan=?, expires_at=? where id=?').run(tp.name, now() + tp.days * DAY, id); } catch (e) {}
   fail('r:' + q.ip, 36e5); act(id, 'register', q); login(s, id); s.json({ ok: 1 });
 }));
 app.post('/api/login', wrap((q, s) => {
@@ -139,7 +144,7 @@ app.post('/api/login', wrap((q, s) => {
 // الخطوة الثانية: رمز تطبيق المصادقة أو رمز استرجاع (لمرة واحدة)
 app.post('/api/login/2fa', wrap((q, s) => {
   if (blocked('2fa:' + q.ip, 8)) return s.status(429).json({ error: 'محاولات كثيرة، أعد المحاولة بعد 15 دقيقة' });
-  let t; try { t = jwt.verify(String((q.body || {}).t || ''), SECRET); } catch (e) { return s.status(401).json({ error: 'انتهت المهلة، سجّل الدخول من جديد' }); }
+  let t; try { t = jwt.verify(String((q.body || {}).t || ''), SECRET, JWTO); } catch (e) { return s.status(401).json({ error: 'انتهت المهلة، سجّل الدخول من جديد' }); }
   const u = t && t.p === '2fa' && db.prepare('select * from users where id=?').get(t.id);
   if (!u || !u.totp_on || (t.v || 0) !== (u.tv || 0)) return s.status(401).json({ error: 'انتهت المهلة، سجّل الدخول من جديد' });
   const code = String((q.body || {}).code || '').trim().toLowerCase(), TOTP = require('./adlib/totp.js');
@@ -282,7 +287,7 @@ app.post('/api/admin/users/:id/reset-link', auth, admin, wrap((q, s) => {
   db.prepare('delete from resets where user_id=? or exp<?').run(u.id, now());
   db.prepare('insert into resets(h,user_id,exp) values(?,?,?)').run(sha(t), u.id, now() + 36e5);   // ساعة واحدة
   act(q.u.id, 'admin_reset_link', q, 'للمستخدم #' + u.id);
-  s.json({ url: (process.env.APP_URL || q.protocol + '://' + q.get('host')).replace(/\/$/, '') + '/reset?t=' + t });
+  s.json({ url: appUrl(q) + '/reset?t=' + t });
 }));
 app.post('/api/admin/users/:id/update', auth, admin, wrap((q, s) => {
   const id = +q.params.id, u = db.prepare('select * from users where id=?').get(id); if (!u) return s.sendStatus(404);
@@ -338,7 +343,7 @@ app.post('/api/forgot', async (q, s, n) => { try {
   if (!tr) return s.json({ ok: 1, manual: true, contact: contactUrl() });   // لا بريد مضبوط: يراسل المدير
   const u = db.prepare('select * from users where email=? or username=?').get(String(q.body.email || '').toLowerCase().trim(), String(q.body.email || '').toLowerCase().trim());
   if (u) {
-    const t = crypto.randomBytes(24).toString('hex'), url = (process.env.APP_URL || q.protocol + '://' + q.get('host')).replace(/\/$/, '') + '/reset?t=' + t;
+    const t = crypto.randomBytes(24).toString('hex'), url = appUrl(q) + '/reset?t=' + t;
     db.prepare('delete from resets where user_id=? or exp<?').run(u.id, now());
     db.prepare('insert into resets(h,user_id,exp) values(?,?,?)').run(sha(t), u.id, now() + 36e5);
     // الرسالة بلغة صفحة الدخول التي طُلبت منها (العربية / English / Français)
@@ -353,16 +358,28 @@ app.post('/api/forgot', async (q, s, n) => { try {
 // ---------- الصور: وكيل آمن + نسخة محفوظة للمنتجات المحفوظة ----------
 const IMG_DIR = process.env.IMG_DIR || path.join(path.dirname(path.resolve(process.env.DB_FILE || 'data.db')), 'images');
 fs.mkdirSync(IMG_DIR, { recursive: true });
+const appUrl = q => String(CFGM.get('app_url') || (q.protocol + '://' + q.get('host'))).replace(/\/$/, '');   // لا نثق بترويسة Host (تسميم رابط الاستعادة)
 const priv = a => /^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(a) || /^(::1?$|f[cd]|fe80|::ffff:)/i.test(a);
+const safeLookup = (h, o, cb) => dns.lookup(h, Object.assign({}, o, { all: true }), (e, L) => {
+  if (e) return cb(e); if (!L.length || L.some(a => priv(a.address))) return cb(Object.assign(new Error('private'), { code: 'EPRIVATE' }));
+  return o && o.all ? cb(null, L) : cb(null, L[0].address, L[0].family);
+});
+const getImg = x => new Promise((res, rej) => {
+  const r = require(x.protocol === 'https:' ? 'https' : 'http').get(x, { lookup: safeLookup, headers: { 'user-agent': 'Mozilla/5.0' } }, rs => {
+    const ch = []; let n = 0;
+    rs.on('data', d => { n += d.length; if (n > 4e6) r.destroy(new Error('too big')); else ch.push(d); });
+    rs.on('end', () => res({ status: rs.statusCode, headers: rs.headers, buf: Buffer.concat(ch) })); rs.on('error', rej);
+  });
+  r.setTimeout(9000, () => r.destroy(new Error('timeout'))); r.on('error', rej);
+});
 async function fetchImg(u, hop = 0) {
   const x = new URL(u); if (!/^https?:$/.test(x.protocol) || (x.port && !['80', '443'].includes(x.port))) throw new Error('bad url');
   if ((await dns.promises.lookup(x.hostname, { all: true })).some(a => priv(a.address))) throw new Error('private');
-  const r = await fetch(x, { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(9000) });
-  if (r.status >= 300 && r.status < 400 && r.headers.get('location') && hop < 3) return fetchImg(new URL(r.headers.get('location'), x).href, hop + 1);
-  const type = (r.headers.get('content-type') || '').split(';')[0].trim();
-  if (!r.ok || !/^image\/(jpeg|png|webp|gif|avif)$/.test(type)) throw new Error('not image');
-  const buf = Buffer.from(await r.arrayBuffer()); if (buf.length > 4e6) throw new Error('too big');
-  return { buf, type };
+  const r = await getImg(x), loc = r.headers.location;
+  if (r.status >= 300 && r.status < 400 && loc && hop < 3) return fetchImg(new URL(loc, x).href, hop + 1);
+  const type = String(r.headers['content-type'] || '').split(';')[0].trim();
+  if (r.status < 200 || r.status >= 300 || !/^image\/(jpeg|png|webp|gif|avif)$/.test(type)) throw new Error('not image');
+  return { buf: r.buf, type };
 }
 const ik = u => sha(u).slice(0, 40);
 app.get('/api/img', auth, active, async (q, s) => { try {
@@ -392,7 +409,7 @@ const imgData = async u => { if (!/^https?:\/\//.test(u || '')) return ''; const
   return buf.length > 3.5e6 ? '' : 'data:' + type + ';base64,' + buf.toString('base64'); };
 require('./adlib/tools.js')(app, { db, auth, active, wrap, now, imgData });
 require('./adlib/edge.js')(app, { db, auth, active, wrap, now, imgData });   // الخروج من المنافسة (أفكار بالذكاء الاصطناعي)
-const optUser = q => { try { const t = jwt.verify(q.cookies.t, SECRET), u = db.prepare('select id, email, name, tv from users where id=?').get(t.id); return u && (t.v || 0) === (u.tv || 0) ? u : null; } catch (e) { return null; } };
+const optUser = q => { try { const t = session(q.cookies.t), u = db.prepare('select id, email, name, tv from users where id=?').get(t.id); return u && (t.v || 0) === (u.tv || 0) ? u : null; } catch (e) { return null; } };
 const BX = { db, auth, active, admin, wrap, now, act, blocked, fail, optUser, DATA_DIR: path.dirname(path.resolve(DBF)) };
 Object.assign(BX, require('./adlib/notify.js')(app, Object.assign({ mailer: () => transport(), sendMail: ML.send }, BX)));   // 🔔 التنبيهات: بريد وتيليغرام
 require('./adlib/billing.js')(app, BX);  // الاشتراكات والدفع والإحصائيات وسجل الأخطاء ومفاتيح المنصة
@@ -423,7 +440,7 @@ const pub = html => { const a = analytics(); return a ? html.replace('</head>', 
 // صفحات الواجهة تُخدَم من views/ (خارج المجلد العام) فلا تظهر بأسماء ملفاتها (.html). التطبيق صفحة واحدة بروابط حقيقية لكل قسم.
 const APP_PAGE = path.join(__dirname, 'views', 'app.html'), LOGIN_PAGE = path.join(__dirname, 'views', 'login.html');
 const sendApp = s => s.type('html').set('Cache-Control', 'no-cache').send(APP_HTML);   // الصفحة نفسها تُفحص دائماً، وملفاتها من ذاكرة المتصفح
-const signedIn = q => { try { jwt.verify(q.cookies.t, SECRET); return true; } catch (e) { return false; } };
+const signedIn = q => { try { session(q.cookies.t); return true; } catch (e) { return false; } };
 app.get('/', (q, s) => signedIn(q) ? sendApp(s) : s.type('html').send(pub(LANDING)));
 app.get(['/collect', '/collect/:tab', '/inbox', '/analyze', '/archive', '/saved', '/compete', '/compete/:id', '/gaps', '/gaps/:id', '/watch', '/watch/:id', '/tiktok', '/tiktok/:id', '/integrations', '/settings', '/subscription', '/security', '/help', '/guide', '/subscribers', '/admin', '/payments', '/payments/:tab', '/support-inbox', '/platform', '/platform/:tab'],
   (q, s) => signedIn(q) ? sendApp(s) : s.redirect('/login?next=' + encodeURIComponent(q.path)));

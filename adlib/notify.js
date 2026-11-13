@@ -1,5 +1,6 @@
 'use strict';
 const U = require('./util.js');   // J · str · kvGet · kvSet
+const TEST_API = k => process.env.NODE_ENV === 'test' ? process.env[k] : '';   // عناوين بديلة للاختبارات فقط (لا تعمل في الإنتاج)
 // 🔔 التنبيهات بالبريد أو تيليغرام:
 //  • ظهر منافس في الجزائر لمنتج في «ثغرات السوق» · إعلانات جديدة لصفحة منافس مراقبة · منتج جديد صار «💎 جوهرة»
 //  • تأكيد الدفع وتفعيل الاشتراك · تذكير قبل انتهاء الاشتراك · (للمدير) طلبات دفع BaridiMob جديدة
@@ -16,7 +17,7 @@ const kvGet = (u, k, d) => U.kvGet(db, u, k, d);
 const kvSet = (u, k, v) => U.kvSet(db, u, k, v);
 const DEFP = () => ({ email: false, tg: false, chat: '', ev: { gap: true, watch: true, gem: true, payment: true, expiry: true, admin: true, support: true } });
 const prefs = uid => { const p = Object.assign(DEFP(), kvGet(uid, 'notify', {})); p.ev = Object.assign(DEFP().ev, p.ev || {}); return p; };
-const tgApi = () => (process.env.TELEGRAM_TEST_API || 'https://api.telegram.org') + '/bot' + CFG.get('telegram_token');
+const tgApi = () => (TEST_API('TELEGRAM_TEST_API') || 'https://api.telegram.org') + '/bot' + CFG.get('telegram_token');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const appUrl = () => (CFG.get('app_url') || '').replace(/\/$/, '');
 
