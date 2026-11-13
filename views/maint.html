@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>رادار المنتجات الرابحة · صيانة</title><meta name="theme-color" content="#118553">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/favicon.ico"><link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root{--bg:#ffffff;--card:#ffffff;--ink:#121916;--mut:#5d6661;--line:#e3e8e5;--brand:#118553;--brand-t:#0a7040;--on-brand:#fff;--soft:#dcefe4}
+@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--ink:#e8efeb;--mut:#9aa6a0;--line:#2a332f;--brand:#35ac74;--brand-t:#6bc79a;--on-brand:#0d1a13;--soft:#1f3a2c}}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}body{background:var(--bg);color:var(--ink);font:16px/1.7 Cairo,Inter,system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px 16px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:24px;max-width:560px;width:100%;padding:36px 28px;text-align:center;box-shadow:0 20px 60px -30px rgba(18,25,22,.35)}
+.lg{display:inline-flex;align-items:center;gap:10px;font-weight:700;margin-bottom:22px}.lg svg{width:40px;height:40px;border-radius:12px}
+.ic{width:84px;height:84px;margin:0 auto 14px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--brand-t)}.ic svg{width:42px;height:42px;animation:sp 6s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+h1{margin:0 0 8px;font-size:26px;line-height:1.35}p{margin:0 0 10px;color:var(--mut)}.msg{color:var(--ink);white-space:pre-line}.til{display:inline-block;background:var(--soft);color:var(--brand-t);border-radius:99px;padding:6px 16px;font-weight:700;margin:6px 0 16px}
+.b{display:inline-flex;gap:8px;align-items:center;justify-content:center;background:#25d366;color:#fff;border-radius:12px;padding:11px 22px;font-weight:700;text-decoration:none;margin-top:6px}
+.lng{margin-top:20px;font-size:13px}.lng a{color:var(--mut);margin:0 6px}.small{font-size:13px;margin-top:14px}
+</style></head><body>
+<main class="c" role="main">
+ <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#118553"/><g transform="translate(12 12) scale(1.6667)" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></g></svg><span id="br"></span></div>
+ <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>
+ <h1 id="h"></h1><p class="msg" id="m"></p><div id="u"></div><div id="w"></div>
+ <p class="small" id="ok"></p>
+ <div class="lng"><a href="?lang=ar">العربية</a>·<a href="?lang=en">English</a>·<a href="?lang=fr">Français</a></div>
+</main>
+<script>
+(function(){var T={ar:{br:'رادار المنتجات الرابحة',h:'نُحسّن المنصة الآن',m:'نقوم بصيانة قصيرة لنقدّم لك منصة أسرع وأفضل. بياناتك ومنتجاتك محفوظة كما هي.',u:'نعود حوالي {t}',w:'تواصل معنا عبر واتساب',ok:'تتحدث الصفحة تلقائياً عند عودة المنصة.'},
+ en:{br:'Winning Product Radar',h:'We’re improving the platform',m:'We’re doing a short maintenance to bring you a faster, better platform. Your data and products are safe.',u:'Back around {t}',w:'Contact us on WhatsApp',ok:'This page refreshes automatically when we’re back.'},
+ fr:{br:'Radar des produits gagnants',h:'Nous améliorons la plateforme',m:'Une courte maintenance pour vous offrir une plateforme plus rapide et meilleure. Vos données et produits sont conservés.',u:'Retour vers {t}',w:'Contactez-nous sur WhatsApp',ok:'Cette page se met à jour automatiquement à notre retour.'}};
+ var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}},L=new URLSearchParams(location.search).get('lang')||g('wpr_lang')||(navigator.language||'ar').slice(0,2);if(!T[L])L='ar';
+ try{if(new URLSearchParams(location.search).get('lang'))localStorage.setItem('wpr_lang',L)}catch(e){}
+ var t=T[L],$=function(i){return document.getElementById(i)},esc=function(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+ document.documentElement.lang=L;document.documentElement.dir=L==='ar'?'rtl':'ltr';$('br').textContent=t.br;$('h').textContent=t.h;$('m').textContent=t.m;$('ok').textContent=t.ok;
+ fetch('/api/maint/info').then(function(r){return r.json()}).then(function(j){
+  if(!j.on&&!/preview/.test(location.pathname)){location.replace('/');return}
+  if(j.msg&&L==='ar')$('m').textContent=j.msg; else if(j['msg_'+L])$('m').textContent=j['msg_'+L]; else if(j.msg&&!j['msg_en'])$('m').textContent=t.m;
+  if(j.until){var d=new Date(j.until);if(!isNaN(d)){$('u').innerHTML='<span class="til">'+esc(t.u.replace('{t}',d.toLocaleString({ar:'ar-DZ',en:'en-GB',fr:'fr-FR'}[L],{weekday:'long',hour:'2-digit',minute:'2-digit'})))+'</span>'}}
+  var n=String(j.whatsapp||'').replace(/[^\d]/g,'');if(n)$('w').innerHTML='<a class="b" target="_blank" rel="noopener" href="https://wa.me/'+n+'">'+esc(t.w)+'</a>';
+ }).catch(function(){});
+ if(!/preview/.test(location.pathname))setInterval(function(){fetch('/api/maint/info').then(function(r){return r.json()}).then(function(j){if(!j.on)location.replace('/')}).catch(function(){})},60000);
+})();
+</script></body></html>

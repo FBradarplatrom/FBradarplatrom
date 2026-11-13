@@ -1,0 +1,117 @@
+{
+  "manifest_version": 3,
+  "name": "إضافة جمع الإعلانات – رادار المنتجات الرابحة",
+  "short_name": "جمع الإعلانات",
+  "version": "1.7.7",
+  "description": "تجمع إعلانات مكتبة ميتا، ونتائج البحث في AliExpress وAlibaba و1688 وTaobao (للمورّد) وTikTok، وترسلها إلى منصتك. تعمل مع المنصة التي نزّلتها منها فقط، ولا تحمل مفاتيح.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "scripting",
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://web.facebook.com/*",
+    "https://*.aliexpress.com/*",
+    "https://*.aliexpress.us/*",
+    "https://www.tiktok.com/*",
+    "https://*.alibaba.com/*",
+    "https://*.1688.com/*",
+    "https://*.taobao.com/*",
+    "https://*.tmall.com/*",
+    "https://YOUR-PLATFORM-DOMAIN/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "إضافة جمع الإعلانات",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/ads/library/*",
+        "https://web.facebook.com/ads/library/*"
+      ],
+      "js": [
+        "inject.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.facebook.com/ads/library/*",
+        "https://web.facebook.com/ads/library/*"
+      ],
+      "js": [
+        "collector.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://*.aliexpress.com/w/*",
+        "https://*.aliexpress.com/wholesale*",
+        "https://*.aliexpress.us/w/*"
+      ],
+      "js": [
+        "ali-collector.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.tiktok.com/search*"
+      ],
+      "js": [
+        "tt-inject.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.tiktok.com/search*"
+      ],
+      "js": [
+        "tt-collector.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.alibaba.com/trade/search*",
+        "https://s.1688.com/selloffer/*",
+        "https://s.taobao.com/search*"
+      ],
+      "js": [
+        "shop-collector.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://YOUR-PLATFORM-DOMAIN/*"
+      ],
+      "js": [
+        "relay.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

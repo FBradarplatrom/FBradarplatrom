@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#118553">
+<title>Winning Product Radar</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root{--bg:#ffffff;--card:#ffffff;--ink:#121916;--mut:#5d6661;--line:#e3e8e5;--brand:#118553;--brand-t:#0a7040;--on-brand:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--ink:#dbe1de;--mut:#9ca4a0;--line:#2e3632;--brand:#35ac74;--brand-t:#6bc79a;--on-brand:#0d1a13}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.85 "Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+html[dir=ltr] body{font-family:"Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+a{color:var(--brand-t)}
+header{border-bottom:1px solid var(--line);background:var(--card)}
+.w{max-width:860px;margin:0 auto;padding:0 18px}.nav{display:flex;align-items:center;gap:14px;height:62px}
+.lg{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--ink);text-decoration:none}.lg i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#118553,#0a7040);display:grid;place-items:center;font-style:normal}
+.nav select{margin-inline-start:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card);color:var(--ink);font:inherit;font-size:13.5px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 8px}.tabs a{padding:7px 14px;border-radius:99px;border:1px solid var(--line);text-decoration:none;color:var(--mut);font-size:14px;background:var(--card)}.tabs a.on{background:var(--brand);color:var(--on-brand);border-color:var(--brand-t)}
+main{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,40px);margin:12px 0 40px}
+h1{margin:0 0 4px;font-size:clamp(24px,3vw,32px)}.upd{color:var(--mut);font-size:14px;margin:0 0 22px}
+h2{font-size:19px;margin:26px 0 6px}p,li{color:var(--ink)}ul{padding-inline-start:22px}
+.box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;margin:10px 0}
+footer{color:var(--mut);font-size:13.5px;text-align:center;padding:0 0 30px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.g2{grid-template-columns:1fr}}
+#cform label{display:block;font-size:14px;font-weight:600;margin:0 0 10px}#cform input,#cform textarea{display:block;width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;background:var(--card);color:var(--ink)}
+#cform .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.sb{background:var(--brand);color:var(--on-brand);border:0;border-radius:10px;padding:10px 22px;font:inherit;font-weight:700;cursor:pointer}.sb:disabled{opacity:.6}
+.cm{margin:10px 0 0;font-weight:600}.cm.ok{color:#059669}.cm.err{color:#dc2626}
+.wa{position:fixed;bottom:20px;inset-inline-end:20px;width:56px;height:56px;border-radius:50%;background:#25d366;display:grid;place-items:center;box-shadow:0 8px 24px -6px rgba(0,0,0,.35);z-index:9}.wa[hidden]{display:none}
+[hidden]{display:none!important}</style>
+<script data-fab src="/theme.js"></script><script src="/icons.js"></script></head>
+<body>
+<header><div class="w nav"><a class="lg" href="/"><i>📡</i><span id="brand"></span></a>
+<select id="lang" aria-label="Language" hidden><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></div></header>
+<div class="w"><nav class="tabs" id="tabs"></nav><main id="doc"></main><footer id="ft"></footer></div>
+<script src="/legal-texts.js"></script>
+<script>
+(function(){
+/* النصوص القانونية بثلاث لغات. القيم بين {} تأتي من «الربط والتكامل ← معلومات النشاط». راجعها مع مختص قانوني قبل الإطلاق. */
+var D=window.LEGAL_D,P=window.LEGAL_PARSE;
+/* نموذج «اتصل بنا»: يصل إلى المدير في «صندوق الدعم» مع تنبيه بالبريد/تيليغرام */
+var F={ar:{h:'أرسل لنا رسالة',name:'الاسم',email:'بريدك الإلكتروني',subject:'الموضوع',msg:'رسالتك',send:'إرسال',ok:'✅ وصلت رسالتك، سنرد عليك على بريدك في أقرب وقت.',err:'تعذّر الإرسال، تحقق من البريد والرسالة (10 أحرف على الأقل) ثم أعد المحاولة.',many:'أرسلت رسائل كثيرة، أعد المحاولة بعد ساعة.',wa:'تواصل معنا عبر واتساب',wah:'أسرع طريقة للتواصل',wad:'نرد عادة خلال ساعات. للدفع وتفعيل العرض والأسئلة.',wam:'السلام عليكم، عندي سؤال عن رادار المنتجات الرابحة: ',or:'أو أرسل لنا رسالة مكتوبة'},
+ en:{h:'Send us a message',name:'Name',email:'Your email',subject:'Subject',msg:'Your message',send:'Send',ok:'✅ Message received. We will reply to your email soon.',err:'Could not send. Check your email and message (at least 10 characters) and try again.',many:'Too many messages, please try again in an hour.',wa:'Chat with us on WhatsApp',wah:'The fastest way to reach us',wad:'We usually reply within hours. Payments, plan activation and questions.',wam:'Hello, I have a question about Winning Product Radar: ',or:'Or send us a written message'},
+ fr:{h:'Envoyez-nous un message',name:'Nom',email:'Votre e-mail',subject:'Sujet',msg:'Votre message',send:'Envoyer',ok:'✅ Message reçu. Nous vous répondrons par e-mail rapidement.',err:'Envoi impossible. Vérifiez l’e-mail et le message (10 caractères minimum).',many:'Trop de messages, réessayez dans une heure.',wa:'Contactez-nous sur WhatsApp',wah:'Le moyen le plus rapide',wad:'Nous répondons en général en quelques heures. Paiements, activation et questions.',wam:'Bonjour, j’ai une question sur Radar des produits gagnants : ',or:'Ou envoyez-nous un message écrit'}};
+function waBox(){var f=F[L],n=String(I.whatsapp||'').replace(/[^\d]/g,'');if(!n)return'';return '<div class="box" id="cwa" style="border:1.5px solid #25d366;display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:16px"><div style="flex:1;min-width:220px"><b style="font-size:17px">'+f.wah+'</b><p style="margin:4px 0 0;opacity:.8">'+f.wad+'</p></div><a class="sb" style="background:#25d366;border-color:#25d366;text-decoration:none;display:inline-block" target="_blank" rel="noopener" href="https://wa.me/'+n+'?text='+encodeURIComponent(f.wam)+'">'+f.wa+'</a></div>'}
+function form(){var f=F[L];return waBox()+'<div class="box" id="cf"><h2 style="margin-top:0">'+(I.whatsapp?f.or:f.h)+'</h2><form id="cform" novalidate><div class="g2"><label>'+f.name+'<input name="name" maxlength="80" autocomplete="name"></label><label>'+f.email+'<input name="email" type="email" required maxlength="120" autocomplete="email" dir="ltr"></label></div><label>'+f.subject+'<input name="subject" maxlength="150"></label><label>'+f.msg+'<textarea name="message" rows="6" required maxlength="4000"></textarea></label><input name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true"><button class="sb" type="submit">'+f.send+'</button><p id="cmsg" class="cm" role="status"></p></form></div>'}
+function bindForm(){var fm=document.getElementById('cform');if(!fm)return;fm.addEventListener('submit',function(ev){ev.preventDefault();var b=fm.querySelector('button'),m=document.getElementById('cmsg'),o={};new FormData(fm).forEach(function(v,k){o[k]=v});b.disabled=true;
+ fetch('/api/contact',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(o)}).then(function(r){if(r.ok){fm.reset();m.className='cm ok';m.textContent=F[L].ok;return}m.className='cm err';m.textContent=r.status===429?F[L].many:F[L].err}).catch(function(){m.className='cm err';m.textContent=F[L].err}).then(function(){b.disabled=false})})}
+var DOCS=['terms','privacy','refund','contact'],doc=location.pathname.replace(/\//g,'');if(DOCS.indexOf(doc)<0)doc='terms';
+var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}},L=new URLSearchParams(location.search).get('lang')||g('wpr_lang')||(navigator.language||'ar').slice(0,2);if(!D[L])L='ar';
+var I={},esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+function fill(t){var site=location.host,mail=I.email?'<a href="mailto:'+esc(I.email)+'">'+esc(I.email)+'</a>':esc(site),wa=I.whatsapp?' · WhatsApp: <a href="https://wa.me/'+esc(String(I.whatsapp).replace(/[^\d]/g,''))+'">'+esc(I.whatsapp)+'</a>':'';
+ return esc(t).replace(/\{name\}/g,esc(I.name||D[L].brand)).replace(/\{email\}/g,mail).replace(/\{wa_line\}/g,wa).replace(/\{country\}/g,esc(I.country||{ar:'الجزائر',en:'Algeria',fr:'Algérie'}[L])).replace(/\{address_line\}/g,I.address?' · '+esc(I.address):'').replace(/\{days\}/g,esc(I.refund_days||7)).replace(/\{date\}/g,esc(I.updated||''))}
+function render(){var d=D[L];document.documentElement.lang=L;document.documentElement.dir=L==='ar'?'rtl':'ltr';document.getElementById('lang').value=L;
+ document.getElementById('brand').textContent=d.brand;document.title=d.tabs[doc]+' · '+d.brand;
+ document.getElementById('tabs').innerHTML=DOCS.map(function(k){return'<a href="/'+k+'?lang='+L+'" class="'+(k===doc?'on':'')+'">'+esc(d.tabs[k])+'</a>'}).join('');
+ var cu=I.docs&&I.docs[L+':'+doc],s=cu?P(cu):d[doc];document.getElementById('doc').innerHTML='<h1>'+esc(s[0][0]||d.tabs[doc])+'</h1>'+(I.updated?'<p class="upd">'+fill(d.upd)+'</p>':'')+s.slice(1).map(function(x){return(x[0]?'<h2>'+esc(x[0])+'</h2>':'')+'<p>'+fill(x[1]).replace(/\n/g,'<br>')+'</p>'}).join('')+(doc==='contact'?form():'');
+ if(doc==='contact')bindForm();
+ document.getElementById('ft').innerHTML='© '+new Date().getFullYear()+' '+esc(I.name||d.brand)}
+document.getElementById('lang').addEventListener('change',function(e){L=e.target.value;try{localStorage.setItem('wpr_lang',L)}catch(x){}var u=new URL(location.href);u.searchParams.set('lang',L);history.replaceState(null,'',u);render()});
+render();fetch('/api/legal/info').then(function(r){return r.json()}).then(function(j){I=j||{};render()}).catch(function(){});
+})();
+</script>
+</body>
+</html>

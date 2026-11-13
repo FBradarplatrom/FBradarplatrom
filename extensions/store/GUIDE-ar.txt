@@ -1,0 +1,66 @@
+دليل تعبئة صفحة الإضافة في متجر Chrome (Store listing)
+=====================================================
+
+الملفات: كلها في مجلد حزمة المتجر.
+  en/  ar/  fr/   ← 5 لقطات شاشة لكل لغة (1280×800، PNG بلا شفافية)
+  global/         ← أيقونة المتجر، اللوحة الصغيرة، اللوحة الكبيرة
+  listing-en.txt  listing-ar.txt  listing-fr.txt   ← الوصف لكل لغة
+  review-answers.txt                               ← لتبويب Privacy
+
+الحزمة التي تُرفع في تبويب Package هي ملف radar-ad-collector-1.7.2-….zip كما هو (لا تفكّ ضغطه ولا تضعه داخل zip آخر).
+
+-----------------------------------------------------
+أولاً: اللغة الإنجليزية (الافتراضية)  Current editing language = English – en
+-----------------------------------------------------
+Title / Summary        : تُقرأ تلقائياً من الحزمة (لا تكتب شيئاً).
+Description            : انسخ كل ما تحت «Description / الوصف:» من listing-en.txt والصقه.
+Category               : Tools  (لكل اللغات).
+Store icon             : global/store-icon-128.png
+Localized promo video  : اتركه فارغاً.
+Localized screenshots  : ارفع بالترتيب: en/1-home.png ، en/2-results.png ، en/3-compete.png ، en/4-profit.png ، en/5-collect.png
+
+-----------------------------------------------------
+ثانياً: الصور العامة (Global assets) — مرة واحدة لكل اللغات
+-----------------------------------------------------
+Global promo video     : فارغ.
+Global screenshots     : نفس صور en (الخمس) — تظهر لأي لغة ليس لها صور خاصة.
+Small promo tile       : global/small-promo-tile-440x280.png
+Marquee promo tile     : global/marquee-promo-tile-1400x560.png
+
+-----------------------------------------------------
+ثالثاً: Additional fields
+-----------------------------------------------------
+Official URL           : اختياري. يظهر في القائمة فقط بعد إثبات ملكية الدومين في Google Search Console
+                         (search.google.com/search-console ← Add property ← Domain ← winningproductradar.com
+                          ← انسخ سجل TXT ← cPanel ← Zone Editor ← Add Record ← TXT على winningproductradar.com ← Verify).
+                         بعد التحقق ارجع واختر winningproductradar.com من القائمة. يمكنك تأجيله: لا يمنع النشر.
+Homepage URL           : https://winningproductradar.com/
+Support URL            : https://winningproductradar.com/contact
+Mature content         : اترك الخيار مطفأ (No) — الإضافة لا تحتوي محتوى للبالغين.
+Item support           : Visibility = Off (الدعم يكون من صفحة التواصل في المنصة).
+
+-----------------------------------------------------
+رابعاً: إضافة العربية والفرنسية
+-----------------------------------------------------
+من «Current editing language» اختر Arabic – ar (أو Add language ← Arabic):
+  Description          : من listing-ar.txt
+  Localized screenshots: ar/1-home.png … ar/5-collect.png
+  (العنوان والملخص يأتيان من الحزمة بالعربية تلقائياً)
+ثم French – fr:
+  Description          : من listing-fr.txt
+  Localized screenshots: fr/1-home.png … fr/5-collect.png
+روابط اختيارية باللغة إن طُلبت: https://winningproductradar.com/?lang=ar  و ?lang=fr
+                               https://winningproductradar.com/contact?lang=ar  و ?lang=fr
+
+اضغط Save draft بعد كل لغة.
+
+-----------------------------------------------------
+خامساً: باقي التبويبات
+-----------------------------------------------------
+Privacy               : من review-answers.txt (الغرض الوحيد، تبرير كل صلاحية، Remote code = No،
+                        البيانات: Website content فقط، ثم علّم الإقرارات الثلاثة،
+                        Privacy policy = https://winningproductradar.com/privacy).
+Distribution          : Free ، Public ، All regions.
+ثم Submit for review.  المراجعة عادة من أيام إلى 3 أسابيع.
+
+قبل الإرسال: تأكد أن https://winningproductradar.com/privacy و /contact تفتحان (المراجِع يزورهما).

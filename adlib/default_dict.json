@@ -1,0 +1,643 @@
+{
+ "version": "2026-10-23",
+ "gold": {
+  "ar": {
+   "strong": [
+    "يحل/تحل/حل",
+    "يقضي على/تقضي على/قضاء على/قاضي على",
+    "يزيل/تزيل/إزالة/مزيل",
+    "يمنع/تمنع/منع/مانع",
+    "يمنع من/تمنع من/منع من/مانع من",
+    "يحمي/تحمي/حماية/حامي",
+    "يحمي من/تحمي من/حماية من/حامي من",
+    "يصلح/تصلح/إصلاح/تصليح/مصلح",
+    "يساعد/تساعد/مساعدة/مساعد",
+    "يساعد على/تساعد على/مساعدة على/مساعد على",
+    "يخفف/تخفف/تخفيف/مخفف",
+    "يخفف من/تخفف من/تخفيف من/مخفف من",
+    "يوقف/توقف/إيقاف",
+    "يكافح/تكافح/مكافحة/مكافح"
+   ],
+   "normal": [
+    "تفادي",
+    "يحسن/تحسن/تحسين/محسن",
+    "يصحح/تصحح/تصحيح/مصحح",
+    "يسهل/تسهل/تسهيل/مسهل",
+    "يوفر عليك/توفر عليك/توفير عليك",
+    "يوفر/توفر/توفير/موفر",
+    "ينظف/تنظف/تنظيف/منظف",
+    "يهدئ/تهدئ/تهدئة/مهدئ",
+    "يريح/تريح",
+    "ينذر/تنذر/إنذار/منذر",
+    "يكشف/تكشف/كشف/كاشف",
+    "ينبه/تنبه/تنبيه/منبه",
+    "يراقب/تراقب/مراقبة/مراقب",
+    "يتتبع/تتتبع",
+    "يقيس/تقيس",
+    "يسد/تسد",
+    "يسرب/تسرب",
+    "يفك/تفك",
+    "يقطع/تقطع",
+    "يجفف/تجفف/تجفيف/مجفف",
+    "يقشر/تقشر",
+    "يشد/تشد",
+    "يضيق/تضيق",
+    "يرطب/ترطب/ترطيب/مرطب",
+    "يقوي/تقوي/تقوية/مقوي",
+    "يحرق/تحرق",
+    "يبيض/تبيض/تبييض/مبيض",
+    "يجمل/تجمل",
+    "يلمع/تلمع/تلميع/ملمع",
+    "يضاعف/تضاعف",
+    "ينمي/تنمي/تنمية/منمي",
+    "يطور/تطور",
+    "يبني/تبني",
+    "يسرع/تسرع/تسريع/مسرع",
+    "يبطئ/تبطئ",
+    "يحفظ/تحفظ/حفظ/حافظ",
+    "يحافظ على/تحافظ على/محافظة على/محافظ على",
+    "ينظم/تنظم/تنظيم/منظم",
+    "يخزن/تخزن/تخزين/مخزن",
+    "يطوي/تطوي",
+    "بدون حاجة",
+    "يلغي/تلغي/إلغاء/ملغي",
+    "يطرد/تطرد/طرد/طارد",
+    "يسقي/تسقي",
+    "يقلم/تقلم",
+    "يسخن/تسخن/تسخين/مسخن",
+    "يضيء/تضيء/إضاءة/مضيء",
+    "يفيد/تفيد"
+   ],
+   "weak": [
+    "يعطي/تعطي",
+    "يجعل/تجعل",
+    "يقوم/تقوم",
+    "يجد/تجد",
+    "يفتح/تفتح",
+    "يناسب/تناسب",
+    "يعلم/تعلم",
+    "يشغل/تشغل",
+    "يشحن/تشحن",
+    "يزيد/تزيد",
+    "يضعف/تضعف",
+    "يجهد/تجهد",
+    "يرافق/ترافق",
+    "يربط/تربط",
+    "يغطي/تغطي",
+    "يخلط/تخلط"
+   ]
+  },
+  "dz": {
+   "strong": [
+    "تخلص من",
+    "وداعا",
+    "ودّع",
+    "الحل النهائي",
+    "حل نهائي",
+    "جبنالك الحل",
+    "يداوي",
+    "تصليح",
+    "يحبّس",
+    "تخلّص نهائياً"
+   ],
+   "normal": [
+    "عندك مشكل",
+    "راك تعاني",
+    "هل تعاني",
+    "تعاني من",
+    "تعبت من",
+    "راح تتهنى",
+    "نهائيا",
+    "يعاون",
+    "يسهّل عليك",
+    "ينحي",
+    "ينقص",
+    "بلا ما تحتاج",
+    "ما تحتاجش",
+    "ما تبقاش",
+    "ما تزيدش",
+    "طريقة سهلة",
+    "ساهل الاستعمال",
+    "متعدد الاستعمالات"
+   ],
+   "weak": []
+  },
+  "fr": {
+   "strong": [
+    "résout/résoudre",
+    "élimine/éliminer",
+    "supprime/supprimer",
+    "empêche/empêcher",
+    "protège/protéger",
+    "protège contre",
+    "répare/réparer",
+    "soulage/soulager",
+    "aide à",
+    "réduit/réduire",
+    "stoppe/arrête",
+    "lutte contre",
+    "solution définitive",
+    "dites adieu à",
+    "débarrassez-vous de",
+    "en finir avec",
+    "stop à"
+   ],
+   "normal": [
+    "évite",
+    "améliore",
+    "corrige",
+    "facilite",
+    "simplifie",
+    "économise",
+    "fait gagner du temps",
+    "nettoie",
+    "apaise",
+    "détecte",
+    "alerte",
+    "surveille",
+    "mesure",
+    "sèche",
+    "hydrate",
+    "renforce",
+    "éclaire",
+    "range",
+    "conserve",
+    "organise",
+    "remplace",
+    "vous souffrez de",
+    "souffrez-vous de",
+    "marre de",
+    "fatigué de",
+    "vous avez un problème",
+    "on a la solution",
+    "voici la solution",
+    "définitivement",
+    "adieu",
+    "plus besoin de",
+    "sans avoir besoin de",
+    "ne plus avoir à",
+    "fini les"
+   ],
+   "weak": [
+    "donne",
+    "rend",
+    "fait",
+    "permet",
+    "convient",
+    "ouvre",
+    "trouve",
+    "accompagne",
+    "connecte",
+    "mélange"
+   ]
+  },
+  "arz": {
+   "strong": [
+    "y7el/yhel",
+    "y9dhi 3la/yqdi 3la",
+    "yzil/yzeel",
+    "ymna3/ymne3",
+    "y7mi/yahmi",
+    "ysal7/ysala7/ysli7",
+    "ysa3ed/ysa3d",
+    "ykhaffef/ykhafef",
+    "yw9ef/ywa9ef/y7bes",
+    "ykafe7/yka7ef",
+    "ydawi",
+    "jbnalek l7al/jibnalek el 7al",
+    "l7al nihai/7al nihai",
+    "t5alas men/tkhalas men/takhallas men",
+    "wada3/ouda3an",
+    "tasli7/tsli7"
+   ],
+   "normal": [
+    "rak t3ani/rak ta3ani",
+    "t3ani men",
+    "t3ebt men/ta3bt men",
+    "3andek mochkil/andek mouchkil",
+    "rah tethana/ra7 tetheni",
+    "nihaiyan/nihayen",
+    "ysahel/ysahhel",
+    "ysahel 3lik",
+    "ywaffer/ywafer",
+    "ynaqqes/ynakes",
+    "yna7i",
+    "ma t7tajch/matahtajch",
+    "ma tb9ach/matebqach",
+    "ma tzidch/matzidch",
+    "bla ma t7taj",
+    "tari9a sahla",
+    "sahel l isti3mal",
+    "mouta3added listi3malat/multi usage"
+   ],
+   "weak": []
+  }
+ },
+ "niches": [
+  {
+   "id": "kids",
+   "name": "منتجات الأطفال والأمهات",
+   "comps": {
+    "ar": [
+     "طفلك",
+     "الأطفال",
+     "ابنك",
+     "صغيرك",
+     "رضيعك",
+     "المولود",
+     "الرضاعة",
+     "الأم",
+     "الحامل",
+     "بنتك"
+    ],
+    "fr": [
+     "votre enfant",
+     "enfants",
+     "bébé",
+     "nourrisson",
+     "maman",
+     "allaitement",
+     "grossesse",
+     "nouveau-né"
+    ],
+    "arz": [
+     "tflek",
+     "wldek",
+     "sghirek",
+     "bebe",
+     "mama"
+    ]
+   }
+  },
+  {
+   "id": "home",
+   "name": "المنزل والمطبخ",
+   "comps": {
+    "ar": [
+     "المطبخ",
+     "البيت",
+     "المنزل",
+     "الطبخ",
+     "الحمام",
+     "الغسيل",
+     "التنظيف",
+     "الأواني",
+     "الأرضية",
+     "الغبار"
+    ],
+    "fr": [
+     "cuisine",
+     "maison",
+     "salle de bain",
+     "ménage",
+     "vaisselle",
+     "rangement",
+     "nettoyage"
+    ],
+    "arz": [
+     "cuisine",
+     "dar",
+     "hammam",
+     "tbikh",
+     "tanzif"
+    ]
+   }
+  },
+  {
+   "id": "beauty",
+   "name": "الجمال والعناية الشخصية",
+   "comps": {
+    "ar": [
+     "بشرتك",
+     "البشرة",
+     "وجهك",
+     "شعرك",
+     "الشعر",
+     "أسنانك",
+     "الأظافر",
+     "التجاعيد",
+     "الجسم",
+     "اللحية"
+    ],
+    "fr": [
+     "votre peau",
+     "peau",
+     "cheveux",
+     "visage",
+     "dents",
+     "ongles",
+     "rides",
+     "barbe"
+    ],
+    "arz": [
+     "bechrtek",
+     "wejhek",
+     "cha3rek",
+     "sennek",
+     "cheveux"
+    ]
+   }
+  },
+  {
+   "id": "car",
+   "name": "إكسسوارات السيارات",
+   "comps": {
+    "ar": [
+     "سيارتك",
+     "السيارة",
+     "المحرك",
+     "المقود",
+     "المقاعد",
+     "الإطارات",
+     "لوحة القيادة",
+     "الزجاج الأمامي"
+    ],
+    "fr": [
+     "voiture",
+     "auto",
+     "moteur",
+     "pare-brise",
+     "volant",
+     "sièges",
+     "pneus",
+     "tableau de bord"
+    ],
+    "arz": [
+     "tonobil",
+     "voiture",
+     "moteur",
+     "volan",
+     "pneu"
+    ]
+   }
+  },
+  {
+   "id": "pets",
+   "name": "الحيوانات الأليفة",
+   "comps": {
+    "ar": [
+     "قطتك",
+     "كلبك",
+     "القطط",
+     "الكلاب",
+     "حيوانك",
+     "الحيوانات الأليفة",
+     "الطيور"
+    ],
+    "fr": [
+     "votre chat",
+     "votre chien",
+     "chats",
+     "chiens",
+     "animaux",
+     "litière"
+    ],
+    "arz": [
+     "9ettek",
+     "klebek",
+     "chat",
+     "chien"
+    ]
+   }
+  },
+  {
+   "id": "sport",
+   "name": "الرياضة واللياقة",
+   "comps": {
+    "ar": [
+     "عضلاتك",
+     "اللياقة",
+     "الجري",
+     "التمرين",
+     "التمارين",
+     "الركبة",
+     "الجسم",
+     "الرياضة"
+    ],
+    "fr": [
+     "musculation",
+     "sport",
+     "fitness",
+     "course",
+     "entraînement",
+     "muscles",
+     "yoga"
+    ],
+    "arz": [
+     "sport",
+     "muscu",
+     "tmarin",
+     "fitness"
+    ]
+   }
+  },
+  {
+   "id": "travel",
+   "name": "السفر والتنظيم",
+   "comps": {
+    "ar": [
+     "السفر",
+     "حقيبتك",
+     "الحقيبة",
+     "الشنطة",
+     "الرحلة",
+     "الأمتعة",
+     "المنظم",
+     "الجواز"
+    ],
+    "fr": [
+     "voyage",
+     "valise",
+     "bagages",
+     "organisation",
+     "rangement",
+     "sac"
+    ],
+    "arz": [
+     "safar",
+     "valise",
+     "sac",
+     "voyage"
+    ]
+   }
+  },
+  {
+   "id": "phone",
+   "name": "إكسسوارات الهاتف",
+   "comps": {
+    "ar": [
+     "هاتفك",
+     "الهاتف",
+     "الجوال",
+     "الشاحن",
+     "البطارية",
+     "الشاشة",
+     "السماعات",
+     "الكابل"
+    ],
+    "fr": [
+     "téléphone",
+     "smartphone",
+     "chargeur",
+     "batterie",
+     "écran",
+     "écouteurs",
+     "coque"
+    ],
+    "arz": [
+     "telifon",
+     "tel",
+     "chargeur",
+     "batterie",
+     "ecran",
+     "ecouteur"
+    ]
+   }
+  },
+  {
+   "id": "fashion",
+   "name": "الموضة والإكسسوارات",
+   "comps": {
+    "ar": [
+     "ملابسك",
+     "الأناقة",
+     "الحذاء",
+     "الساعة",
+     "النظارات",
+     "العطر",
+     "المجوهرات",
+     "الحقيبة"
+    ],
+    "fr": [
+     "vêtements",
+     "mode",
+     "chaussures",
+     "montre",
+     "sac à main",
+     "lunettes",
+     "bijoux",
+     "parfum"
+    ],
+    "arz": [
+     "vetement",
+     "sebbat",
+     "montre",
+     "lunette",
+     "sac"
+    ]
+   }
+  },
+  {
+   "id": "tools",
+   "name": "الأدوات العملية والإصلاح",
+   "comps": {
+    "ar": [
+     "التصليح",
+     "الأدوات",
+     "المسامير",
+     "الأنابيب",
+     "التسرب",
+     "الكهرباء",
+     "السباكة",
+     "الصنبور",
+     "المثقاب"
+    ],
+    "fr": [
+     "bricolage",
+     "réparation",
+     "outils",
+     "fuite",
+     "plomberie",
+     "électricité",
+     "perceuse",
+     "colle"
+    ],
+    "arz": [
+     "bricolage",
+     "outil",
+     "fuite",
+     "plomberie"
+    ]
+   }
+  }
+ ],
+ "bigBrands": [
+  "jumia",
+  "ouedkniss",
+  "temu",
+  "aliexpress",
+  "amazon",
+  "جوميا",
+  "واد كنيس",
+  "علي اكسبرس",
+  "امازون",
+  "تيمو"
+ ],
+ "codLarge": [
+  "خزانة",
+  "خزائن",
+  "دولاب",
+  "دواليب",
+  "ثلاجة",
+  "ثلاجات",
+  "غسالة",
+  "غسالات",
+  "كنبة",
+  "كنبات",
+  "أريكة",
+  "أرائك",
+  "سرير",
+  "أسرّة",
+  "طاولة",
+  "طاولات",
+  "أثاث",
+  "مكيف",
+  "مكيفات",
+  "armoire",
+  "meuble",
+  "réfrigérateur",
+  "lave-linge",
+  "canapé",
+  "lit",
+  "table",
+  "climatiseur",
+  "khizana",
+  "dulab",
+  "thalaja",
+  "frigo",
+  "ghassala",
+  "kanaba",
+  "kanapé",
+  "sarir",
+  "tawla"
+ ],
+ "codFragile": [
+  "زجاج",
+  "هش",
+  "قابل للكسر",
+  "خزف",
+  "سيراميك",
+  "بلور",
+  "مرآة",
+  "verre",
+  "fragile",
+  "céramique",
+  "cristal",
+  "miroir",
+  "zoujaj",
+  "zejaj",
+  "hech",
+  "9abil lel kasr"
+ ],
+ "seasonal": [
+  "رمضان",
+  "العيد",
+  "الأضحية",
+  "الشتاء",
+  "شتاء",
+  "بلاك فرايداي",
+  "black friday",
+  "ramadan",
+  "الدخول المدرسي"
+ ]
+}

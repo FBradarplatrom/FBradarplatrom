@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#118553">
+<title>دخول | رادار المنتجات الرابحة</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root{--bg:#ffffff;--card:#ffffff;--card2:#f5f7f6;--ink:#121916;--mut:#5d6661;--line:#e3e8e5;--brand:#118553;--brand-t:#0a7040;--on-brand:#fff;--brand-h:#0a7040;--soft:#dcefe4;--ok:#0a7040;--bad:#dc2626;--warn:#d97706;--sh:0 1px 2px rgba(18,25,22,.05),0 8px 24px -16px rgba(18,25,22,.18)}
+@media(prefers-color-scheme:dark){:root{--bg:#121916;--card:#1b221f;--card2:#202825;--ink:#dbe1de;--mut:#9ca4a0;--line:#2e3632;--brand:#35ac74;--brand-t:#6bc79a;--on-brand:#0d1a13;--brand-h:#6bc79a;--soft:#173126;--sh:0 1px 2px rgba(0,0,0,.35),0 8px 24px -16px rgba(0,0,0,.6)}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.75 "Inter Variable","Cairo Variable",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--brand-t);text-decoration:none}a:hover{text-decoration:underline}
+.auth{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:100vh;min-height:100dvh}
+/* ---- اللوحة التعريفية ---- */
+.bp{position:relative;overflow:hidden;color:#fff;padding:44px clamp(28px,5vw,64px);display:flex;flex-direction:column;justify-content:space-between;gap:32px;background:radial-gradient(900px 500px at 85% -10%,rgba(167,139,250,.22),transparent 60%),radial-gradient(700px 500px at -10% 110%,rgba(6,182,212,.16),transparent 60%),linear-gradient(145deg,#053b20,#0b6a41 55%,#06482a)}
+.bp::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(180deg,#000,transparent 75%);pointer-events:none}
+.bp>*{position:relative;z-index:1}
+.lg{display:flex;align-items:center;gap:12px;font-weight:700;font-size:19px;color:inherit;text-decoration:none}.lg:hover{text-decoration:none}
+.lg i{width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);display:grid;place-items:center;font-style:normal;font-size:21px;border:1px solid rgba(255,255,255,.25)}
+.bp h2{font-size:clamp(26px,3vw,38px);line-height:1.4;margin:0 0 14px;letter-spacing:-.3px}
+.bp p{margin:0;color:rgba(255,255,255,.82);font-size:16px;max-width:460px}
+.ft{display:grid;gap:12px;margin:26px 0 0;padding:0;list-style:none}
+.ft li{display:flex;gap:12px;align-items:flex-start;color:rgba(255,255,255,.92)}
+.ft li span{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.pv{position:relative;margin:26px 0 6px;max-width:440px;display:grid;gap:10px}
+.pr{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:16px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(10px);box-shadow:0 12px 30px -18px rgba(0,0,0,.5)}
+.pr:nth-child(2){margin-inline-start:22px}.pr:nth-child(3){margin-inline-start:44px}
+.pr i{width:42px;height:42px;border-radius:11px;flex:none;display:grid;place-items:center}.pr i svg{width:22px;height:22px}.pr div{flex:1;min-width:0}.pr b{display:block;font-size:14px}.pr small{color:rgba(255,255,255,.75);font-size:12px}
+.pr u{display:block;height:5px;border-radius:9px;background:rgba(255,255,255,.18);margin-top:5px;overflow:hidden;text-decoration:none}.pr u s{display:block;height:100%;background:#fff;opacity:.85}
+.pr em{font-style:normal;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pt{position:absolute;inset-inline-end:-6px;bottom:-14px;background:#fff;color:#1e1b4b;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:12px;box-shadow:0 14px 30px -14px rgba(0,0,0,.6)}
+.ft{margin-top:30px!important}
+.trust{display:flex;flex-wrap:wrap;gap:8px}.trust span{font-size:13px;font-weight:600;padding:6px 13px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24)}
+.chips b{font-weight:600;font-size:13px;padding:5px 13px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(6px)}
+/* ---- النموذج ---- */
+.pane{display:flex;align-items:center;justify-content:center;padding:32px clamp(16px,4vw,48px)}
+.box{width:min(440px,100%)}
+.mlogo{display:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(22px,4vw,34px);box-shadow:var(--sh)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:22px}
+.seg button{border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:9px;border-radius:10px;cursor:pointer;transition:.18s}
+.seg button.on{background:var(--card);color:var(--brand-t);box-shadow:0 1px 3px rgba(18,25,22,.14)}
+.seg button:not(.on):hover{color:var(--ink)}
+h1{font-size:24px;line-height:1.35;margin:0 0 4px;letter-spacing:-.2px}
+.lead{margin:0 0 20px;color:var(--mut);font-size:14.5px}
+form{display:flex;flex-direction:column;gap:15px;animation:in .28s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fl{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weight:500}
+.fl>span{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fl small{color:var(--mut);font-weight:400}
+input{font:inherit;width:100%;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;transition:border-color .15s,box-shadow .15s}
+input::placeholder{color:#94a3b8}
+input:hover{border-color:#cbd5e1}
+input:focus{outline:0;border-color:var(--brand-t);box-shadow:0 0 0 4px var(--soft)}
+input:user-invalid{border-color:var(--bad)}
+input[dir=ltr]{text-align:left}
+.pw{position:relative}.pw input{padding-inline-end:46px}
+.eye{position:absolute;inset-block:0;inset-inline-end:6px;margin:auto 0;width:36px;height:36px;border:0;background:none;color:var(--mut);cursor:pointer;border-radius:9px;display:grid;place-items:center}
+.eye:hover{background:var(--card2);color:var(--ink)}.eye svg{width:20px;height:20px}
+.meter{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:2px}.meter i{display:block;height:100%;width:0;border-radius:99px;transition:.25s}
+.mt{font-size:12.5px;color:var(--mut);min-height:1.4em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:600;font-size:15.5px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#118553,#0a7040);box-shadow:0 10px 22px -10px rgba(17,133,83,.7);transition:.18s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 14px 26px -10px rgba(17,133,83,.8)}.btn:active{transform:none}
+.btn[disabled]{opacity:.7;cursor:progress;transform:none}
+.btn.ghost{background:var(--card);color:var(--brand-t);border:1px solid var(--line);box-shadow:none}.btn.ghost:hover{background:var(--soft)}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lnk{background:none;border:0;padding:6px 2px;min-height:32px;font:inherit;font-size:13.5px;color:var(--brand-t);cursor:pointer}.lnk:hover{text-decoration:underline}
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;font-size:13.5px;color:var(--mut)}
+.msg{border-radius:12px;padding:11px 14px;margin:0 0 16px;font-size:14px;line-height:1.7;animation:in .25s}
+.msg.err{background:rgba(220,38,38,.1);color:var(--bad);border:1px solid rgba(220,38,38,.25)}
+.msg.ok{background:rgba(5,150,105,.1);color:var(--ok);border:1px solid rgba(5,150,105,.25)}
+.msg.info{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.msg a.btn{margin-top:10px;width:auto}
+.done{text-align:center;padding:6px 0}.done .ic{width:58px;height:58px;border-radius:50%;background:rgba(5,150,105,.12);color:var(--ok);display:grid;place-items:center;margin:0 auto 14px;font-size:28px}
+.done p{color:var(--mut);margin:6px 0 18px}
+.back{display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;font-size:13.5px}
+.home{text-align:center;margin-top:18px;font-size:13.5px}
+@media(max-width:900px){
+ .auth{grid-template-columns:1fr}
+ .bp{display:none}
+ .pane{align-items:flex-start;padding-top:28px}
+ .mlogo{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:18px;margin-bottom:18px;color:var(--ink)}
+ .mlogo i{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#118553,#35ac74);display:grid;place-items:center;font-style:normal;font-size:20px;color:#fff}
+}
+@media(max-width:420px){.row2{grid-template-columns:1fr}input{font-size:16px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+[hidden]{display:none!important}</style>
+<script data-fab src="/theme.js"></script><script src="/icons.js"></script></head>
+<style>.lsw{display:flex;justify-content:flex-end;margin-bottom:10px}.lsw label{display:inline-flex;align-items:center;gap:6px;font-size:13px;opacity:.85}.lsw select{border:1px solid rgba(127,127,127,.35);border-radius:10px;padding:5px 10px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}</style>
+<style>.consent{font-size:12.5px;opacity:.75;margin:4px 0 10px}.consent a,.legal a{color:inherit}.legal{text-align:center;font-size:12.5px;opacity:.7;margin-top:6px}</style>
+<body>
+<div class="auth">
+ <aside class="bp" aria-hidden="false">
+  <a class="lg" href="/"><i>📡</i><span>رادار المنتجات الرابحة</span></a>
+  <div>
+   <h2>اعرف المنتج الرابح قبل أن يزدحم السوق</h2>
+   <p>ما يبيع فعلاً الآن، في سوقك وفي أكثر من 40 دولة، مرتّب لتقرّر بثقة.</p>
+   <div class="pv" aria-hidden="true">
+    <div class="pr"><i style="background:linear-gradient(135deg,#a2ddbf,#6bc79a)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></i><div><b>جهاز منزلي ذكي</b><small>يتصدّر هذا الأسبوع</small><u><s style="width:86%"></s></u></div><em style="background:#1b7f55">💎 جوهرة</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#bbf7d0,#22c55e)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></i><div><b>إكسسوار سيارة</b><small>صاعد</small><u><s style="width:64%"></s></u></div><em style="background:#15803d">🌱 واعد</em></div>
+    <div class="pr"><i style="background:linear-gradient(135deg,#fed7aa,#f97316)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2.34M14 2v2.34"/><path d="M9 4.34h6a1 1 0 0 1 1 1v2.32a1 1 0 0 0 .3.71l.4.4a1 1 0 0 1 .3.7V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9.47a1 1 0 0 1 .3-.7l.4-.4a1 1 0 0 0 .3-.71V5.34a1 1 0 0 1 1-1Z"/><path d="M7 13h10"/></svg></i><div><b>منتج عناية</b><small>طلب ثابت</small><u><s style="width:72%"></s></u></div><em style="background:#c2410c">🔥 رابح</em></div>
+    <div class="pt">🏭 مورّد بسعر أقل وُجد</div>
+   </div>
+   <ul class="ft">
+    <li><span>📡</span><div>منتجات رابحة مرتّبة من الأكثر وعداً.</div></li>
+    <li><span>🎯</span><div>فرص لم تصل بعد إلى سوقك.</div></li>
+    <li><span>🏭</span><div>المورّد الأرخص والربح المتوقع قبل أن تطلق.</div></li>
+   </ul>
+  </div>
+  <div class="trust"><span>✨ تجربة مجانية</span><span>🔒 دفع آمن</span><span>↩️ إلغاء في أي وقت</span></div>
+ </aside>
+
+ <main class="pane"><div class="box">
+  <div class="lsw" hidden><label>🌐 <select id="lang" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="fr">Français</option></select></label></div>
+  <div class="mlogo"><i>📡</i><span>رادار المنتجات الرابحة</span></div>
+  <div class="card">
+   <div class="seg" id="seg" role="tablist" aria-label="نوع العملية">
+    <button type="button" role="tab" data-m="login" class="on">دخول</button>
+    <button type="button" role="tab" data-m="register">إنشاء حساب</button>
+   </div>
+   <a class="back lnk" id="back" href="#login" hidden>→ العودة لتسجيل الدخول</a>
+   <h1 id="ttl">مرحباً بعودتك</h1>
+   <p class="lead" id="lead">سجّل دخولك لمتابعة تحليلاتك ومنتجاتك المحفوظة.</p>
+   <div id="msg" role="alert" aria-live="polite"></div>
+
+   <!-- دخول -->
+   <form id="f-login" data-m="login" novalidate>
+    <label class="fl"><span>البريد الإلكتروني أو اسم المستخدم</span><input id="l-id" name="id" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="name@example.com"></label>
+    <label class="fl"><span>كلمة المرور <button type="button" class="lnk" data-go="forgot">نسيت كلمة المرور؟</button></span>
+     <div class="pw"><input id="l-pw" type="password" autocomplete="current-password" required placeholder="••••••••"><button type="button" class="eye" data-eye="l-pw" aria-label="إظهار كلمة المرور"></button></div></label>
+    <button class="btn" type="submit">دخول</button>
+    <div class="foot"><span>ليس لديك حساب؟</span><button type="button" class="lnk" data-go="register">أنشئ حساباً جديداً</button></div>
+   </form>
+
+   <!-- إنشاء حساب -->
+   <form id="f-register" data-m="register" novalidate hidden>
+    <div class="row2">
+     <label class="fl"><span>الاسم <small>(اختياري)</small></span><input id="r-name" autocomplete="name" maxlength="60" placeholder="أحمد"></label>
+     <label class="fl"><span>اسم المستخدم <small>(اختياري)</small></span><input id="r-un" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="ahmed_dz"></label>
+    </div>
+    <label class="fl"><span>البريد الإلكتروني</span><input id="r-em" type="email" dir="ltr" autocomplete="email" required placeholder="name@example.com"></label>
+    <label class="fl"><span>كلمة المرور <small>8 أحرف فأكثر</small></span>
+     <div class="pw"><input id="r-pw" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••"><button type="button" class="eye" data-eye="r-pw" aria-label="إظهار كلمة المرور"></button></div>
+     <div class="meter"><i id="r-bar"></i></div><div class="mt" id="r-mt"></div></label>
+    <label class="fl"><span>تأكيد كلمة المرور</span>
+     <div class="pw"><input id="r-pw2" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••"><button type="button" class="eye" data-eye="r-pw2" aria-label="إظهار كلمة المرور"></button></div></label>
+    <p class="consent">بإنشاء حسابك توافق على <a href="/terms" target="_blank">شروط الاستخدام</a> و<a href="/privacy" target="_blank">سياسة الخصوصية</a>.</p>
+    <button class="btn" type="submit">إنشاء الحساب</button>
+    <div class="foot"><span>لديك حساب؟</span><button type="button" class="lnk" data-go="login">سجّل الدخول</button></div>
+   </form>
+
+   <!-- نسيت كلمة المرور -->
+   <form id="f-forgot" data-m="forgot" novalidate hidden>
+    <label class="fl"><span>البريد الإلكتروني أو اسم المستخدم</span><input id="f-id" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="name@example.com"></label>
+    <button class="btn" type="submit">إرسال رابط الاستعادة</button>
+    <div class="foot"><span>تذكّرتها؟</span><button type="button" class="lnk" data-go="login">العودة للدخول</button></div>
+   </form>
+
+   <!-- التحقق بخطوتين: رمز تطبيق المصادقة -->
+   <form id="f-2fa" data-m="2fa" novalidate hidden>
+    <label class="fl"><span>رمز التحقق (6 أرقام من تطبيق المصادقة)</span><input id="t-code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="11" required placeholder="123456" style="letter-spacing:.3em;text-align:center;font-size:20px"></label>
+    <button class="btn" type="submit">تأكيد الدخول</button>
+    <p class="sub" style="font-size:13px;margin:10px 0 0">ضاع هاتفك؟ اكتب أحد رموز الاسترجاع (مثل a1b2c-3d4e5) مكان الرمز.</p>
+    <div class="foot"><button type="button" class="lnk" data-go="login">العودة للدخول</button></div>
+   </form>
+
+   <!-- كلمة مرور جديدة (من رابط الاستعادة) -->
+   <form id="f-reset" data-m="reset" novalidate hidden>
+    <label class="fl"><span>كلمة المرور الجديدة <small>8 أحرف فأكثر</small></span>
+     <div class="pw"><input id="n-pw" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••"><button type="button" class="eye" data-eye="n-pw" aria-label="إظهار كلمة المرور"></button></div>
+     <div class="meter"><i id="n-bar"></i></div><div class="mt" id="n-mt"></div></label>
+    <label class="fl"><span>تأكيد كلمة المرور</span>
+     <div class="pw"><input id="n-pw2" type="password" autocomplete="new-password" minlength="8" required placeholder="••••••••"><button type="button" class="eye" data-eye="n-pw2" aria-label="إظهار كلمة المرور"></button></div></label>
+    <button class="btn" type="submit">حفظ كلمة المرور والدخول</button>
+   </form>
+
+   <div id="done" class="done" hidden></div>
+  </div>
+  <p class="home"><a href="/">← الصفحة الرئيسية</a></p>
+  <p class="legal"><a href="/terms">شروط الاستخدام</a> · <a href="/privacy">الخصوصية</a> · <a href="/refund">الاسترداد</a> · <a href="/contact">اتصل بنا</a></p>
+ </div></main>
+</div>
+<noscript><p style="text-align:center;padding:20px">يتطلب تسجيل الدخول تفعيل JavaScript.</p></noscript>
+<script>
+/* ترجمة الصفحة: النص العربي مفتاح، والإنجليزية والفرنسية من القاموس */
+(function(){
+var D={en:{},fr:{}},A=function(ar,en,fr){D.en[ar]=en;D.fr[ar]=fr};
+A('رادار المنتجات الرابحة','Winning Product Radar','Radar des produits gagnants');
+A('اعرف المنتج الرابح قبل أن يزدحم السوق','Spot the winning product before the market gets crowded','Trouvez le produit gagnant avant que le marché ne sature');
+A('ما يبيع فعلاً الآن، في سوقك وفي أكثر من 40 دولة، مرتّب لتقرّر بثقة.','What actually sells right now, in your market and in 40+ countries, ranked so you can decide with confidence.','Ce qui se vend réellement, dans votre marché et dans plus de 40 pays, classé pour décider en confiance.');
+A('منتجات رابحة مرتّبة من الأكثر وعداً.','Winning products ranked from most promising.','Produits gagnants classés du plus prometteur.');
+A('فرص لم تصل بعد إلى سوقك.','Opportunities not yet in your market.','Opportunités absentes de votre marché.');
+A('المورّد الأرخص والربح المتوقع قبل أن تطلق.','Cheapest supplier and expected profit before you launch.','Fournisseur le moins cher et profit estimé avant de lancer.');
+A('دخول','Log in','Connexion');A('إنشاء حساب','Sign up','Créer un compte');A('→ العودة لتسجيل الدخول','← Back to log in','← Retour à la connexion');
+A('مرحباً بعودتك','Welcome back','Bon retour');A('سجّل دخولك لمتابعة تحليلاتك ومنتجاتك المحفوظة.','Log in to continue with your analyses and saved products.','Connectez-vous pour retrouver vos analyses et produits enregistrés.');
+A('البريد الإلكتروني أو اسم المستخدم','Email or username','E-mail ou nom d’utilisateur');A('كلمة المرور','Password','Mot de passe');A('نسيت كلمة المرور؟','Forgot password?','Mot de passe oublié ?');
+A('ليس لديك حساب؟','No account yet?','Pas encore de compte ?');A('أنشئ حساباً جديداً','Create an account','Créer un compte');
+A('الاسم','Name','Nom');A('(اختياري)','(optional)','(facultatif)');A('اسم المستخدم','Username','Nom d’utilisateur');A('البريد الإلكتروني','Email','E-mail');A('8 أحرف فأكثر','8+ characters','8 caractères min.');
+A('تأكيد كلمة المرور','Confirm password','Confirmer le mot de passe');A('إنشاء الحساب','Create account','Créer le compte');A('لديك حساب؟','Have an account?','Vous avez un compte ?');A('سجّل الدخول','Log in','Se connecter');
+A('إرسال رابط الاستعادة','Send reset link','Envoyer le lien');A('تذكّرتها؟','Remembered it?','Vous vous en souvenez ?');A('العودة للدخول','Back to log in','Retour à la connexion');
+A('كلمة المرور الجديدة','New password','Nouveau mot de passe');A('حفظ كلمة المرور والدخول','Save password and log in','Enregistrer et se connecter');A('← الصفحة الرئيسية','← Home','← Accueil');
+A('أنشئ حسابك','Create your account','Créez votre compte');A('خطوة واحدة وتبدأ بتحليل إعلاناتك واكتشاف المنتجات الرابحة.','One step and you start discovering winning products.','Une étape et vous découvrez les produits gagnants.');
+A('استعادة كلمة المرور | رادار المنتجات الرابحة','Reset password | Winning Product Radar','Mot de passe oublié | Radar des produits gagnants');
+A('أدخل بريدك أو اسم المستخدم، ونرسل لك رابطاً لتعيين كلمة مرور جديدة.','Enter your email or username and we’ll send you a link to set a new password.','Saisissez votre e-mail ou nom d’utilisateur, nous vous enverrons un lien.');
+A('كلمة مرور جديدة','New password','Nouveau mot de passe');A('اختر كلمة مرور قوية لحسابك. الرابط صالح لمرة واحدة.','Choose a strong password. The link works once.','Choisissez un mot de passe fort. Le lien est à usage unique.');
+A('دخول | رادار المنتجات الرابحة','Log in | Winning Product Radar','Connexion | Radar des produits gagnants');A('إنشاء حساب | رادار المنتجات الرابحة','Sign up | Winning Product Radar','Inscription | Radar des produits gagnants');
+A('كلمة مرور جديدة | رادار المنتجات الرابحة','New password | Winning Product Radar','Nouveau mot de passe | Radar des produits gagnants');
+A('إظهار كلمة المرور','Show password','Afficher le mot de passe');A('إخفاء كلمة المرور','Hide password','Masquer le mot de passe');
+A('ضعيفة','weak','faible');A('مقبولة','fair','correct');A('جيدة','good','bon');A('قوية','strong','fort');A('قوة كلمة المرور: ','Password strength: ','Force : ');
+A('تعذّر الاتصال بالخادم. تحقق من الإنترنت وأعد المحاولة.','Cannot reach the server. Check your connection and try again.','Serveur injoignable. Vérifiez votre connexion.');
+A('محاولات كثيرة، أعد المحاولة لاحقاً','Too many attempts, try again later','Trop de tentatives, réessayez plus tard');
+A('أدخل بريدك أو اسم المستخدم وكلمة المرور.','Enter your email or username and password.','Saisissez votre identifiant et votre mot de passe.');
+A('أدخل بريداً إلكترونياً صحيحاً.','Enter a valid email.','Saisissez un e-mail valide.');A('اسم المستخدم: 3 إلى 30 حرفاً لاتينياً صغيراً أو أرقاماً أو _ .','Username: 3–30 lowercase latin letters, digits, _ or .','Nom d’utilisateur : 3 à 30 lettres minuscules, chiffres, _ ou .');
+A('كلمة المرور يجب ألا تقل عن 8 أحرف.','Password must be at least 8 characters.','Le mot de passe doit contenir au moins 8 caractères.');A('كلمتا المرور غير متطابقتين.','Passwords do not match.','Les mots de passe ne correspondent pas.');
+A('أدخل بريدك أو اسم المستخدم.','Enter your email or username.','Saisissez votre e-mail ou nom d’utilisateur.');A('استعادة عبر الإدارة','Reset via support','Réinitialisation par le support');A('تحقق من بريدك','Check your email','Vérifiez votre e-mail');
+A('الاستعادة التلقائية غير مفعّلة','Automatic reset is not enabled','La réinitialisation automatique n’est pas activée');A('تواصل مع الإدارة','Contact support','Contacter le support');
+A('تم إرسال الطلب','Request sent','Demande envoyée');A('إعادة الإرسال','Send again','Renvoyer');
+A('تواصل مع الإدارة وأخبرهم ببريد حسابك، وسيرسلون لك رابطاً لتعيين كلمة مرور جديدة صالحاً لمدة ساعة.','Contact support with your account email; they will send you a link valid for one hour.','Contactez le support avec l’e-mail de votre compte ; il vous enverra un lien valable une heure.');
+A('إن كان الحساب مسجّلاً لدينا فقد وصلك بريد فيه رابط تعيين كلمة مرور جديدة (صالح ساعة). تفقّد صندوق الرسائل المزعجة أيضاً.','If the account exists, you received an email with a reset link (valid one hour). Check your spam folder too.','Si le compte existe, vous avez reçu un e-mail avec un lien (valable une heure). Vérifiez aussi les spams.');
+A('بيانات الدخول غير صحيحة','Incorrect login details','Identifiants incorrects');A('البريد مسجّل مسبقاً','This email is already registered','Cet e-mail est déjà inscrit');A('اسم المستخدم مستعمل','Username already taken','Nom d’utilisateur déjà pris');
+A('بريد غير صالح أو كلمة مرور أقل من 8 أحرف','Invalid email or password under 8 characters','E-mail invalide ou mot de passe trop court');A('بريد غير صالح','Invalid email','E-mail invalide');
+A('محاولات كثيرة، أعد المحاولة بعد 15 دقيقة','Too many attempts, try again in 15 minutes','Trop de tentatives, réessayez dans 15 minutes');A('حسابات كثيرة من نفس الجهاز، أعد المحاولة بعد ساعة','Too many accounts from this device, try again in an hour','Trop de comptes depuis cet appareil, réessayez dans une heure');
+A('جهاز منزلي ذكي','Smart home gadget','Gadget maison connecté');A('يتصدّر هذا الأسبوع','Leading this week','En tête cette semaine');A('إكسسوار سيارة','Car accessory','Accessoire auto');A('صاعد','Rising','En hausse');
+A('منتج عناية','Self-care product','Produit de soin');A('طلب ثابت','Steady demand','Demande stable');A('💎 جوهرة','💎 Gem','💎 Pépite');A('🌱 واعد','🌱 Promising','🌱 Prometteur');A('🔥 رابح','🔥 Winner','🔥 Gagnant');
+A('🏭 مورّد بسعر أقل وُجد','🏭 Cheaper supplier found','🏭 Fournisseur moins cher trouvé');A('✨ تجربة مجانية','✨ Free trial','✨ Essai gratuit');A('🔒 دفع آمن','🔒 Secure payment','🔒 Paiement sécurisé');A('↩️ إلغاء في أي وقت','↩️ Cancel anytime','↩️ Résiliable à tout moment');
+A('بإنشاء حسابك توافق على','By creating an account you agree to the','En créant un compte, vous acceptez les');A('شروط الاستخدام','Terms of Service','Conditions d’utilisation');A('سياسة الخصوصية','Privacy Policy','la Politique de confidentialité');A('و','and','et');
+A('الخصوصية','Privacy','Confidentialité');A('الاسترداد','Refunds','Remboursement');A('اتصل بنا','Contact','Contact');
+A('يتطلب تسجيل الدخول تفعيل JavaScript.','JavaScript is required to log in.','JavaScript est requis pour se connecter.');
+A('رمز التحقق (6 أرقام من تطبيق المصادقة)','Verification code (6 digits from your authenticator app)','Code de vérification (6 chiffres de l’application d’authentification)');A('تأكيد الدخول','Confirm login','Confirmer la connexion');
+A('ضاع هاتفك؟ اكتب أحد رموز الاسترجاع (مثل a1b2c-3d4e5) مكان الرمز.','Lost your phone? Enter one of your recovery codes (like a1b2c-3d4e5) instead.','Téléphone perdu ? Saisissez l’un de vos codes de secours (ex. a1b2c-3d4e5).');
+A('التحقق بخطوتين','Two-step verification','Vérification en deux étapes');A('افتح تطبيق المصادقة في هاتفك واكتب الرمز الظاهر لحساب «Winning Product Radar».','Open your authenticator app and enter the code shown for “Winning Product Radar”.','Ouvrez votre application d’authentification et saisissez le code affiché pour « Winning Product Radar ».');
+A('اكتب الرمز المكوّن من 6 أرقام.','Enter the 6-digit code.','Saisissez le code à 6 chiffres.');A('الرمز غير صحيح','The code is incorrect','Code incorrect');A('انتهت المهلة، سجّل الدخول من جديد','Timed out, please log in again','Délai expiré, reconnectez-vous');A('العودة للدخول','Back to login','Retour à la connexion');
+var g=function(k){try{return localStorage.getItem(k)}catch(e){return null}};
+var L=new URLSearchParams(location.search).get('lang')||g('wpr_lang')||(navigator.language||'ar').slice(0,2);if(L!=='en'&&L!=='fr')L='ar';
+window.__L=L;window.__tr=function(t){if(L==='ar'||t==null)return t;var s=String(t),d=D[L];if(d[s])return d[s];var k=s.trim();if(d[k])return s.replace(k,d[k]);return s};
+window.__trDom=function(root){if(L==='ar')return;var w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT),n;while((n=w.nextNode())){var v=n.nodeValue,k=v.trim();if(k&&D[L][k])n.nodeValue=v.replace(k,D[L][k])}
+ (root||document).querySelectorAll('[aria-label],[placeholder]').forEach(function(e){['aria-label','placeholder'].forEach(function(a){var v=e.getAttribute(a);if(v&&D[L][v])e.setAttribute(a,D[L][v])})})};
+document.documentElement.lang=L;document.documentElement.dir=L==='ar'?'rtl':'ltr';
+})();
+(function(){
+'use strict';
+const tr=window.__tr;
+const $=id=>document.getElementById(id),Q=new URLSearchParams(location.search),RT=Q.get('t');
+const NEXT=(n=>/^\/(collect|inbox|analyze|archive|saved|gaps|settings|subscribers)(\/[a-z0-9]+)?$/.test(n||'')?n:'/')(Q.get('next'));
+const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE0='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a19.9 19.9 0 0 1-3.17 4.19M1 1l22 22"/></svg>';
+const TXT={
+ login:['مرحباً بعودتك','سجّل دخولك لمتابعة تحليلاتك ومنتجاتك المحفوظة.','دخول | رادار المنتجات الرابحة'],
+ register:['أنشئ حسابك','خطوة واحدة وتبدأ بتحليل إعلاناتك واكتشاف المنتجات الرابحة.','إنشاء حساب | رادار المنتجات الرابحة'],
+ forgot:['نسيت كلمة المرور؟','أدخل بريدك أو اسم المستخدم، ونرسل لك رابطاً لتعيين كلمة مرور جديدة.','استعادة كلمة المرور | رادار المنتجات الرابحة'],
+ reset:['كلمة مرور جديدة','اختر كلمة مرور قوية لحسابك. الرابط صالح لمرة واحدة.','كلمة مرور جديدة | رادار المنتجات الرابحة']};
+let mode='login';
+document.querySelectorAll('[data-eye]').forEach(b=>{b.innerHTML=EYE;b.onclick=()=>{const i=$(b.dataset.eye),s=i.type==='password';i.type=s?'text':'password';b.innerHTML=s?EYE0:EYE;b.setAttribute('aria-label',tr(s?'إخفاء كلمة المرور':'إظهار كلمة المرور'))}});
+function note(t,k){t=tr(t);$('msg').innerHTML=t?'<div class="msg '+(k||'err')+'">'+t+'</div>':''}
+function go(m,keep){mode=m;if(!keep)note('');$('done').hidden=true;$('done').innerHTML='';
+ document.querySelectorAll('form').forEach(f=>f.hidden=f.dataset.m!==m);
+ const tab=m==='login'||m==='register';$('seg').hidden=!tab;$('back').hidden=tab||m==='reset';
+ document.querySelectorAll('#seg button').forEach(b=>{b.classList.toggle('on',b.dataset.m===m);b.setAttribute('aria-selected',b.dataset.m===m)});
+ $('ttl').textContent=tr(TXT[m][0]);$('lead').textContent=tr(TXT[m][1]);$('lead').hidden=false;document.title=tr(TXT[m][2]);
+ if(!RT&&history.replaceState)history.replaceState(null,'','/'+m+'?'+new URLSearchParams(Object.assign({lang:window.__L},Q.get('next')?{next:Q.get('next')}:{})).toString());
+ const f=document.querySelector('form[data-m="'+m+'"] input:not([type=hidden])');f&&setTimeout(()=>f.focus({preventScroll:true}),30)}
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>go(b.dataset.m));
+$('back').onclick=e=>{e.preventDefault();go('login')};
+addEventListener('popstate',()=>{const m=location.pathname.replace(/\/+$/,'').slice(1);if(!RT&&TXT[m]&&m!=='reset'&&m!==mode)go(m)});
+/* قوة كلمة المرور */
+function meter(inp,bar,txt){inp.addEventListener('input',()=>{const v=inp.value;let s=0;if(v.length>=8)s++;if(v.length>=11)s++;if(/[a-z]/.test(v)&&/[A-Z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^\w\s]/.test(v))s++;
+ const lv=!v?0:Math.min(4,Math.max(1,s-(v.length<8?1:0)));const L=['','ضعيفة','مقبولة','جيدة','قوية'],C=['transparent','#dc2626','#d97706','#0891b2','#059669'];
+ bar.style.width=lv*25+'%';bar.style.background=C[lv];txt.textContent=v?tr('قوة كلمة المرور: ')+tr(L[lv]):''})}
+meter($('r-pw'),$('r-bar'),$('r-mt'));meter($('n-pw'),$('n-bar'),$('n-mt'));
+/* إرسال */
+async function post(u,b){const r=await fetch('/api/'+u,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).catch(()=>null);
+ if(!r)throw new Error('تعذّر الاتصال بالخادم. تحقق من الإنترنت وأعد المحاولة.');const j=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(j.error||(r.status===429?'محاولات كثيرة، أعد المحاولة لاحقاً':'حدث خطأ ('+r.status+')'));return j}
+function busy(f,on){const b=f.querySelector('.btn');if(on){b.dataset.t=b.innerHTML;b.innerHTML='<span class="spin"></span>';b.disabled=true}else{b.innerHTML=b.dataset.t||b.innerHTML;b.disabled=false}}
+function run(form,fn){form.addEventListener('submit',async ev=>{ev.preventDefault();note('');busy(form,true);try{await fn()}catch(x){note(x.message)}finally{busy(form,false)}})}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+run($('f-login'),async()=>{const id=$('l-id').value.trim(),pw=$('l-pw').value;if(!id||!pw)throw new Error('أدخل بريدك أو اسم المستخدم وكلمة المرور.');
+ const j=await post('login',{email:id,password:pw});if(j.need2fa){T2FA=j.t;document.querySelectorAll('form').forEach(f=>f.hidden=f.id!=='f-2fa');$('seg').hidden=true;$('ttl').textContent=tr('التحقق بخطوتين');$('lead').textContent=tr('افتح تطبيق المصادقة في هاتفك واكتب الرمز الظاهر لحساب «Winning Product Radar».');$('lead').hidden=false;setTimeout(()=>$('t-code').focus(),50);return}location.href=NEXT});
+let T2FA='';run($('f-2fa'),async()=>{const c=$('t-code').value.trim();if(c.length<6)throw new Error('اكتب الرمز المكوّن من 6 أرقام.');await post('login/2fa',{t:T2FA,code:c});location.href=NEXT});
+run($('f-register'),async()=>{const nm=$('r-name').value.trim(),un=$('r-un').value.trim().toLowerCase(),em=$('r-em').value.trim(),pw=$('r-pw').value;
+ if(!/^\S+@\S+\.\S+$/.test(em))throw new Error('أدخل بريداً إلكترونياً صحيحاً.');
+ if(un&&!/^[a-z0-9_.]{3,30}$/.test(un))throw new Error('اسم المستخدم: 3 إلى 30 حرفاً لاتينياً صغيراً أو أرقاماً أو _ .');
+ if(pw.length<8)throw new Error('كلمة المرور يجب ألا تقل عن 8 أحرف.');
+ if(pw!==$('r-pw2').value)throw new Error('كلمتا المرور غير متطابقتين.');
+ await post('register',{name:nm,username:un,email:em,password:pw});try{window.fbq&&fbq('track','CompleteRegistration');window.gtag&&gtag('event','sign_up')}catch(x){}setTimeout(()=>location.href='/',window.fbq||window.gtag?400:0)});
+run($('f-forgot'),async()=>{const id=$('f-id').value.trim();if(!id)throw new Error('أدخل بريدك أو اسم المستخدم.');
+ const j=await post('forgot',{email:id,lang:window.__L||'ar'});$('ttl').textContent=tr(j.manual?'استعادة عبر الإدارة':'تحقق من بريدك');$('lead').hidden=true;document.querySelectorAll('form').forEach(f=>f.hidden=true);$('back').hidden=false;
+ const ct=/^(https?:|mailto:)/i.test(j.contact||'')?j.contact:'';
+ $('done').hidden=false;$('done').innerHTML=j.manual
+  ?'<div class="ic">💬</div><b>الاستعادة التلقائية غير مفعّلة</b><p>تواصل مع الإدارة وأخبرهم ببريد حسابك، وسيرسلون لك رابطاً لتعيين كلمة مرور جديدة صالحاً لمدة ساعة.</p>'+(ct?'<a class="btn" href="'+esc(ct)+'" target="_blank" rel="noopener">تواصل مع الإدارة</a>':'')
+  :'<div class="ic">✉️</div><b>تم إرسال الطلب</b><p>إن كان الحساب مسجّلاً لدينا فقد وصلك بريد فيه رابط تعيين كلمة مرور جديدة (صالح ساعة). تفقّد صندوق الرسائل المزعجة أيضاً.</p><button type="button" class="btn ghost" id="again">إعادة الإرسال</button>';
+ window.__trDom($('done'));
+ const a=$('again');if(a)a.onclick=()=>{go('forgot',true);$('f-id').value=id}});
+run($('f-reset'),async()=>{const pw=$('n-pw').value;if(pw.length<8)throw new Error('كلمة المرور يجب ألا تقل عن 8 أحرف.');if(pw!==$('n-pw2').value)throw new Error('كلمتا المرور غير متطابقتين.');
+ await post('reset',{token:RT,password:pw});location.href='/'});
+/* البداية */
+window.__trDom(document.body);
+{const sl=$('lang');sl.value=window.__L;sl.onchange=()=>{try{localStorage.setItem('wpr_lang',sl.value)}catch(e){}const u=new URL(location.href);u.searchParams.set('lang',sl.value);location.href=u.toString()}}
+{const m=location.pathname.replace(/\/+$/,'').slice(1);if(RT&&m==='reset')go('reset');else go(TXT[m]&&m!=='reset'?m:'login')}
+})();
+</script>
+</body>
+</html>
