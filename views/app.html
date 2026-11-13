@@ -283,7 +283,7 @@ h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background
 <section id="v-tiktok" class="view" hidden><div class="ph"><div><h1>منتجات TikTok</h1><p class="sub">ابحث في TikTok بأشهر عبارات المنتجات الرائجة، وتُرتَّب الفيديوهات بالمشاهدات والتفاعل والحداثة، واحفظ المنتجات لتبحث عن مورّدها وتحلّلها وتفحصها في الجزائر.</p></div></div><div id="x-tiktok"></div></section>
 <section id="v-integrations" class="view" hidden><div class="ph"><div><h1>الربط والتكامل</h1><p class="sub">كل ما يربط المنصة بالخارج في مكان واحد: الإضافة، TikTok، Google Sheets، التنبيهات، ومفاتيح المنصة (الذكاء الاصطناعي، الدفع، تيليغرام) للمدير.</p></div></div><div id="x-int"></div></section>
 <section id="v-settings" class="view" hidden><div class="ph"><div><h1>الملف الشخصي</h1><p class="sub">اسمك وبريدك، ونسخة من بياناتك أو حذف حسابك.</p></div></div><div id="x-set"></div></section>
-<section id="v-sub" class="view" hidden><div class="ph"><div><h1>اشتراكي</h1><p class="sub">عرضك الحالي واستهلاكه، والدفع والتجديد، وسجل مدفوعاتك.</p></div></div><div class="card" id="x-billing"><p class="sub">جارٍ التحميل…</p></div></section>
+<section id="v-sub" class="view" hidden><div class="ph"><div><h1>اشتراكي</h1><p class="sub">عرضك الحالي واستهلاكه، والدفع أو تغيير العرض، وسجل مدفوعاتك.</p></div></div><div class="card" id="x-billing"><p class="sub">جارٍ التحميل…</p></div></section>
 <section id="v-sec" class="view" hidden><div class="ph"><div><h1>أمان الحساب</h1><p class="sub">التحقق بخطوتين، كلمة المرور، والأجهزة التي دخلت إلى حسابك.</p></div></div><div id="x-secp"></div></section>
 <section id="v-guide" class="view" hidden><div class="ph"><div><h1>دليل الاستخدام</h1><p class="sub">من تثبيت الإضافة إلى معرفة ربحك وفحص المنتج في سوقك: كل الخطوات بالترتيب، بنفس أسماء القائمة.</p></div></div><div id="x-guide"></div></section>
 <section id="v-help" class="view" hidden><div class="ph"><div><h1>المساعدة والدعم</h1><p class="sub">إجابات سريعة لأكثر الأسئلة شيوعاً، وطرق التواصل معنا.</p></div></div><div id="x-help"></div></section>
@@ -803,13 +803,13 @@ const PATH={dash:'/',collect:'/collect',inbox:'/inbox',analyze:'/analyze',arch:'
 const TITLE={dash:'لوحة التحكم',collect:'جمع الإعلانات',inbox:'الإعلانات الواردة',analyze:'تحليل جديد',arch:'الأرشيف',saved:'المنتجات المحفوظة',edge:'الخروج من المنافسة',gap:'ثغرات السوق',watch:'مراقبة المنافسين',tiktok:'منتجات TikTok',integrations:'الربط والتكامل',settings:'الملف الشخصي',sub:'اشتراكي',sec:'أمان الحساب',help:'المساعدة والدعم',guide:'دليل الاستخدام',admin:'المشتركون',aover:'نظرة عامة',abill:'العروض والمدفوعات',ainbox:'صندوق الدعم',aset:'إعدادات المنصة'};
 const viewOf=p=>{const g='/'+(p.split('/')[1]||'');return Object.keys(PATH).find(k=>PATH[k]===g)||'dash'};
 const goUrl=(p,replace)=>{if(location.pathname!==p)history[replace?'replaceState':'pushState']({},'',p)};
-function show(v,o){o=o||{};const forced=(!ME.active&&!['settings','sub','sec','help','guide'].includes(v))||(['admin','aover','abill','ainbox','aset'].includes(v)&&ME.role!=='admin');if(forced){v='dash';o={replace:true}}if(v==='sub'&&ME.role==='admin'){v='abill';o={replace:true}}cur=v;V.forEach(x=>$('#v-'+x).hidden=x!==v);
+function show(v,o){o=o||{};const forced=(!ME.active&&!['settings','sub','sec','help','guide'].includes(v))||(['admin','aover','abill','ainbox','aset'].includes(v)&&ME.role!=='admin');if(forced){v='dash';o={replace:true}}cur=v;V.forEach(x=>$('#v-'+x).hidden=x!==v);
  document.title='رادار المنتجات الرابحة · '+TITLE[v];if(v!=='collect'&&!o.nopush)goUrl(PATH[v],o.replace);
  R.querySelectorAll('.nv[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));amClose();$('#sb').classList.remove('open');$('#scrim').classList.remove('open');
  DRAW[v]&&guard(DRAW[v])(o.fromUrl?location.pathname.split('/')[2]||'':'',o);scrollTo({top:0})}
 function badge(rs){const n=rs.filter(r=>r.source==='adlib'&&!r.summary).length,b=$('#nb-inbox');b.hidden=!n;b.textContent=n}
 const planName=()=>ME.role==='admin'?'مدير':ME.active?(ME.plan&&ME.plan!=='none'?ME.plan:'تجريبي'):'منتهي';
-function updateMe(){const n=ME.name||ME.username||ME.email.split('@')[0];$('#me-name').textContent=n;$('#me-av').textContent=n.trim().charAt(0).toUpperCase();$('#me-plan').textContent=planName()+(ME.active&&ME.role!=='admin'?' · باقي '+Math.max(0,Math.ceil((ME.expires_at-Date.now())/864e5))+' يوم':'');$('#nav-admin').hidden=ME.role!=='admin';document.querySelectorAll('[data-v="sub"].am-i').forEach(x=>x.hidden=ME.role==='admin');if(ME.role==='admin')adminBadges();const F=ME.features||[];[['gap','gap'],['watch','watch'],['tiktok','tiktok'],['edge','ai']].forEach(([v,k])=>{const b=R.querySelector('.nv[data-v="'+v+'"]');if(b)b.hidden=!F.includes(k)})}
+function updateMe(){const n=ME.name||ME.username||ME.email.split('@')[0];$('#me-name').textContent=n;$('#me-av').textContent=n.trim().charAt(0).toUpperCase();$('#me-plan').textContent=planName()+(ME.active&&ME.role!=='admin'?' · باقي '+Math.max(0,Math.ceil((ME.expires_at-Date.now())/864e5))+' يوم':'');$('#nav-admin').hidden=ME.role!=='admin';if(ME.role==='admin')adminBadges();const F=ME.features||[];[['gap','gap'],['watch','watch'],['tiktok','tiktok'],['edge','ai']].forEach(([v,k])=>{const b=R.querySelector('.nv[data-v="'+v+'"]');if(b)b.hidden=!F.includes(k)})}
 
 /* ---------- صفوف مشتركة ---------- */
 const stPill=r=>r.summary?'<span class="pill ok">تم تحليله</span>':'<span class="pill warn">جديد</span>';
@@ -831,7 +831,7 @@ async function dashAlerts(pend){
 async function rDash(){
  const nm=ME.name||ME.username||ME.email.split('@')[0];
  $('#d-head').innerHTML=`<div class="ph"><div><h1>مرحباً ${e(nm)} 👋</h1><p class="sub">${ME.active?'نظرة عامة على إعلاناتك الواردة وتحليلاتك ومنتجاتك الرابحة.':'انتهى اشتراكك.'}</p></div>${ME.active?`<div class="acts"><button class="btn" data-v="analyze">تحليل جديد</button><button class="btn ghost" data-v="inbox">الإعلانات الواردة</button></div>`:''}</div>`;
- if(!ME.active){$('#d-body').innerHTML=`<div class="card"><h2>انتهى اشتراكك</h2><p class="sub">${ME.expires_at?`<span>انتهى اشتراكك بتاريخ</span> <b>${fd(ME.expires_at)}</b>. `:''}<span>جدّده لتعود إلى كل الأقسام: منتجاتك وتحليلاتك محفوظة كما هي.</span></p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" data-v="sub">💳 جدّد اشتراكك</button></div></div>`;return}
+ if(!ME.active){$('#d-body').innerHTML=`<div class="card"><h2>انتهى اشتراكك</h2><p class="sub">${ME.expires_at?`<span>انتهى اشتراكك بتاريخ</span> <b>${fd(ME.expires_at)}</b>. `:''}<span>جدّده لتعود إلى كل الأقسام: منتجاتك وتحليلاتك محفوظة كما هي.</span></p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" data-v="sub">💳 جدّد اشتراكك</button><button class="btn ghost" data-wac="renew">التجديد عبر واتساب</button></div></div>`;return}
  const [rs,sv]=await Promise.all([api('GET','/runs'),api('GET','/saved/keys')]);RUNS=rs;badge(rs);
  const inbox=rs.filter(r=>r.source==='adlib'),anal=rs.filter(r=>r.summary),L=anal[0],prev=anal[1],pend=inbox.filter(r=>!r.summary).length;
  const gf=L?(L.counts?L.counts.gem+L.counts.fire:L.summary.filter(p=>p.tier==='gem'||p.tier==='fire').length):0;
@@ -917,7 +917,7 @@ async function rHelp(){
 <div class="card hc-hero"><h2>كيف نساعدك؟</h2><div class="hc-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="hc-q" type="search" placeholder="ابحث في الأسئلة: الدفع، الإضافة، TikTok…" autocomplete="off"></div></div>
 <div class="hc-g">
 <button class="card hc-c" data-v="guide"><span class="hc-i">${ICO.book}</span><b>دليل الاستخدام</b><small>كل خطوات المنصة بالصور، بالترتيب.</small></button>
-<button class="card hc-c" data-a="hcpay"><span class="hc-i">${ICO.rocket}</span><b>الدفع والاشتراك</b><small>الدفع والتجديد، وإرسال الوصل أو سؤال عبر واتساب.</small></button>
+<button class="card hc-c" data-a="hcpay"><span class="hc-i">${ICO.rocket}</span><b>الدفع والاشتراك</b><small>وصل الدفع، تغيير العرض أو التجديد عبر واتساب.</small></button>
 <button class="card hc-c" data-a="hcform"><span class="hc-i">${ICO.mail}</span><b>رسالة مكتوبة</b><small>اكتب لنا بالتفصيل، ويصلك الرد هنا وبالبريد.</small></button>
 </div>
 ${wa?`<div class="card hc-sec" id="hc-wa"><div class="hc-wh"><span class="hc-i">${ICO.chat}</span><div><h2>تحدّث معنا على واتساب</h2><small>اختر الموضوع: تظهر الرسالة جاهزة بمعلومات حسابك، راجعها واضغط إرسال.</small></div></div>
@@ -1017,7 +1017,7 @@ R.addEventListener('click',guard(async ev=>{
  if(a==='dper'){DPER=+b.dataset.d;return rDash()}
  if(a==='hcf'){HFQ=b.dataset.f;R.querySelectorAll('[data-a="hcf"]').forEach(x=>x.classList.toggle('on',x===b));$('#hc-faq').innerHTML=FAQ.filter(x=>HFQ==='all'||x[0]===HFQ).map(x=>`<details class="fx hf-q" data-q="${e((x[1]+' '+x[2]).toLowerCase())}"><summary>${x[1]}</summary><p style="margin:0 0 14px;line-height:1.8">${x[2]}</p></details>`).join('');return}
  if(a==='hcform'){ev.preventDefault();const f=$('#hc-form');f.scrollIntoView({behavior:'smooth',block:'start'});f.classList.add('hl');setTimeout(()=>f.classList.remove('hl'),1600);setTimeout(()=>$('#hf-m').focus({preventScroll:true}),500);return}
- if(a==='hcpay'){ev.preventDefault();show('sub');return}
+ if(a==='hcpay'){ev.preventDefault();const w=$('#hc-wa');if(w){w.scrollIntoView({behavior:'smooth',block:'start'});w.classList.add('hl');setTimeout(()=>w.classList.remove('hl'),1600)}else show('sub');return}
 
  if(a==='onbhide'){try{localStorage.setItem('wpr_onb_hide','1')}catch(x){}return rDash()}
  if(a==='logoutall'){if(!two(b))return;await api('POST','/logout-all',{});location.href='/login';return}

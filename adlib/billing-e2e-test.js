@@ -75,19 +75,12 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     // ---- المشترك: بطاقة الاشتراك والعدادات
     await M.goto(BASE + '/subscription'); await M.waitForSelector('#x-billing .meter');
     ok((await M.locator('#x-billing .meter').count()) === 4, 'عدادات الاستعمال الأربعة');
-    await M.waitForSelector('#pay-box .plan-g .plan');
-    ok(!(await M.$('[data-acc="plans"]')) && !/الدفع أو تغيير العرض/.test(await M.textContent('#x-billing')), 'الدفع داخل «الدفع والتجديد» مباشرة: لا زر ولا نافذة مكررة');
-    ok(await M.locator('.per-t [data-acc="per"]').count() === 3 && await M.locator('.per-t .on').getAttribute('data-m') === '6', 'قسم الدفع: 3 مدد (بلا شهر: التجربة المجانية تكفي)، و6 أشهر مختارة');
-    await M.click('.per-t [data-acc="per"][data-m="3"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'الأساسية' }).click(); await M.waitForSelector('.per-t [data-m="3"].on');
-    ok(/7[.,٬]?100/.test(await M.locator('.plan-g').textContent()), 'الباقة بسعرها في قسم الدفع (3 أشهر)');
-    ok(['satim', 'stripe', 'paypal'].every(async m => 1) && await M.locator('[data-acc="pay"][data-m="satim"]').count() === 1 && await M.locator('[data-acc="pay"][data-m="stripe"]').count() === 1 && await M.locator('[data-acc="pay"][data-m="paypal"]').count() === 1 && await M.locator('[data-acc="baridi"]').count() === 1, 'طرق الدفع: CIB/الذهبية، Stripe، PayPal، BaridiMob');
-    ok(/\$54\.15/.test(await M.locator('#pay-box').textContent()), 'السعر بالدولار ظاهر');
-    // BaridiMob: رقم العملية + صورة الوصل
+    ok(!(await M.$('[data-acc="plans"]')) && !/الدفع أو تغيير العرض/.test(await M.textContent('#x-billing')), 'حُذف «الدفع أو تغيير العرض» (مكرر «الدفع والتجديد»)');
+    ok(await M.locator('.pay-sec [data-wac]').count() === 4, '«الدفع والتجديد» كما هو: الوصل، الترقية، التجديد، سؤال');
+    // BaridiMob: رقم العملية + صورة الوصل (عبر الواجهة البرمجية للمنصة)
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
-    ok(await M.isVisible('[data-acc="wa"]') && /اسم متجرك/.test(await M.locator('.pay-m').textContent()), 'الطريقة اليدوية: BaridiMob/CCP/تحويل + زر واتساب');
-    await M.click('.pay-m details summary');
-    await M.fill('#bm-ref', 'BM-778899'); await M.setInputFiles('#bm-img', { name: 'r.png', mimeType: 'image/png', buffer: png });
-    await M.click('[data-acc="baridi"]'); await toast(M, /أُرسل طلبك/);
+    ok((await M.request.post(BASE + '/api/billing/baridi', { data: { plan_id: pl.id, months: 3, ref: 'BM-778899', proof: 'data:image/png;base64,' + png.toString('base64') } })).ok(), 'طلب BaridiMob برقم العملية وصورة الوصل');
+    await M.reload();
     await M.waitForSelector('#x-billing details');
     ok(/قيد المراجعة/.test(await M.locator('#x-billing').textContent()), 'الطلب يظهر «قيد المراجعة» في سجل المشترك');
 
@@ -113,16 +106,16 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok(bl.limits.gapProducts === 2 && bl.usage.gapProducts === 2, 'الاستعمال والحدود في /api/billing');
 
     const days = async () => (await (await M.request.get(BASE + '/api/me')).json()).expires_at;
-    const openPay = async m => { await M.goto(BASE + '/subscription'); await M.waitForSelector('#pay-box .per-t'); await M.click('.per-t [data-acc="per"][data-m="3"]'); await M.locator('.plan-g [data-acc="pick"]', { hasText: 'الأساسية' }).click(); await M.waitForSelector('.plan-g .plan.on:has-text("الأساسية")'); await M.waitForSelector('[data-acc="pay"][data-m="' + m + '"]'); };
+    const openPay = async m => { const r = await (await M.request.post(BASE + '/api/billing/checkout', { data: { plan_id: pl.id, months: 3, method: m } })).json(); await M.goto(r.url); };
     // ---- SATIM: CIB / الذهبية مباشرة
     let before = await days();
-    await openPay('satim'); await Promise.all([M.waitForURL(/paid=/), M.click('[data-acc="pay"][data-m="satim"]')]);
+    await openPay('satim'); await M.waitForURL(/paid=/);
     await toast(M, /تم الدفع وتفعيل اشتراكك/);
     ok(satim.length === 1 && satim[0].amount === '710000' && satim[0].currency === '012' && satim[0].userName === 'radar_api' && satim[0].password === 'satim-pass-9' && JSON.parse(satim[0].jsonParams).force_terminal_id === 'E010900001', 'SATIM: المبلغ بالسنتيم (250000) والعملة 012 ورقم الطرفية');
     ok(Math.round((await days() - before) / 864e5) === 90, 'SATIM: تأكيد الطلب من البوابة ثم تمديد 90 يوماً (3 أشهر)');
     // ---- Stripe: إشعار موقّع
     before = await days();
-    await openPay('stripe'); await Promise.all([M.waitForURL(/paid=/), M.click('[data-acc="pay"][data-m="stripe"]')]);
+    await openPay('stripe'); await M.waitForURL(/paid=/);
     const sp = stripeS[0];
     ok(sp.auth === 'Bearer ' + SK && sp.f['line_items[0][price_data][unit_amount]'] === '5415' && sp.f['line_items[0][price_data][currency]'] === 'usd', 'Stripe: 54.15$ (3 أشهر −5٪) بالمفتاح السري');
     const cpid = sp.f['metadata[payment_id]'], ev = JSON.stringify({ type: 'checkout.session.completed', data: { object: { payment_status: 'paid', amount_total: 5415, metadata: { payment_id: cpid } } } });
@@ -141,7 +134,7 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     ok((await (await M.request.get(BASE + '/api/billing/payment/' + c2.id)).json()).status === 'paid', 'Stripe: يُفعَّل عند العودة حتى لو تأخر الإشعار');
     // ---- PayPal
     before = await days();
-    await openPay('paypal'); await Promise.all([M.waitForURL(/paid=/), M.click('[data-acc="pay"][data-m="paypal"]')]);
+    await openPay('paypal'); await M.waitForURL(/paid=/);
     await toast(M, /تم الدفع وتفعيل اشتراكك/);
     ok(ppOrders.length === 1 && ppOrders[0].auth === 'Bearer PPTOK' && ppOrders[0].j.purchase_units[0].amount.value === '54.15', 'PayPal: طلب 54.15$ بالرمز');
     ok(Math.round((await days() - before) / 864e5) === 90, 'PayPal: موافقة ثم capture ثم تمديد 90 يوماً');
@@ -215,8 +208,8 @@ const SK = 'sk_test_abc123', WH = 'whsec_test_123';
     await E.request.post(BASE + '/api/register', { data: { email: 'x@t.dz', password: 'password123' } });
     const uid = (await (await A.request.get(BASE + '/api/admin/users')).json()).find(u => u.email === 'x@t.dz').id;
     await A.request.post(BASE + '/api/admin/users/' + uid, { data: { days: -10, plan: 'الأساسية' } });
-    await E.goto(BASE + '/subscription'); await E.waitForSelector('.pay-sec h3');
-    ok(/اشترك الآن/.test(await E.textContent('.pay-sec h3')) && await E.$('#pay-box .plan-g'), 'منتهي الاشتراك يرى «اشترك الآن» والعروض مباشرة');
+    await E.goto(BASE + '/subscription'); await E.waitForSelector('.pay-sec [data-wac="pay"]');
+    ok(/الدفع والتجديد/.test(await E.textContent('.pay-sec h3')), 'منتهي الاشتراك يرى «الدفع والتجديد» لإرسال الوصل');
 
     ok(!errs.length, 'لا أخطاء جافاسكربت: ' + errs.join(' | '));
     console.log('\n✅ اختبار الاشتراكات:', pass, 'فحصاً ناجحاً');

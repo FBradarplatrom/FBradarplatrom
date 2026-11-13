@@ -7,6 +7,8 @@ const CFG = require('./config.js');
 const VARS = { name: 'الاسم', email: 'بريد الحساب', plan: 'العرض المختار', current: 'العرض الحالي', amount: 'المبلغ', days: 'المدة بالأيام', expires: 'تاريخ الانتهاء', store: 'اسم المتجر', request: 'رقم الطلب', topic: 'نوع الطلب' };
 const KEYS = {
   pay: ['إرسال وصل الدفع', ['plan', 'days', 'amount', 'store', 'request', 'email', 'name']],
+  upgrade: ['ترقية أو تغيير العرض', ['current', 'plan', 'amount', 'email', 'name']],
+  renew: ['تجديد الاشتراك', ['plan', 'expires', 'amount', 'email', 'name']],
   billing: ['سؤال عن الدفع أو الاشتراك', ['current', 'expires', 'email', 'name']],
   support: ['طلب مساعدة (الدعم)', ['topic', 'email', 'name']]
 };
@@ -15,6 +17,16 @@ const DEF = {
     ar: 'السلام عليكم،\nأرسل لكم وصل الدفع لتفعيل عرضي في رادار المنتجات الرابحة:\n• العرض: {plan} ({days} يوماً)\n• المبلغ: {amount}\n• اسم المتجر: {store}\n• رقم الطلب: #{request}\n• بريد الحساب: {email}\nصورة الوصل مرفقة.',
     en: 'Hello,\nHere is my payment receipt to activate my Winning Product Radar plan:\n• Plan: {plan} ({days} days)\n• Amount: {amount}\n• Store: {store}\n• Request: #{request}\n• Account email: {email}\nReceipt photo attached.',
     fr: 'Bonjour,\nVoici mon reçu de paiement pour activer mon offre Radar des produits gagnants :\n• Offre : {plan} ({days} jours)\n• Montant : {amount}\n• Boutique : {store}\n• Demande : #{request}\n• E-mail du compte : {email}\nPhoto du reçu jointe.'
+  },
+  upgrade: {
+    ar: 'السلام عليكم،\nأريد تغيير عرضي في رادار المنتجات الرابحة:\n• عرضي الحالي: {current}\n• العرض الذي أريده: {plan} ({amount})\n• بريد الحساب: {email}\nكيف أدفع الفرق؟',
+    en: 'Hello,\nI would like to change my Winning Product Radar plan:\n• Current plan: {current}\n• New plan: {plan} ({amount})\n• Account email: {email}\nHow can I pay?',
+    fr: 'Bonjour,\nJe souhaite changer mon offre Radar des produits gagnants :\n• Offre actuelle : {current}\n• Nouvelle offre : {plan} ({amount})\n• E-mail du compte : {email}\nComment puis-je payer ?'
+  },
+  renew: {
+    ar: 'السلام عليكم،\nأريد تجديد اشتراكي في رادار المنتجات الرابحة:\n• العرض: {plan} ({amount})\n• ينتهي اشتراكي في: {expires}\n• بريد الحساب: {email}',
+    en: 'Hello,\nI would like to renew my Winning Product Radar subscription:\n• Plan: {plan} ({amount})\n• My subscription ends on: {expires}\n• Account email: {email}',
+    fr: 'Bonjour,\nJe souhaite renouveler mon abonnement Radar des produits gagnants :\n• Offre : {plan} ({amount})\n• Mon abonnement se termine le : {expires}\n• E-mail du compte : {email}'
   },
   billing: {
     ar: 'السلام عليكم،\nعندي سؤال عن اشتراكي في رادار المنتجات الرابحة:\n• عرضي: {current} (ينتهي في {expires})\n• بريد الحساب: {email}\nسؤالي: ',

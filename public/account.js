@@ -50,11 +50,12 @@
 ${adm ? '<span class="sub"> حساب مدير، بلا انتهاء ولا حدود.</span>' : `<span class="sub"> ${me.active ? '<span>ينتهي في</span> ' + X.fd(BL.expires_at) + ' · <span>باقي ' + num(left) + ' يوم</span>' : 'منتهٍ'}</span>`}</p>
 ${!adm && me.active && left <= 5 ? '<div class="alert">⏰ اشتراكك ينتهي قريباً. جدّده الآن حتى لا يتوقف عملك.</div>' : ''}
 ${(() => { const U = { searchesPerDay: BL.usage.searchesToday, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth }, hot = adm ? [] : Object.keys(BL.labels).filter(k => { const mx = BL.limits[k]; return Number.isFinite(mx) && mx > 0 && mx < 1e9 && (U[k] || 0) / mx >= .8; }); return hot.length ? `<div class="alert" style="margin:8px 0">⚠️ اقتربت من حد عرضك في: ${hot.map(k => e(BL.labels[k])).join('، ')}. انتقل إلى عرض أعلى قبل أن يتوقف هذا الاستعمال.</div>` : ''; })()}${Object.keys(BL.labels).map(k => meter(BL.labels[k], ({ searchesPerDay: BL.usage.searchesToday, aiMonth: 0, gapProducts: BL.usage.gapProducts, watchPages: BL.usage.watchPages, aiPerMonth: BL.usage.aiMonth })[k] || 0, BL.limits[k])).join('')}
-${adm ? '' : `<div class="pay-sec"><div class="pay-h"><div><h3>${me.active ? 'الدفع والتجديد' : 'اشترك الآن'}</h3><span class="sub">اختر المدة والعرض ثم طريقة الدفع. نفس عرضك = تجديد يُضاف إلى ما بقي، وعرض آخر = انتقال تُحوَّل فيه أيامك المتبقية بنسبة السعر.</span></div></div>
-${BL.plans.length ? '<div id="pay-box"></div>' : '<p class="sub" style="margin:8px 0 0">لا توجد عروض متاحة للشراء بعد.</p>'}
-<p class="sub" style="margin:14px 0 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">سؤال عن الدفع أو الاشتراك؟ <button type="button" class="btn ghost sm" data-wac="billing">${WAICON} اسألنا عبر واتساب</button></p></div>`}
+${adm ? '' : `<div class="pay-sec"><div class="pay-h"><div><h3>الدفع والتجديد</h3><span class="sub">ادفع بالتحويل وأرسل الوصل، أو اطلب الترقية أو التجديد، عبر واتساب.</span></div></div>
+${BL.plans.length ? '' : `<p class="sub" style="margin:8px 0 0">لا توجد عروض متاحة للشراء بعد.</p>`}
+<div class="wa-l"><div class="wa-lt">${WAICON} عبر واتساب: رسالة جاهزة بمعلومات حسابك</div><div class="wa-lg">
+${[['pay', 'إرسال وصل الدفع', 'بعد التحويل عبر BaridiMob أو CCP'], me.active ? ['upgrade', 'ترقية أو تغيير العرض', 'انتقل إلى باقة أخرى'] : null, me.active ? ['renew', 'تجديد الاشتراك', 'مدّد اشتراكك الحالي'] : null, ['billing', 'سؤال عن الدفع أو الاشتراك', 'نجيبك في أقرب وقت']].filter(Boolean)
+  .map(([k, t, h]) => `<button type="button" class="wa-i" data-wac="${k}"><b>${t}</b><small>${h}</small></button>`).join('')}</div></div></div>`}
 ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>سجل المدفوعات (${num(BL.payments.length)})</summary><div class="tbw"><table class="tb"><tr><th>الباقة</th><th>المبلغ</th><th>الطريقة</th><th>الحالة</th><th>التاريخ</th></tr>${BL.payments.map(p => `<tr><td>${e(p.plan_name)}</td><td>${money(p.amount, p.currency)}</td><td>${MT[p.method] || e(p.method)}</td><td><span class="pill ${(ST[p.status] || [''])[0]}">${(ST[p.status] || ['', p.status])[1]}</span>${p.note ? '<br><small>' + e(p.note) + '</small>' : ''}</td><td>${X.fd(p.created_at)}</td></tr>`).join('')}</table></div></details>` : ''}`;
-    if (!adm && BL.plans.length) payBox($('#pay-box'));
   }
   /* ================= 💬 واتساب: رسائل جاهزة يضبطها المدير ================= */
   let WA = null;
@@ -62,22 +63,22 @@ ${BL.payments.length ? `<details class="fx" style="margin-top:10px"><summary>س�
   const waFill = (k, v) => { const L = W.__LANG || 'ar', t = (WA.templates[k] || {})[L] || (WA.templates[k] || {}).ar || ''; return t.replace(/\{(\w+)\}/g, (m, n) => v[n] != null && v[n] !== '' ? String(v[n]) : '—'); };
   const waUrl = text => 'https://wa.me/' + WA.number + '?text=' + encodeURIComponent(text);
   const WAICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg>';
-  const WAT = { pay: 'إرسال وصل الدفع', billing: 'سؤال عن الدفع أو الاشتراك', support: 'طلب مساعدة' };
+  const WAT = { pay: 'إرسال وصل الدفع', upgrade: 'ترقية أو تغيير العرض', renew: 'تجديد الاشتراك', billing: 'سؤال عن الدفع أو الاشتراك', support: 'طلب مساعدة' };
   // key: نوع الرسالة. o.plan: العرض المختار مسبقاً، o.topic: نوع طلب الدعم
   async function waModal(key, o) {
     o = o || {}; await waLoad(); const T = W.WPRTOOLS; if (!T) return;
     if (!WA.number) return X.toast('رقم واتساب الدعم غير مضبوط بعد', 'err');
-    if (['pay', 'billing'].includes(key) && !BL) BL = await X.api('GET', '/billing');
+    if (['pay', 'upgrade', 'renew', 'billing'].includes(key) && !BL) BL = await X.api('GET', '/billing');
     const me = X.me(), paid = BL ? BL.plans.filter(x => x.price > 0 || x.price_usd > 0) : [], cur = BL ? (BL.plan && BL.plan !== 'none' ? BL.plan : '') : '';
-    const curPlan = paid.find(x => x.name === cur), others = paid;
-    let sel = o.plan || (curPlan || others[0] || {}).id, mon = o.months || defMonths(), dirty = false;
+    const curPlan = paid.find(x => x.name === cur), others = key === 'upgrade' ? paid.filter(x => x.name !== cur) : paid;
+    let sel = o.plan || (key === 'renew' && curPlan ? curPlan.id : (others[0] || {}).id), mon = o.months || defMonths(), dirty = false;
     const TOP = { tech: 'مشكلة تقنية', billing: 'الدفع والعروض', usage: 'سؤال عن الاستعمال', idea: 'اقتراح', other: 'أخرى' };
     const b = T.open(WAT[key], '');
     const vars = () => { const p = paid.find(x => x.id === +sel) || {}, z = perOf(p, mon) || {}, f = b.querySelector('#wa-store'), tp = b.querySelector('#wa-topic');
       return { name: me.name || '', email: me.email, plan: p.name ? p.name + ' · ' + perName(z.m || mon) : '', days: z.days || '', amount: z.dzd > 0 ? dz(z.dzd) : z.usd > 0 ? '$' + Number(z.usd).toFixed(2) : '', current: cur || '—',
         expires: BL && BL.expires_at ? X.fd(BL.expires_at) : '—', store: f ? f.value.trim() : '', request: '…', topic: tp ? (TOP[tp.value] || '') : '' }; };
-    const needPlan = key === 'pay';
-    b.innerHTML = `<div class="wa-m">${needPlan ? (others.length ? `<label class="fl">العرض<select id="wa-plan">${others.map(x => `<option value="${x.id}"${x.id === +sel ? ' selected' : ''}>${e(x.name)} · ${dz(x.price)} / شهرياً</option>`).join('')}</select></label>
+    const needPlan = ['pay', 'upgrade', 'renew'].includes(key);
+    b.innerHTML = `<div class="wa-m">${needPlan ? (others.length ? `<label class="fl">${key === 'upgrade' ? 'العرض الذي تريده' : 'العرض'}<select id="wa-plan">${others.map(x => `<option value="${x.id}"${x.id === +sel ? ' selected' : ''}>${e(x.name)} · ${dz(x.price)} / شهرياً</option>`).join('')}</select></label>
 <label class="fl">المدة<select id="wa-mon">${(BL.periods || []).map(z => { const pz = perOf(paid.find(x => x.id === +sel), z.m); return pz ? `<option value="${z.m}"${+z.m === +mon ? ' selected' : ''}>${perName(z.m)} · ${dz(pz.dzd)}${z.off ? ' (−' + z.off + '%)' : ''}</option>` : ''; }).join('')}</select></label>` : '<div class="alert">لا توجد عروض مدفوعة بعد.</div>') : ''}
 ${key === 'pay' ? `${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : ''}<label class="fl">اسم متجرك<input id="wa-store" maxlength="80" dir="auto" placeholder="مثال: Boutique Amine"></label>` : ''}
 ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">${Object.entries(TOP).map(([k, t]) => `<option value="${k}"${k === o.topic ? ' selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
@@ -107,52 +108,6 @@ ${key === 'support' ? `<label class="fl">نوع الطلب<select id="wa-topic">
   }
   W.WPRWA = { open: (k, o) => waModal(k, o).catch(x => X.toast(x.message, 'err')), url: async t => { await waLoad(); return WA.number ? waUrl(t) : ''; } };
 
-  // الدفع داخل «اشتراكي»: 1) المدة 2) العرض (عرضك الحالي محدد افتراضياً للتجديد) 3) طريقة الدفع
-  function payBox(b) {
-    if (!b) return;
-    const curP = BL.plans.find(x => x.name === BL.plan);
-    let sel = (curP || BL.plans.find(x => x.note) || BL.plans[0] || {}).id, PM = defMonths();
-    const draw = () => {
-      const ms = (BL.periods || []).map(x => +x.m).filter(m => BL.plans.some(p => perOf(p, m)));
-      if (!ms.includes(PM)) PM = ms[0];
-      const p = BL.plans.find(x => x.id === sel) || BL.plans[0], x = perOf(p, PM) || {};
-      b.innerHTML = `<h3 style="margin:0 0 8px">1. اختر المدة</h3><div class="per-t">${ms.map(m => { const off = ((BL.periods || []).find(z => +z.m === m) || {}).off; return `<button type="button" data-acc="per" data-m="${m}" class="${m === PM ? 'on' : ''}">${perName(m)}${off ? `<small><bdi dir="ltr">-${off}%</bdi></small>` : ''}</button>`; }).join('')}</div>
-<h3 style="margin:16px 0 8px">2. اختر الباقة</h3><div class="plan-g">${BL.plans.map(q => { const z = perOf(q, PM); if (!z) return ''; return `<div class="plan${q.id === sel ? ' on' : ''}" data-acc="pick" data-id="${q.id}" style="cursor:pointer"><b>${e(q.name)}${curP && q.id === curP.id ? ' <span class="pill ok">عرضك الحالي</span>' : ''}</b><span class="pr">${dz(z.monthly)} <small>/ شهرياً</small></span>
-<small>${z.m > 1 ? `<span>المجموع ${dz(z.dzd)} عن ${perName(z.m)}</span>${z.save ? ` · <span>توفّر ${dz(z.save)}</span>` : ''}` : 'يُدفع كل شهر'}</small>
-<ul>${Object.keys(BL.labels).map(k => `<li>${e(BL.labels[k])}: <b>${+q.limits[k] < 0 ? 'بلا حد' : num(q.limits[k])}</b></li>`).join('')}</ul>${q.note ? `<small>${e(q.note)}</small>` : ''}</div>`; }).join('')}</div>
-<h3 style="margin:16px 0 6px">3. ${curP && p.id === curP.id ? 'جدّد' : 'ادفع'}: «${e(p.name)} · ${perName(PM)}» · ${dz(x.dzd)}${x.usd ? ' · $' + Number(x.usd).toFixed(2) : ''}</h3>
-${BL.methods.satim && x.dzd > 0 ? `<div class="card" style="margin:8px 0"><b>💳 بطاقة CIB أو الذهبية (Edahabia)</b><p class="sub">دفع آمن مباشرة عبر بوابة SATIM بالدينار. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="satim">ادفع ${dz(x.dzd)}</button></div>` : ''}
-${BL.methods.stripe && x.usd > 0 ? `<div class="card" style="margin:8px 0"><b>💳 Visa / Mastercard (Stripe)</b><p class="sub">لكل الدول. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="stripe">ادفع $${Number(x.usd).toFixed(2)}</button></div>` : ''}
-${BL.methods.paypal && x.usd > 0 ? `<div class="card" style="margin:8px 0"><b>🅿️ PayPal</b><p class="sub">ادفع من حسابك في PayPal أو ببطاقتك. يُفعَّل اشتراكك فور نجاح الدفع.</p><button class="btn" data-acc="pay" data-m="paypal">ادفع $${Number(x.usd).toFixed(2)} بـ PayPal</button></div>` : ''}
-${(BL.methods.baridi || BL.methods.whatsapp) && x.dzd > 0 ? `<div class="card pay-m" style="margin:8px 0"><b>📱 BaridiMob أو CCP أو تحويل بنكي</b>
-<p class="sub" style="margin:6px 0">حوّل <b>${dz(x.dzd)}</b> ثم أرسل الوصل مع اسم متجرك: يُفعَّل عرضك عند الاستلام.</p>
-${BL.methods.baridi ? `<div class="alert info" style="white-space:pre-wrap;margin:8px 0" translate="no" dir="auto">${e(BL.methods.baridi)}</div>` : '<p class="sub">اطلب معلومات التحويل عبر واتساب.</p>'}
-${BL.methods.whatsapp ? `<p style="margin:10px 0 0"><button class="btn wa" data-acc="wa"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.4-.3z"/></svg> إرسال الوصل عبر واتساب</button></p>
-<p class="sub" style="margin:6px 0 0">رسالة جاهزة (العرض، المبلغ، اسم متجرك، بريد حسابك): أرفق صورة الوصل وأرسلها.</p>` : ''}
-${BL.methods.baridi ? `<details class="fx" style="margin:10px 0 0"><summary>أو أرفق الوصل هنا بدل واتساب</summary>
-<div class="grid2" style="gap:8px;margin:0"><label class="fl">رقم العملية<input id="bm-ref" dir="ltr"></label><label class="fl">صورة الوصل<input id="bm-img" type="file" accept="image/*"></label></div>
-<p style="margin:8px 0 12px"><button class="btn ghost" data-acc="baridi">أرسل طلب التفعيل</button></p></details>` : ''}</div>` : ''}
-${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.baridi && !BL.methods.whatsapp ? '<div class="alert">لا توجد طريقة دفع مفعّلة بعد. تواصل مع الإدارة.</div>' : ''}`;
-      b.onclick = async ev => {
-        const t = ev.target.closest('[data-acc]'); if (!t) return;
-        const a = t.dataset.acc;
-        if (a === 'pick') { sel = +t.dataset.id; return draw(); }
-        if (a === 'per') { PM = +t.dataset.m; return draw(); }
-        const run = f => { const pr = Promise.resolve().then(f); W.__btnBusy && W.__btnBusy(ev, pr); pr.catch(x => X.toast(x.message || 'خطأ', 'err')); };
-        if (a === 'pay') run(async () => { const r = await X.api('POST', '/billing/checkout', { plan_id: sel, months: PM, method: t.dataset.m }); location.href = r.url; });
-        if (a === 'wa') return waModal('pay', { plan: sel, months: PM });
-        if (a === 'baridi') run(async () => {
-          const ref = b.querySelector('#bm-ref').value.trim(), f = b.querySelector('#bm-img').files[0];
-          const proof = f ? await shrink(f) : '';
-          if (!ref && !proof) return X.toast('اكتب رقم العملية أو أرفق صورة الوصل', 'err');
-          await X.api('POST', '/billing/baridi', { plan_id: sel, months: PM, ref, proof }); X.toast('أُرسل طلبك. سيُفعَّل اشتراكك بعد المراجعة وستصلك رسالة.'); drawBilling();
-        });
-      };
-    };
-    draw();
-  }
-  // تصغير صورة الوصل في المتصفح (JPEG ≤ 1400 بكسل)
-  const shrink = f => new Promise((ok, no) => { const im = new Image(), u = URL.createObjectURL(f); im.onload = () => { const k = Math.min(1, 1400 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', 0.82)); }; im.onerror = () => no(new Error('صورة غير صالحة')); im.src = u; });
   // العودة من صفحة الدفع: ننتظر إشعار البوابة ثم نحدّث الحساب
   async function afterReturn() {
     const p = new URLSearchParams(location.search), id = p.get('paid'), fail = p.get('failed');
@@ -170,7 +125,7 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
     aover: [['stats', '']],
     abill: [['pay', 'طلبات الدفع'], ['plans', 'العروض والمميزات'], ['methods', 'طرق الدفع']],
     ainbox: [['msgs', '']],
-    aset: [['general', 'النشاط والتواصل'], ['ext', 'الإضافة والقاموس'], ['wa', 'رسائل واتساب'], ['ai', 'الذكاء الاصطناعي'], ['tg', 'التنبيهات'], ['legal', 'الصفحات القانونية'], ['backup', 'النسخ الاحتياطي'], ['maint', 'وضع الصيانة'], ['err', 'سجل الأخطاء']]
+    aset: [['general', 'النشاط والتواصل'], ['wa', 'رسائل واتساب'], ['ai', 'الذكاء الاصطناعي'], ['tg', 'التنبيهات'], ['legal', 'الصفحات القانونية'], ['backup', 'النسخ الاحتياطي'], ['maint', 'وضع الصيانة'], ['err', 'سجل الأخطاء']]
   };
   const ABASE = { aover: '/admin', abill: '/payments', ainbox: '/support-inbox', aset: '/platform' };
   let AVIEW = 'aover', ATAB = 'stats', MF = 'new';
@@ -206,20 +161,6 @@ ${!BL.methods.satim && !BL.methods.stripe && !BL.methods.paypal && !BL.methods.b
 <p class="sub" style="margin-top:6px">جرّب بريداً على Gmail: إن وصل إلى بريد الدومين ولم يصل إلى Gmail فالسبب غالباً SPF/DKIM، وإشعار الرفض يصل إلى صندوق بريد الإرسال نفسه (Webmail).</p><div id="mail-r"></div></div>` : '';
       el.innerHTML = `<p class="sub" style="margin:0 0 12px"><span>${intro}</span> <span>المفاتيح السرية تُحفظ مشفّرة ولا تظهر كاملة بعد الحفظ.</span></p><div class="int-g">${pick.map(k => c[k]).join('')}${mail}</div>`;
       if (mail) mailStatus();
-      return;
-    }
-    if (ATAB === 'ext') {   // كل ما يخص المنصة كلها حول الإضافة: الدومينات، رابط المتجر، القاموس الافتراضي
-      const [c, st] = await Promise.all([X.api('GET', '/admin/config').catch(() => ({ config: {} })), X.api('GET', '/lib/stats').catch(() => ({}))]);
-      const C = c.config || {}, ex = st.ext || {}, hosts = ex.hosts || [];
-      el.innerHTML = `<div class="int-g"><div class="card"><h2>إضافة Chrome</h2>
-<p class="sub">آخر إصدار في المنصة: <b>${e(ex.latest || '—')}</b> · أقل إصدار مقبول: <b>${e(ex.min || '—')}</b></p>
-<p class="sub">النسخة المنزَّلة من المنصة (التثبيت اليدوي) تُربط بهذه الدومينات: ${hosts.map(h => `<code>${e(h)}</code>`).join('، ') || '—'}.
-${hosts.includes(location.hostname) ? 'عنوانك الحالي ضمنها.' : '<b style="color:var(--bad)">عنوانك الحالي <code>' + e(location.hostname) + '</code> ليس ضمنها: اضبط BRIDGE_ORIGINS في إعدادات الخادم ثم أعد التنزيل.</b>'}</p>
-<label class="fl">رابط الإضافة في متجر Chrome<input data-cfg="ext_store_url" dir="ltr" value="${e(C.ext_store_url ? C.ext_store_url.value : '')}" placeholder="https://chromewebstore.google.com/detail/…"></label>
-<p class="sub" style="margin:4px 0 0">عند ضبطه يرى المشتركون خطوات التثبيت من المتجر («إضافة إلى Chrome») بدل الملف.</p>
-<p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>
-<div class="card"><h2>القاموس الافتراضي</h2><p class="sub">الكلمات الذهبية والنيشات التي يبدأ بها كل مشترك. تعديلها يغيّر الأصل للجميع، وما أضافه أو عطّله كل مشترك في قاموسه يبقى له.</p>
-<p style="margin:8px 0 0"><a class="btn" href="/collect/dictionary?admin=1">تعديل القاموس الافتراضي</a></p></div></div>`;
       return;
     }
     if (ATAB === 'stats') {
@@ -408,7 +349,7 @@ ${field('telegram_token', 'رمز البوت (Token)', '123456:ABC…', 'secret'
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>`,
       biz: `<div class="card"><h2>معلومات النشاط والدعم</h2><p class="sub">تظهر في الصفحات القانونية (الشروط، الخصوصية، الاسترداد، اتصل بنا) وفي الدعم. <a href="/terms" target="_blank">معاينة</a></p>
 ${field('biz_name', 'اسم النشاط', 'Winning Product Radar')}${field('biz_country', 'البلد (القانون المطبّق)', 'الجزائر')}${field('biz_address', 'العنوان (اختياري)', '')}
-${field('support_email', 'بريد الدعم', 'support@…')}${field('support_whatsapp', 'واتساب الدعم (اختياري)', '+213…')}${field('refund_days', 'مدة طلب الاسترداد (أيام)', '7')}${field('legal_updated', 'تاريخ آخر تحديث للشروط', '2026-11-10')}
+${field('ext_store_url', 'رابط الإضافة في متجر Chrome', 'https://chromewebstore.google.com/detail/…')}${field('support_email', 'بريد الدعم', 'support@…')}${field('support_whatsapp', 'واتساب الدعم (اختياري)', '+213…')}${field('refund_days', 'مدة طلب الاسترداد (أيام)', '7')}${field('legal_updated', 'تاريخ آخر تحديث للشروط', '2026-11-10')}
 <p style="margin:8px 0 0"><button class="btn sm" data-int="save">حفظ</button></p></div>`,
       analytics: `<div class="card"><h2>قياس الزيارات والإعلانات</h2><p class="sub">في الصفحات العامة فقط (الرئيسية، التسجيل، الصفحات القانونية) لقياس نتائج إعلاناتك: زيارة الصفحة، وإنشاء حساب (CompleteRegistration / sign_up). لا يُحمَّل شيء منها داخل المنصة. اتركه فارغاً لتعطيله.</p>
 ${field('ga_id', 'Google Analytics 4 (Measurement ID)', 'G-XXXXXXXXXX')}${field('meta_pixel', 'Meta Pixel ID', '123456789012345')}
@@ -418,7 +359,7 @@ ${field('ga_id', 'Google Analytics 4 (Measurement ID)', 'G-XXXXXXXXXX')}${field(
   }
 
   /* ================= 🔌 الربط والتكامل ================= */
-  let INTV = 0;   // رسم «الربط والتكامل»: يُعتمد آخر رسم فقط (انتظار الإضافة قد يجعل رسماً قديماً ينتهي بعد رسم أحدث)
+  let INTV = 0;   // رسم «الربط والتكامل»: يُعتمد آخر رسم فقط
   async function drawIntegrations() {
     const el = $('#x-int'); if (!el) return; const tok = ++INTV;
     el.innerHTML = '<div class="card"><p class="sub">جارٍ التحميل…</p></div>';

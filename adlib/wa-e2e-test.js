@@ -15,7 +15,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await ap.request.post(BASE + '/api/register', { data: { email: 'a@t.dz', password: 'password123' } });
     // 1) المدير يعدّل رسالة «وصل الدفع»
     await ap.goto(BASE + '/platform/wa'); await ap.waitForSelector('[data-wat="pay"][data-l="ar"]');
-    ok((await ap.$$('[data-wat]')).length === 9 && /\{store\}/.test(await ap.innerText('#x-aset')), 'المدير: 3 رسائل × 3 لغات مع المتغيرات المتاحة');
+    ok((await ap.$$('[data-wat]')).length === 15 && /\{store\}/.test(await ap.innerText('#x-aset')), 'المدير: 5 رسائل × 3 لغات مع المتغيرات المتاحة');
     const t0 = await ap.inputValue('[data-wat="pay"][data-l="ar"]');
     await ap.fill('[data-wat="pay"][data-l="ar"]', t0 + '\nمتجري هو {store} وشكراً');
     await ap.click('[data-adm="wasave"]'); await ap.waitForFunction(() => /معدّلة/.test(document.querySelector('#x-aset').innerText));
@@ -28,8 +28,8 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     ok((await (await up.request.get(BASE + '/api/billing')).json()).plans.some(p => p.price === 2900), 'باقة مدفوعة');
     await up.goto(BASE + '/subscription'); await up.waitForSelector('.pay-sec');
     const btns = await up.$$eval('.pay-sec [data-wac]', a => a.map(x => x.dataset.wac));
-    ok(btns.join(',') === 'billing', 'اشتراكي: الوصل من بطاقة الدفع (بالعرض والمدة المختارين)، وزر واتساب واحد للأسئلة');
-    await up.click('#pay-box [data-acc="wa"]'); await up.waitForSelector('#wa-text');
+    ok(btns.join(',') === 'pay,upgrade,renew,billing', 'اشتراكي: أزرار واتساب (الوصل، الترقية، التجديد، سؤال)');
+    await up.click('.pay-sec [data-wac="pay"]'); await up.waitForSelector('#wa-text');
     ok(/CCP 0012345/.test(await up.innerText('.tm')) && /u@t\.dz/.test(await up.inputValue('#wa-text')), 'نافذة الوصل: معلومات التحويل + الرسالة ببريد الحساب');
     await up.fill('#wa-store', 'Boutique Amine'); ok(/متجري هو Boutique Amine وشكراً/.test(await up.inputValue('#wa-text')), 'الرسالة تتحدث باسم المتجر (نص المدير المعدّل)');
     const [pop] = await Promise.all([up.waitForEvent('popup'), up.click('[data-wa="go"]')]); await pop.waitForURL(/wa\.me/, { timeout: 8000 });
@@ -45,8 +45,7 @@ let pass = 0; const ok = (c, m) => { assert.ok(c, m); pass++; console.log('ok', 
     await up.goto(BASE + '/help'); await up.waitForSelector('#hc-wa');
     const order = await up.evaluate(() => { const g = document.querySelector('.hc-g'), w = document.querySelector('#hc-wa'), f = document.querySelector('#hc-form'), q = document.querySelector('#hc-faq'); return !!(g.compareDocumentPosition(w) & 4) && !!(w.compareDocumentPosition(f) & 4) && !!(f.compareDocumentPosition(q) & 4); });
     ok(order && (await up.innerText('#hc-form h2')).trim() === 'رسالة مكتوبة' && (await up.$$('.hc-g .hc-c')).length === 3, 'المساعدة: البطاقات ← واتساب ← رسالة مكتوبة ← الأسئلة، بلا تكرار ولا «(بديل واتساب)»');
-    await up.click('.hc-g [data-a="hcpay"]'); await up.waitForURL(/\/subscription$/); await up.waitForSelector('#pay-box'); ok(true, 'بطاقة «الدفع والاشتراك» تفتح «اشتراكي ← الدفع والتجديد»');
-    await up.goto(BASE + '/help'); await up.waitForSelector('#hc-wa');
+    await up.click('.hc-g [data-a="hcpay"]'); await up.waitForFunction(() => document.querySelector('#hc-wa').classList.contains('hl')); ok(true, 'بطاقة «الدفع والاشتراك» تنزل إلى قسم واتساب');
     await up.click('#hc-wa [data-wac="support"][data-topic="tech"]'); await up.waitForSelector('#wa-topic');
 
     ok(/مشكلة تقنية/.test(await up.inputValue('#wa-text')), 'رسالة الدعم بنوع الطلب');

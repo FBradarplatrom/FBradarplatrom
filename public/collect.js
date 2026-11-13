@@ -378,7 +378,7 @@ ${curScripts().map(sc => `<div class="l-sub">${SCN[sc]}</div><div class="l-chips
     const v = DICT.view, isAdm = X.me().role === 'admin';
     root.innerHTML = `<div class="card"><div class="l-st"><div class="grow"><h2 style="margin:0">قاموس كلمات البحث</h2><p class="sub" style="margin:2px 0 0">هذه الكلمات هي ما يبحث به «البحث الجماعي». قاموس المنصة الافتراضي (لغات الجزائر + لغات الأسواق الدولية) يصلك دائماً ومحدَّثاً، وما تضيفه أو تعطّله يخصّك وحدك ولا يضيع عند تحديث الافتراضي. <small id="l-dst">تُحفظ التعديلات تلقائياً</small></p></div>
 <button class="btn ghost sm" data-l="dreset">استعادة كل الافتراضي</button></div>
-${isAdm && DMODE === 'admin' ? `<div class="alert" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="flex:1">⚠️ <b>وضع المدير</b>: تعدّل القاموس الافتراضي لكل المشتركين${DICT.custom ? ' (معدَّل)' : ''}.</span><button class="btn danger sm" data-l="dadminreset">العودة للأصل المرفق</button><button class="btn ghost sm" data-l="dadminoff">خروج إلى قاموسي</button></div>` : ''}</div>
+${isAdm ? `<label class="fl chk" style="margin-top:8px"><input type="checkbox" data-l="dadmin"${DMODE === 'admin' ? ' checked' : ''}> وضع المدير: تعديل القاموس الافتراضي لكل المشتركين${DICT.custom ? ' (معدَّل)' : ''}</label>${DMODE === 'admin' ? `<p class="sub">⚠️ تعديلاتك هنا تغيّر الأصل للجميع. <button class="btn danger sm" data-l="dadminreset">العودة للأصل المرفق</button></p>` : ''}` : ''}</div>
 <div class="card" style="margin-top:14px"><h2>الكلمات الذهبية</h2><p class="sub">قوية = 3 وحدات · عادية = 1 · عامة = 0.3. تُطابَق كلمة مستقلة مكتملة، وتُقبل السوابق وصيغ المخاطب. الصيغ البديلة تُفصل بـ «/».</p>
 ${MK.ALL_LANGS.filter(lg => v.gold[lg]).map(lg => `<details class="fx"><summary>${LGN[lg]} <small>${['strong', 'normal', 'weak'].map(t => num(v.gold[lg][t].filter(x => x.s !== 'off').length)).join(' · ')}</small></summary>
 ${['strong', 'normal', 'weak'].map(t => `<div class="l-sub">${TRN[t]}</div><div class="l-chips">${v.gold[lg][t].map(x => chipD(x, `data-d="g" data-lg="${lg}" data-tr="${t}" data-t="${e(x.t)}" data-s="${x.s}"`, lg)).join('')}</div>${addBox(`data-d="g" data-lg="${lg}" data-tr="${t}"`)}`).join('')}
@@ -415,6 +415,7 @@ ${ALL_SCRIPTS.filter(sc => n.comps[sc]).map(sc => `<div class="l-sub">${SCN[sc]}
   /* ================= الإضافة ================= */
   async function drawExt() {
     if (!STATS) await loadStats();
+    const admin = X.me().role === 'admin', hosts = (STATS.ext && STATS.ext.hosts) || [];
     const store = STATS.ext && STATS.ext.store;
     // التثبيت اليدوي (ملف ZIP): الطريقة الوحيدة قبل النشر في المتجر، وبديل بعده (نسخة تجريبية أو دومين آخر)
     const manual = `<ol class="l-steps"><li><a class="btn sm" href="/api/lib/extension.zip" download>⬇️ نزّل الإضافة</a> وفُكّ الضغط في مجلد دائم (لا تحذفه بعد التثبيت).</li>
@@ -433,7 +434,8 @@ ${store ? `<ol class="l-steps"><li><a class="btn sm" href="${e(store)}" target="
 <li>يجب أن تكون مسجلاً الدخول إلى فيسبوك. لا تقرأ الإضافة شيئاً خارج مكتبة الإعلانات.</li>
 <li>الحدود لحماية حسابك: ${STATS ? num(STATS.limits.maxBatch) + ' بحثاً في الدفعة و' + num(STATS.limits.maxDay) + ' في اليوم' : 'حدود يومية'}، وسرعة عادية أو بطيئة. شروط ميتا تقيّد الجمع الآلي وتبعته عليك.</li></ul>
 ${B.ok ? '' : `<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَّلة في <code>chrome://extensions</code>، ثم أعد تحميل هذه الصفحة (F5).</p><p class="sub">${store ? 'وإن كانت لديك نسخة يدوية قديمة فاحذفها وثبّتها من المتجر.' : 'وإن كانت لديك نسخة قديمة فاحذفها ونزّل الجديدة.'}</p>`}</div>
-`;
+${admin ? `<div class="card" style="margin-top:14px"><h2>للمدير</h2><p class="sub">تُربط الإضافة المنزَّلة بهذه الدومينات: ${hosts.map(h => `<code>${e(h)}</code>`).join('، ') || '—'}.
+${hosts.includes(location.hostname) ? 'عنوانك الحالي ضمنها.' : '<b style="color:var(--bad)">عنوانك الحالي <code>' + e(location.hostname) + '</code> ليس ضمنها: اضبط BRIDGE_ORIGINS في إعدادات الخادم ثم أعد التنزيل.</b>'}</p></div>` : ''}`;
   }
 
   /* ================= الحدث والتفاعل ================= */
@@ -441,7 +443,6 @@ ${B.ok ? '' : `<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَ�
   const emptyDiff = () => { const d = { v: 1, gold: {}, niches: { add: [], off: [], edit: {} }, bigBrands: { add: [], off: [] } }; MK.ALL_LANGS.forEach(l => { d.gold[l] = {}; ['strong', 'normal', 'weak'].forEach(t => { d.gold[l][t] = { add: [], off: [] }; }); }); return d; };
   const two = b => { if (b.dataset.s2 !== '1') { b.dataset.s2 = '1'; b.dataset.t2 = b.textContent; b.textContent = 'تأكيد؟'; setTimeout(() => { b.dataset.s2 = ''; b.textContent = b.dataset.t2 || b.textContent; }, 3500); return false; } return true; };
   async function onClick(ev) {
-    if (ev.target.closest('[data-l="dadminoff"]')) { DMODE = 'user'; DICT = null; history.replaceState(null, '', '/collect/dictionary'); return drawDict(); }   // خروج من وضع المدير
     const t = ev.target.closest('[data-lt]'); if (t && X.cur() === VIEW) { P.tab = t.dataset.lt; saveP(); X.url(tabPath(P.tab)); redraw(); return true; }
     const g = ev.target.closest('[data-g]'); if (g) { const a = selSet(P.selG, g.dataset.g), i = a.indexOf(g.dataset.t); i >= 0 ? a.splice(i, 1) : a.push(g.dataset.t); saveP(); g.classList.toggle('on', i < 0); refreshPrev(); return true; }
     const c = ev.target.closest('[data-c]'); if (c) { const m = (P.selC[c.dataset.c] = P.selC[c.dataset.c] || {}), a = (m[c.dataset.sc] = m[c.dataset.sc] || []), i = a.indexOf(c.dataset.t); i >= 0 ? a.splice(i, 1) : a.push(c.dataset.t); saveP(); c.classList.toggle('on', i < 0); refreshPrev(); return true; }
@@ -470,6 +471,7 @@ ${B.ok ? '' : `<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَ�
     const p = ev.target.closest('[data-p]'); if (p) { P[p.dataset.p] = p.type === 'number' ? +p.value : p.value; saveP(); if (['type', 'country', 'mode'].includes(p.dataset.p)) drawCollect(); return true; }
     const pc = ev.target.closest('[data-pc]'); if (pc) { P[pc.dataset.pc] = pc.checked; saveP(); refreshPrev(); return true; }
     const sm = ev.target.closest('[data-sm]'); if (sm) { bsend('set_mode', { mode: sm.value }).then(() => { if (B.state) B.state.sendMode = sm.value; drawProg(); }).catch(() => X.toast('الإضافة غير متصلة', 'err')); return true; }
+    const ad = ev.target.closest('[data-l="dadmin"]'); if (ad) { DMODE = ad.checked ? 'admin' : 'user'; DICT = null; drawDict(); return true; }
     return false;
   }
   function guardRun(f, ev) { const pr = Promise.resolve().then(f); if (ev && W.__btnBusy) W.__btnBusy(ev, pr); pr.catch(x => { if (x && x.message !== 'auth') X.toast(x.message || 'حدث خطأ', 'err'); }); }
@@ -501,7 +503,6 @@ ${B.ok ? '' : `<p class="sub"><b>لا تتصل؟</b> تأكد أنها مفعَ�
       if (!$('#l-tabs')) $('#x-collect').innerHTML = '<div class="lt" id="l-tabs"></div><div id="l-body"></div>';
       if (sub && TAB_OF[sub]) P.tab = TAB_OF[sub]; else if (!sub && o && o.fromUrl) P.tab = 'collect';
       if (!TABS.some(t => t[0] === P.tab)) P.tab = 'collect';
-      if (X.me().role === 'admin' && new URLSearchParams(location.search).get('admin') === '1') DMODE = 'admin';   // من «إعدادات المنصة» فقط
       X.url(tabPath(P.tab), !!(o && o.nopush));
       DICT = DMODE === 'admin' ? DICT : null; if (DMODE === 'admin' && X.me().role !== 'admin') DMODE = 'user';
       ping(); STATS = null; redraw();
