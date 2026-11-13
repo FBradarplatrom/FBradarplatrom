@@ -104,7 +104,7 @@ details.fx{background:var(--card);border:1px solid var(--line);border-radius:var
 .lb-bar{position:absolute;bottom:18px;display:flex;gap:10px;align-items:center;color:#fff}.lb-bar a,.lb-bar button{position:static;font-size:14px;height:40px}
 /* ----- إشعارات ----- */
 #toasts{position:fixed;bottom:20px;inset-inline-start:20px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:min(92vw,380px)}
-.toast{background:#121916;color:#fff;border-radius:12px;padding:11px 16px;font-size:14px;box-shadow:0 14px 36px -10px rgba(0,0,0,.5);animation:in .25s}.toast.err{border-color:var(--bad)}.toast{cursor:pointer;transition:opacity .25s,transform .25s}.maint-bar{border:1.5px solid var(--warn);background:rgba(217,119,6,.10);margin:0 0 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.maint-bar a{font-weight:700}
+.toast{background:#121916;color:#fff;border-radius:12px;padding:11px 16px;font-size:14px;box-shadow:0 14px 36px -10px rgba(0,0,0,.5);animation:in .25s;border-inline-start:4px solid var(--ok)}.toast.err{border-color:var(--bad)}.toast{cursor:pointer;transition:opacity .25s,transform .25s}.maint-bar{border:1.5px solid var(--warn);background:rgba(217,119,6,.10);margin:0 0 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.maint-bar a{font-weight:700}
 .toast.out{opacity:0;transform:translateY(6px)}
 /* ----- جوال ----- */
 @media(max-width:960px){#wpr-app{flex-direction:column}
@@ -120,7 +120,7 @@ details.fx{background:var(--card);border:1px solid var(--line);border-radius:var
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:0}
 *{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .sb{background:var(--card)}
-.brand i{box-shadow:0 8px 18px -8px rgba(18,25,22,0.22)}
+.brand i{box-shadow:0 8px 18px -8px rgba(17,133,83,.7)}
 .nv{position:relative}.nv.on::before{content:"";position:absolute;inset-inline-end:-14px;top:22%;bottom:22%;width:4px;border-radius:4px;background:var(--brand)}
 .btn{background:var(--brand);border:1px solid var(--brand);box-shadow:none}
 .btn:hover{background:var(--brand-h);border-color:var(--brand-h)}
@@ -128,10 +128,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:0}
 .btn.ghost:hover{background:var(--soft)}.btn.danger:hover{background:rgba(220,38,38,.08)}
 .card,.kpi,.pc,details.fx{transition:box-shadow .2s,border-color .2s,transform .2s}
 .kpi:hover{transform:translateY(-2px);border-color:var(--brand-t)}
-h1{color:var(--ink)}
+h1{background:linear-gradient(135deg,var(--ink),var(--brand));-webkit-background-clip:text;background-clip:text;color:transparent}
 .tb th{position:sticky;top:0;background:var(--card);z-index:1}
 .tb tr td{transition:background .12s}
-#tabs button.on{background:linear-gradient(135deg,var(--brand),#0a7040);box-shadow:0 8px 16px -10px rgba(18,25,22,0.22)}
+#tabs button.on{background:linear-gradient(135deg,var(--brand),#0a7040);box-shadow:0 8px 16px -10px rgba(17,133,83,.8)}
 .pc-media img{background:var(--card2)}
 .pc-media:not(.noimg)::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);background-size:200% 100%;animation:sk 1.4s linear 2;pointer-events:none}
 @keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
@@ -193,7 +193,7 @@ h1{color:var(--ink)}
 
 /* الحركة والتأثيرات: لطيفة وسريعة، وتُلغى لمن فعّل «تقليل الحركة» في جهازه */
 .btn{transition:transform .15s ease,box-shadow .2s ease,background .15s,border-color .15s,color .15s}
-.btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 18px -10px rgba(18,25,22,0.22)}.btn.ghost:not(:disabled):hover{box-shadow:0 6px 14px -10px rgba(18,25,22,.35)}
+.btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 18px -10px rgba(17,133,83,.55)}.btn.ghost:not(:disabled):hover{box-shadow:0 6px 14px -10px rgba(18,25,22,.35)}
 .btn:not(:disabled):active{transform:translateY(0) scale(.98)}
 .hc-c,.wa-i,.plan,.ed-hc,.ed-tc,.wt-c,.g-card,.pc,.kpis>div,.dsum .kpis>div,.hc-sec .wa-i{transition:transform .2s ease,box-shadow .25s ease,border-color .2s}
 .hc-c:hover,.wa-i:hover,.plan:hover,.ed-hc:hover,.ed-tc:hover,.wt-c:hover,.g-card:hover,.pc:hover{transform:translateY(-3px);box-shadow:0 18px 34px -22px rgba(18,25,22,.35)}
